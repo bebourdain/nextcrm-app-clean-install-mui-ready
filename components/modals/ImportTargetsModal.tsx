@@ -7,6 +7,7 @@ import { suggestMapping } from "@/actions/crm/targets/suggest-mapping";
 import { parseSpreadsheetFile } from "@/lib/spreadsheet/parse";
 import { TARGET_FIELDS } from "@/lib/spreadsheet/target-fields";
 import { toast } from "sonner";
+import { Close } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -17,6 +18,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
   MenuItem,
   Paper,
   Stack,
@@ -167,11 +169,14 @@ const ImportTargetsModal = () => {
         Import CSV / Excel
       </Button>
       <Dialog open={open} onClose={() => !isLoading && handleOpenChange(false)} fullWidth maxWidth="md" slotProps={{ paper: { sx: { maxHeight: "90vh" } } }}>
-        <DialogTitle>
-          Import Targets
-          <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-            Step {step === "upload" ? 1 : step === "mapping" ? 2 : 3} of 3
-          </Typography>
+        <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+          <Box>
+            Import Targets
+            <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+              Step {step === "upload" ? 1 : step === "mapping" ? 2 : 3} of 3
+            </Typography>
+          </Box>
+          <IconButton aria-label="Close import dialog" size="small" disabled={isLoading} onClick={() => handleOpenChange(false)}><Close fontSize="small" /></IconButton>
         </DialogTitle>
         <DialogContent dividers>
           <DialogContentText sx={{ mb: 3 }}>
