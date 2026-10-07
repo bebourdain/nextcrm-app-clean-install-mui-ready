@@ -1,378 +1,93 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-
-import {
-  CalendarDays,
-  CoinsIcon,
-  Facebook,
-  Instagram,
-  LayoutGrid,
-  Linkedin,
-  Twitter,
-  User,
-  Youtube,
-} from "lucide-react";
-import moment from "moment";
-import { prismadb } from "@/lib/prisma";
 import Link from "next/link";
-import { EnvelopeClosedIcon } from "@radix-ui/react-icons";
-import { Badge } from "@/components/ui/badge";
+import moment from "moment";
+import { Box, Chip, Divider, Grid, Link as MuiLink, Paper, Stack, Typography } from "@mui/material";
+import { prismadb } from "@/lib/prisma";
+import { getAllCrmData } from "@/actions/crm/get-crm-data";
 import { EnrichButton } from "./EnrichButton";
 import { ContactDetailActions } from "./ContactDetailActions";
-import { getAllCrmData } from "@/actions/crm/get-crm-data";
 
-interface OppsViewProps {
-  data: any;
+function Field({ label, value }: { label: string; value?: React.ReactNode }) {
+  return <Box sx={{ py: 1 }}>
+    <Typography variant="body2" sx={{ fontWeight: 600 }}>{label}</Typography>
+    <Typography variant="body2" color="text.secondary" component="div">{value || "N/A"}</Typography>
+  </Box>;
 }
 
-export async function BasicView({ data }: OppsViewProps) {
-  //console.log(data, "data");
-  const users = await prismadb.users.findMany();
-  const crmData = await getAllCrmData();
-  const contactTypes = crmData.contactTypes;
-  if (!data) return <div>Opportunity not found</div>;
-  return (
-    <div className="pb-3 space-y-5">
-      {/*      <pre>{JSON.stringify(data, null, 2)}</pre> */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex w-full justify-between">
-            <div>
-              <CardTitle>
-                {data.first_name} {data.last_name}
-              </CardTitle>
-              <CardDescription>ID:{data.id}</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <EnrichButton
-                contactId={data.id}
-                contactEmail={data.email ?? null}
-                contactCurrentData={{
-                  position:         data.position ?? null,
-                  website:          data.website ?? null,
-                  social_linkedin:  data.social_linkedin ?? null,
-                  social_twitter:   data.social_twitter ?? null,
-                  social_facebook:  data.social_facebook ?? null,
-                  social_instagram: data.social_instagram ?? null,
-                  description:      data.description ?? null,
-                  office_phone:     data.office_phone ?? null,
-                  mobile_phone:     data.mobile_phone ?? null,
-                }}
-              />
-              <ContactDetailActions contact={data} contactTypes={contactTypes} />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 w-full ">
-            <div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <CoinsIcon className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Account</p>
-                  <p className="text-sm text-muted-foreground">
-                    {data.assigned_accounts?.name}
-                  </p>
-                </div>
-              </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <CoinsIcon className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Position</p>
-                  <p className="text-sm text-muted-foreground">
-                    {data.position ? data.position : "N/A"}
-                  </p>
-                </div>
-              </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <CoinsIcon className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Birthday</p>
-                  <p className="text-sm text-muted-foreground">
-                    {data.birthday
-                      ? moment(data.birthday).format("MMM DD YYYY")
-                      : "N/A"}
-                  </p>
-                </div>
-              </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <CoinsIcon className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    Description
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {data.description ? data.description : "N/A"}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <User className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    Assigned to
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {users.find((user) => user.id === data.assigned_to)?.name}
-                  </p>
-                </div>
-              </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <CalendarDays className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Created</p>
-                  <p className="text-sm text-muted-foreground">
-                    {moment(data.created_on).format("MMM DD YYYY")}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Created by</p>
-                  <p className="text-sm text-muted-foreground">
-                    {users.find((user) => user.id === data.createdBy)?.name}
-                  </p>
-                </div>
-              </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <CalendarDays className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    Last update
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {moment(data.updatedAt).format("MMM DD YYYY")}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    Last update by
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {users.find((user) => user.id === data.updatedBy)?.name}
-                  </p>
-                </div>
-              </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <CoinsIcon className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Status</p>
-                  <p className="text-sm text-muted-foreground">
-                    {data.status ? "Active" : "Inactive"}
-                  </p>
-                </div>
-              </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <CoinsIcon className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Type</p>
-                  <p className="text-sm text-muted-foreground">{data.contact_type?.name ?? "—"}</p>
-                </div>
-              </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <CoinsIcon className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Member of</p>
-                  <p className="text-sm text-muted-foreground">
-                    {data.member_of}
-                  </p>
-                </div>
-              </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <CoinsIcon className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Industry</p>
-                  <p className="text-sm text-muted-foreground">
-                    {data.industry}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div> Tags:</div>
-              <div className="flex flex-wrap gap-2">
-                {data.tags.map((tag: string) => (
-                  <Badge key={tag} variant={"outline"}>
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      <div className="grid grid-cols-2 gap-3 w-full">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Contacts</CardTitle>
-          </CardHeader>
-          <CardContent className="gap-1">
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">E-mail</p>
-                {data?.email ? (
-                  <Link
-                    href={`mailto:${data.email}`}
-                    className="flex items-center  gap-5 text-sm text-muted-foreground"
-                  >
-                    {data.email}
-                    <EnvelopeClosedIcon />
-                  </Link>
-                ) : null}
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Personal e-mail
-                </p>
-                {data?.personal_email ? (
-                  <Link
-                    href={`mailto:${data.personal_email}`}
-                    className="flex items-center  gap-5 text-sm text-muted-foreground"
-                  >
-                    {data.personal_email}
-                    <EnvelopeClosedIcon />
-                  </Link>
-                ) : null}
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">Office phone</p>
-                <p className="text-sm text-muted-foreground">
-                  {data.office_phone}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">Mobile phone</p>
-                <p className="text-sm text-muted-foreground">
-                  {data.mobile_phone}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">Website</p>
-                <p className="text-sm text-muted-foreground">
-                  {data?.website ? (
-                    <Link href={data.website}>{data.website}</Link>
-                  ) : (
-                    "N/A"
-                  )}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Billing country
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {data.billing_country}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Social networks</CardTitle>
-          </CardHeader>
-          <CardContent className="gap-1">
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <Twitter className="mt-px h-5 w-5" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">Twitter</p>
-                <p className="text-sm text-muted-foreground">
-                  {data.social_twitter}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <Facebook className="mt-px h-5 w-5" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">Facebook</p>
-                <p className="text-sm text-muted-foreground">
-                  {data.social_facebook}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <Linkedin className="mt-px h-5 w-5" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">LinkedIn</p>
-                <p className="text-sm text-muted-foreground">
-                  {data.social_linkedin}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <LayoutGrid className="mt-px h-5 w-5" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">Skype</p>
-                <p className="text-sm text-muted-foreground">
-                  {data.social_skype}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <Instagram className="mt-px h-5 w-5" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">Instagram</p>
-                <p className="text-sm text-muted-foreground">
-                  {data.social_instagram}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <Youtube className="mt-px h-5 w-5" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">YouTube</p>
-                <p className="text-sm text-muted-foreground">
-                  {data.social_youtube}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <LayoutGrid className="mt-px h-5 w-5" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">TikTok</p>
-                <p className="text-sm text-muted-foreground">
-                  {data.social_tiktok}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      <div>
-        {
-          //TODO: Add notes functionality
-          //TODO: Delete notes functionality
-        }
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Notes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              {data.notes.map((note: string) => (
-                <p className="text-sm text-muted-foreground" key={note}>
-                  {note}
-                </p>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return <Paper variant="outlined" sx={{ p: 3, borderRadius: "var(--radius)" }}>
+    <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>{title}</Typography>
+    <Divider sx={{ my: 2 }} />
+    {children}
+  </Paper>;
+}
+
+export async function BasicView({ data }: { data: any }) {
+  const [users, crmData] = await Promise.all([prismadb.users.findMany(), getAllCrmData()]);
+  if (!data) return <Typography>Contact not found</Typography>;
+  const userName = (id: string | null | undefined) => users.find((user) => user.id === id)?.name || "N/A";
+  const date = (value: Date | string | null | undefined) => value ? moment(value).format("MMM DD YYYY") : "N/A";
+  const email = (value: string | null | undefined) => value ? <MuiLink component={Link} href={`mailto:${value}`}>{value}</MuiLink> : "N/A";
+  return <Stack spacing={2.5}>
+    <Paper variant="outlined" sx={{ p: 3, borderRadius: "var(--radius)" }}>
+      <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }} spacing={2}>
+        <Box>
+          <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>{data.first_name} {data.last_name}</Typography>
+          <Typography variant="body2" color="text.secondary">ID: {data.id}</Typography>
+        </Box>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <EnrichButton contactId={data.id} contactEmail={data.email ?? null} contactCurrentData={{
+            position: data.position ?? null, website: data.website ?? null, social_linkedin: data.social_linkedin ?? null,
+            social_twitter: data.social_twitter ?? null, social_facebook: data.social_facebook ?? null,
+            social_instagram: data.social_instagram ?? null, description: data.description ?? null,
+            office_phone: data.office_phone ?? null, mobile_phone: data.mobile_phone ?? null,
+          }} />
+          <ContactDetailActions contact={data} contactTypes={crmData.contactTypes} />
+        </Stack>
+      </Stack>
+      <Divider sx={{ my: 2 }} />
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Field label="Account" value={data.assigned_accounts?.name} />
+          <Field label="Position" value={data.position} />
+          <Field label="Birthday" value={date(data.birthday)} />
+          <Field label="Description" value={data.description} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Field label="Assigned to" value={userName(data.assigned_to)} />
+          <Field label="Created" value={date(data.created_on)} />
+          <Field label="Created by" value={userName(data.createdBy)} />
+          <Field label="Last update" value={date(data.updatedAt)} />
+          <Field label="Last update by" value={userName(data.updatedBy)} />
+          <Field label="Status" value={data.status ? "Active" : "Inactive"} />
+          <Field label="Type" value={data.contact_type?.name} />
+          <Field label="Member of" value={data.member_of} />
+          <Field label="Industry" value={data.industry} />
+        </Grid>
+      </Grid>
+      <Typography variant="body2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Tags</Typography>
+      <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>{(data.tags ?? []).map((tag: string) => <Chip key={tag} label={tag} size="small" variant="outlined" />)}</Stack>
+    </Paper>
+    <Grid container spacing={2.5}>
+      <Grid size={{ xs: 12, md: 6 }}><Section title="Contacts">
+        <Field label="E-mail" value={email(data.email)} />
+        <Field label="Personal e-mail" value={email(data.personal_email)} />
+        <Field label="Office phone" value={data.office_phone} />
+        <Field label="Mobile phone" value={data.mobile_phone} />
+        <Field label="Website" value={data.website ? <MuiLink component={Link} href={data.website}>{data.website}</MuiLink> : undefined} />
+        <Field label="Billing country" value={data.billing_country} />
+      </Section></Grid>
+      <Grid size={{ xs: 12, md: 6 }}><Section title="Social networks">
+        <Field label="Twitter" value={data.social_twitter} />
+        <Field label="Facebook" value={data.social_facebook} />
+        <Field label="LinkedIn" value={data.social_linkedin} />
+        <Field label="Skype" value={data.social_skype} />
+        <Field label="Instagram" value={data.social_instagram} />
+        <Field label="YouTube" value={data.social_youtube} />
+        <Field label="TikTok" value={data.social_tiktok} />
+      </Section></Grid>
+    </Grid>
+    <Section title="Notes">
+      <Stack spacing={1}>{(data.notes ?? []).map((note: string, index: number) => <Typography key={`${index}-${note}`} variant="body2" color="text.secondary">{note}</Typography>)}</Stack>
+    </Section>
+  </Stack>;
 }

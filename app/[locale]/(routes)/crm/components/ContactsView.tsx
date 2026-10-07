@@ -2,29 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Box, Button, Dialog, DialogContent, DialogTitle, Divider, Paper, Stack, Typography } from "@mui/material";
 
 import { createColumns } from "../contacts/table-components/columns";
 import { NewContactForm } from "../contacts/components/NewContactForm";
 import { ContactsDataTable } from "../contacts/table-components/data-table";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-
 import type { getAllCrmData } from "@/actions/crm/get-crm-data";
 
 type CrmData = Awaited<ReturnType<typeof getAllCrmData>>;
@@ -37,59 +21,30 @@ interface ContactsViewProps {
 
 const ContactsView = ({ data, crmData, accountId }: ContactsViewProps) => {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
   const t = useTranslations("CrmPage");
 
-  const { accounts, contactTypes } = crmData;
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between">
-          <div>
-            <CardTitle>
-              <Link href="/crm/contacts" className="hover:underline">
-                {t("contacts.viewTitle")}
-              </Link>
-            </CardTitle>
-          </div>
-          <div className="flex space-x-2">
-            <Sheet open={open} onOpenChange={setOpen}>
-              <SheetTrigger asChild>
-                <Button size="sm" aria-label={t("contacts.addNew")} data-testid="add-contact-btn">+</Button>
-              </SheetTrigger>
-              <SheetContent className="w-full md:max-w-[771px] overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle>{t("contacts.sheetTitle")}</SheetTitle>
-                  <SheetDescription>
-                    {t("contacts.sheetDescription")}
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="mt-6 space-y-4">
-                  <NewContactForm
-                    accounts={accounts}
-                    accountId={accountId}
-                    onFinish={() => setOpen(false)}
-                  />
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
-        <Separator />
-      </CardHeader>
-
-      <CardContent>
-        {!data || data.length === 0 ? (
-          t("contacts.empty")
-        ) : (
-          <ContactsDataTable
-            data={data}
-            columns={createColumns(contactTypes)}
-          />
-        )}
-      </CardContent>
-    </Card>
-  );
+  return <Paper variant="outlined" sx={{ borderRadius: "var(--radius)", overflow: "hidden", boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)" }}>
+    <Box sx={{ p: 3, pb: 1.5 }}>
+      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+        <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
+          <Link href="/crm/contacts" style={{ color: "inherit", textDecoration: "none" }}>{t("contacts.viewTitle")}</Link>
+        </Typography>
+        <Button variant="contained" aria-label={t("contacts.addNew")} data-testid="add-contact-btn" onClick={() => setOpen(true)} sx={{ minWidth: 36, my: 1 }}>+</Button>
+      </Stack>
+      <Divider sx={{ mt: 2.5 }} />
+    </Box>
+    <Box sx={{ px: 3, pb: 3 }}>
+      {!data?.length ? <Typography variant="body2">{t("contacts.empty")}</Typography> : <ContactsDataTable data={data} columns={createColumns(crmData.contactTypes)} />}
+    </Box>
+    <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="md" scroll="paper">
+      <DialogTitle>{t("contacts.sheetTitle")}</DialogTitle>
+      <DialogContent dividers>
+        <Typography color="text.secondary" variant="body2" sx={{ mb: 2 }}>{t("contacts.sheetDescription")}</Typography>
+        <NewContactForm accounts={crmData.accounts} accountId={accountId} onFinish={() => { setOpen(false); router.refresh(); }} />
+      </DialogContent>
+    </Dialog>
+  </Paper>;
 };
 
 export default ContactsView;

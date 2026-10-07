@@ -1,119 +1,58 @@
 "use client";
 
-import { DotsHorizontalIcon } from "@radix-ui/react-icons";
-import { Row } from "@tanstack/react-table";
-
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-import { opportunitySchema } from "../table-data/schema";
-import { useRouter } from "next/navigation";
-import AlertModal from "@/components/modals/alert-modal";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Row } from "@tanstack/react-table";
+import { IconButton, Menu, MenuItem, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from "@mui/material";
+import { MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
+import { opportunitySchema } from "../table-data/schema";
 import { UpdateContactForm } from "../components/UpdateContactForm";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { deleteContact } from "@/actions/crm/contacts/delete-contact";
 
 type ConfigItem = { id: string; name: string };
 
-interface DataTableRowActionsProps<TData> {
-  row: Row<TData>;
-  contactTypes: ConfigItem[];
-}
-
-export function DataTableRowActions<TData>({
-  row,
-  contactTypes,
-}: DataTableRowActionsProps<TData>) {
+export function DataTableRowActions<TData>({ row, contactTypes }: { row: Row<TData>; contactTypes: ConfigItem[] }) {
   const router = useRouter();
   const contact = opportunitySchema.parse(row.original);
-
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [updateOpen, setUpdateOpen] = useState(false);
-
+  const [loading, setLoading] = useState(false);
 
   const onDelete = async () => {
     setLoading(true);
     try {
-      const result = await deleteContact(contact?.id);
-      if (result.error) {
-        toast.error(result.error);
-      } else {
-        toast.success("Contact has been deleted");
-      }
-    } catch (error) {
+      const result = await deleteContact(contact.id);
+      if (result.error) toast.error(result.error);
+      else toast.success("Contact has been deleted");
+    } catch {
       toast.error("Something went wrong while deleting contact. Please try again.");
     } finally {
       setLoading(false);
-      setOpen(false);
+      setDeleteOpen(false);
       router.refresh();
     }
   };
 
-  return (
-    <>
-      <AlertModal
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        onConfirm={onDelete}
-        loading={loading}
-      />
-      <Sheet open={updateOpen} onOpenChange={setUpdateOpen}>
-        <SheetContent className="w-full md:max-w-[771px] overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Update Contact - {contact?.first_name} {contact?.last_name}</SheetTitle>
-            <SheetDescription>Update contact details</SheetDescription>
-          </SheetHeader>
-          <div className="mt-6 space-y-4">
-            <UpdateContactForm
-              initialData={row.original}
-              setOpen={setUpdateOpen}
-              contactTypes={contactTypes}
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
-          >
-            <DotsHorizontalIcon className="h-4 w-4" />
-            <span className="sr-only">Open menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[160px]">
-          <DropdownMenuItem
-            onClick={() => router.push(`/crm/contacts/${contact?.id}`)}
-          >
-            View
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setUpdateOpen(true)}>
-            Update
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setOpen(true)}>
-            Delete
-            <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
-  );
+  return <>
+    <IconButton size="small" aria-label="Open contact menu" onClick={(event) => setAnchor(event.currentTarget)}><MoreHorizontal size={18} /><span className="sr-only">Open menu</span></IconButton>
+    <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
+      <MenuItem onClick={() => { setAnchor(null); router.push(`/crm/contacts/${contact.id}`); }}>View</MenuItem>
+      <MenuItem onClick={() => { setAnchor(null); setUpdateOpen(true); }}>Update</MenuItem>
+      <MenuItem onClick={() => { setAnchor(null); setDeleteOpen(true); }}>Delete</MenuItem>
+    </Menu>
+    <Dialog open={updateOpen} onClose={() => setUpdateOpen(false)} fullWidth maxWidth="md" scroll="paper" slotProps={{ paper: { ...{ "data-state": "open" } } }}>
+      <DialogTitle>Update Contact - {contact.first_name} {contact.last_name}</DialogTitle>
+      <DialogContent dividers>
+        <DialogContentText sx={{ mb: 2 }}>Update contact details</DialogContentText>
+        <UpdateContactForm initialData={row.original} contactTypes={contactTypes} setOpen={(value) => { setUpdateOpen(value); if (!value) router.refresh(); }} />
+      </DialogContent>
+    </Dialog>
+    <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}>
+      <DialogTitle>Delete contact?</DialogTitle>
+      <DialogContent><DialogContentText>This action cannot be undone.</DialogContentText></DialogContent>
+      <DialogActions><Button onClick={() => setDeleteOpen(false)} disabled={loading}>Cancel</Button><Button color="error" onClick={onDelete} disabled={loading}>{loading ? "Deleting..." : "Delete"}</Button></DialogActions>
+    </Dialog>
+  </>;
 }

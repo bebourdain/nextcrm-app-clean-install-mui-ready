@@ -1,73 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogContentText, DialogTitle, IconButton, Menu, MenuItem } from "@mui/material";
 import { UpdateContactForm } from "../../components/UpdateContactForm";
 
 type ConfigItem = { id: string; name: string };
 
-interface ContactDetailActionsProps {
-  contact: any;
-  contactTypes: ConfigItem[];
-}
-
-export function ContactDetailActions({
-  contact,
-  contactTypes,
-}: ContactDetailActionsProps) {
+export function ContactDetailActions({ contact, contactTypes }: { contact: any; contactTypes: ConfigItem[] }) {
   const [updateOpen, setUpdateOpen] = useState(false);
-
-  return (
-    <>
-      <Sheet open={updateOpen} onOpenChange={setUpdateOpen}>
-        <SheetContent className="w-full md:max-w-[771px] overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>
-              Update Contact - {contact?.first_name} {contact?.last_name}
-            </SheetTitle>
-            <SheetDescription>Update contact details</SheetDescription>
-          </SheetHeader>
-          <div className="mt-6 space-y-4">
-            <UpdateContactForm
-              initialData={contact}
-              setOpen={setUpdateOpen}
-              contactTypes={contactTypes}
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
-            data-testid="contact-detail-actions-btn"
-          >
-            <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
-            <span className="sr-only">Open menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[160px]">
-          <DropdownMenuItem onClick={() => setUpdateOpen(true)}>
-            Update
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
-  );
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const router = useRouter();
+  return <>
+    <IconButton size="small" data-testid="contact-detail-actions-btn" aria-label="Open menu" onClick={(event) => setAnchor(event.currentTarget)}><MoreHorizontal size={20} /></IconButton>
+    <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
+      <MenuItem onClick={() => { setAnchor(null); setUpdateOpen(true); }}>Update</MenuItem>
+    </Menu>
+    <Dialog open={updateOpen} onClose={() => setUpdateOpen(false)} fullWidth maxWidth="md" scroll="paper" slotProps={{ paper: { ...{ "data-state": "open" } } }}>
+      <DialogTitle>Update Contact - {contact.first_name} {contact.last_name}</DialogTitle>
+      <DialogContent dividers>
+        <DialogContentText sx={{ mb: 2 }}>Update contact details</DialogContentText>
+        <UpdateContactForm initialData={contact} contactTypes={contactTypes} setOpen={(value) => { setUpdateOpen(value); if (!value) router.refresh(); }} />
+      </DialogContent>
+    </Dialog>
+  </>;
 }

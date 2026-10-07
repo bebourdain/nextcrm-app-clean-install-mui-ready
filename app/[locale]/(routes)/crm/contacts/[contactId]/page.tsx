@@ -1,4 +1,3 @@
-import Container from "@/app/[locale]/(routes)/components/ui/Container";
 
 import { BasicView } from "./components/BasicView";
 import { FindSimilarButton } from "@/components/crm/find-similar-button";
@@ -12,7 +11,7 @@ import { getAccountsByContactId } from "@/actions/crm/get-accounts-by-contactId"
 import AccountsView from "../../components/AccountsView";
 import OpportunitiesView from "../../components/OpportunitiesView";
 import DocumentsView from "../../components/DocumentsView";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MuiContactDetailLayout } from "./components/MuiContactDetailLayout";
 import { HistoryTab } from "./components/HistoryTab";
 import { ActivitiesSection } from "./components/ActivitiesSection";
 
@@ -29,32 +28,18 @@ const ContactViewPage = async (props: any) => {
 
   if (!contact) return <div>Contact not found</div>;
 
-  return (
-    <Container
-      title={`Contact detail view: ${contact?.first_name} ${contact?.last_name}`}
-      description={"Everything you need to know about sales potential"}
-    >
-      <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview">
-          <div className="space-y-5">
-            <BasicView data={contact} />
-            <ActivitiesSection contactId={contact.id} />
-            <FindSimilarButton entityType="contact" recordId={contactId} />
-            <AccountsView data={accounts} crmData={crmData} />
-            <OpportunitiesView data={opportunities} crmData={crmData} />
-            <DocumentsView data={documents} />
-          </div>
-        </TabsContent>
-        <TabsContent value="history">
-          <HistoryTab contactId={contactId} />
-        </TabsContent>
-      </Tabs>
-    </Container>
-  );
+  return <MuiContactDetailLayout
+    title={`Contact detail view: ${contact.first_name} ${contact.last_name}`}
+    overview={<>
+      <BasicView data={contact} />
+      <ActivitiesSection contactId={contact.id} />
+      <FindSimilarButton entityType="contact" recordId={contactId} />
+      <AccountsView data={accounts} crmData={crmData} />
+      <OpportunitiesView data={opportunities} crmData={crmData} />
+      <DocumentsView data={documents} />
+    </>}
+    history={<HistoryTab contactId={contactId} />}
+  />;
 };
 
 export default ContactViewPage;

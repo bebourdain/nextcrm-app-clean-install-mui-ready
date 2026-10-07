@@ -1,27 +1,21 @@
-import { Suspense } from "react";
-
-import CrmTableSkeleton from "@/components/skeletons/crm-table-skeleton";
-
-import Container from "../../components/ui/Container";
+import { Box, Divider } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import ContactsView from "../components/ContactsView";
 import { getContacts } from "@/actions/crm/get-contacts";
 import { getAllCrmData } from "@/actions/crm/get-crm-data";
 import { getTranslations } from "next-intl/server";
 
-const AccountsPage = async () => {
+const ContactsPage = async () => {
   const t = await getTranslations("CrmPage");
   const crmData = await getAllCrmData();
   const contacts = await getContacts();
   return (
-    <Container
-      title={t("contacts.pageTitle")}
-      description={t("contacts.pageDescription")}
-    >
-      <Suspense fallback={<CrmTableSkeleton />}>
-        <ContactsView crmData={crmData} data={contacts} />
-      </Suspense>
-    </Container>
+    <Box sx={{ width: "100%", pb: 6 }}>
+      <MuiPageHeader title={t("contacts.pageTitle")} description={t("contacts.pageDescription")} />
+      <Divider sx={{ my: 2 }} />
+      <ContactsView crmData={crmData} data={contacts} />
+    </Box>
   );
 };
 
-export default AccountsPage;
+export default ContactsPage;
