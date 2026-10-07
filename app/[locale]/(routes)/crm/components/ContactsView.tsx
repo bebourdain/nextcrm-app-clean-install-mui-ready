@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Box, Button, Dialog, DialogContent, DialogTitle, Divider, Paper, Stack, Typography } from "@mui/material";
+import { X } from "lucide-react";
+import { Box, Button, Divider, Drawer, IconButton, Paper, Stack, Typography } from "@mui/material";
 
 import { createColumns } from "../contacts/table-components/columns";
 import { NewContactForm } from "../contacts/components/NewContactForm";
@@ -37,13 +38,16 @@ const ContactsView = ({ data, crmData, accountId }: ContactsViewProps) => {
     <Box sx={{ px: 3, pb: 3 }}>
       {!data?.length ? <Typography variant="body2">{t("contacts.empty")}</Typography> : <ContactsDataTable data={data} columns={createColumns(crmData.contactTypes)} />}
     </Box>
-    <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="md" scroll="paper">
-      <DialogTitle>{t("contacts.sheetTitle")}</DialogTitle>
-      <DialogContent dividers>
-        <Typography color="text.secondary" variant="body2" sx={{ mb: 2 }}>{t("contacts.sheetDescription")}</Typography>
+    <Drawer anchor="right" open={open} onClose={() => setOpen(false)} slotProps={{ paper: { role: "dialog", ...{ "data-state": "open" }, sx: { width: { xs: "100%", md: 771 }, maxWidth: "100%" } } }}>
+      <Stack direction="row" sx={{ p: 3, alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}>
+        <Box><Typography variant="h5">{t("contacts.sheetTitle")}</Typography><Typography variant="body2" color="text.secondary">{t("contacts.sheetDescription")}</Typography></Box>
+        <IconButton aria-label="Close" onClick={() => setOpen(false)}><X size={18} /></IconButton>
+      </Stack>
+      <Divider />
+      <Box sx={{ overflowY: "auto", px: { xs: 2, md: 4 }, py: 3 }}>
         <NewContactForm accounts={crmData.accounts} accountId={accountId} onFinish={() => { setOpen(false); router.refresh(); }} />
-      </DialogContent>
-    </Dialog>
+      </Box>
+    </Drawer>
   </Paper>;
 };
 

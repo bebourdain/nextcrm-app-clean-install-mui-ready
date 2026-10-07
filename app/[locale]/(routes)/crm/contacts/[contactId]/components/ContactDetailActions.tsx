@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal } from "lucide-react";
-import { Dialog, DialogContent, DialogContentText, DialogTitle, IconButton, Menu, MenuItem } from "@mui/material";
+import { MoreHorizontal, X } from "lucide-react";
+import { Box, Divider, Drawer, IconButton, Menu, MenuItem, Stack, Typography } from "@mui/material";
 import { UpdateContactForm } from "../../components/UpdateContactForm";
 
 type ConfigItem = { id: string; name: string };
@@ -17,12 +17,15 @@ export function ContactDetailActions({ contact, contactTypes }: { contact: any; 
     <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
       <MenuItem onClick={() => { setAnchor(null); setUpdateOpen(true); }}>Update</MenuItem>
     </Menu>
-    <Dialog open={updateOpen} onClose={() => setUpdateOpen(false)} fullWidth maxWidth="md" scroll="paper" slotProps={{ paper: { ...{ "data-state": "open" } } }}>
-      <DialogTitle>Update Contact - {contact.first_name} {contact.last_name}</DialogTitle>
-      <DialogContent dividers>
-        <DialogContentText sx={{ mb: 2 }}>Update contact details</DialogContentText>
+    <Drawer anchor="right" open={updateOpen} onClose={() => setUpdateOpen(false)} slotProps={{ paper: { role: "dialog", ...{ "data-state": "open" }, sx: { width: { xs: "100%", md: 771 }, maxWidth: "100%" } } }}>
+      <Stack direction="row" sx={{ p: 3, alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}>
+        <Box><Typography variant="h5">Update Contact - {contact.first_name} {contact.last_name}</Typography><Typography variant="body2" color="text.secondary">Update contact details</Typography></Box>
+        <IconButton aria-label="Close" onClick={() => setUpdateOpen(false)}><X size={18} /></IconButton>
+      </Stack>
+      <Divider />
+      <Box sx={{ overflowY: "auto", px: { xs: 2, md: 4 }, py: 3 }}>
         <UpdateContactForm initialData={contact} contactTypes={contactTypes} setOpen={(value) => { setUpdateOpen(value); if (!value) router.refresh(); }} />
-      </DialogContent>
-    </Dialog>
+      </Box>
+    </Drawer>
   </>;
 }
