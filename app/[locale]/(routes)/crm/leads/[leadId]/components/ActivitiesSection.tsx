@@ -1,5 +1,5 @@
 import { getActivitiesByEntity } from "@/actions/crm/activities/get-activities-by-entity";
-import { ActivitiesView } from "@/components/crm/activities/ActivitiesView";
+import { MuiLeadActivities } from "./MuiLeadActivities";
 
 interface Props {
   leadId: string;
@@ -8,6 +8,6 @@ interface Props {
 export async function ActivitiesSection({ leadId }: Props) {
   const initialData = await getActivitiesByEntity("lead", leadId);
   return (
-    <ActivitiesView entityType="lead" entityId={leadId} initialData={initialData} />
+    <MuiLeadActivities leadId={leadId} initialData={initialData} />
   );
 }

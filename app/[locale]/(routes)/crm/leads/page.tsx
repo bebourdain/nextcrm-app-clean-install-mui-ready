@@ -1,8 +1,5 @@
-import { Suspense } from "react";
-
-import CrmTableSkeleton from "@/components/skeletons/crm-table-skeleton";
-
-import Container from "../../components/ui/Container";
+import { Box, Divider } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import LeadsView from "../components/LeadsView";
 
 import { getAllCrmData } from "@/actions/crm/get-crm-data";
@@ -14,16 +11,12 @@ const LeadsPage = async () => {
   const crmData = await getAllCrmData();
   const leads = await getLeads();
 
-  console.log(leads[0], "leads");
   return (
-    <Container
-      title={t("leads.pageTitle")}
-      description={t("leads.pageDescription")}
-    >
-      <Suspense fallback={<CrmTableSkeleton />}>
-        <LeadsView crmData={crmData} data={leads} />
-      </Suspense>
-    </Container>
+    <Box sx={{ width: "100%", pb: 6 }}>
+      <MuiPageHeader title={t("leads.pageTitle")} description={t("leads.pageDescription")} />
+      <Divider sx={{ my: 2 }} />
+      <LeadsView crmData={crmData} data={leads} />
+    </Box>
   );
 };
 
