@@ -6,7 +6,7 @@ import { Avatar, Box, Divider, ListItemButton, Menu, MenuItem, Tooltip, Typograp
 import { BadgeDollarSign, ChevronsUpDown, LayoutDashboard, LogOut, Settings } from "lucide-react";
 import { signOut } from "@/lib/auth-client";
 import { useAvatarContext } from "@/context/avatar-context";
-import { useSidebar } from "@/components/ui/sidebar";
+import { useMuiSidebar } from "./mui-sidebar-context";
 
 interface NavUserProps {
   user: {
@@ -20,7 +20,7 @@ interface NavUserProps {
 export function NavUser({ user }: NavUserProps) {
   const router = useRouter();
   const { avatar } = useAvatarContext();
-  const { state, isMobile, setOpenMobile } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useMuiSidebar();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const showLabels = isMobile || state === "expanded";
   const avatarUrl = avatar || user.avatar || undefined;

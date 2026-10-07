@@ -1,7 +1,10 @@
+"use client";
+
 import Feedback from "./Feedback";
 import FulltextSearch from "./FulltextSearch";
 import { Box, Divider } from "@mui/material";
 import { MuiSidebarTrigger } from "./mui-sidebar-trigger";
+import { useMuiSidebar } from "./mui-sidebar-context";
 import { SetLanguage } from "@/components/SetLanguage";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CommandComponent } from "@/components/CommandComponent";
@@ -11,11 +14,12 @@ import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 type Props = { id: string; lang: string };
 
 const Header = ({ id }: Props) => {
+  const { state } = useMuiSidebar();
+
   return (
     <Box
       component="header"
-      className="h-16 group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12"
-      sx={{ display: "flex", flexShrink: 0, alignItems: "center", justifyContent: "space-between", gap: 1, px: { xs: 1, sm: 2 }, borderBottom: 1, borderColor: "divider", minWidth: 0, transition: "height 150ms ease" }}
+      sx={{ display: "flex", height: { xs: 64, md: state === "collapsed" ? 48 : 64 }, flexShrink: 0, alignItems: "center", justifyContent: "space-between", gap: 1, px: { xs: 1, sm: 2 }, borderBottom: 1, borderColor: "divider", minWidth: 0, transition: "height 150ms ease" }}
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
           <MuiSidebarTrigger />

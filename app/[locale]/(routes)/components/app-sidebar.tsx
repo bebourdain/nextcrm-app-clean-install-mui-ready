@@ -1,15 +1,7 @@
 "use client";
 
-import * as React from "react";
-import { Avatar, Box, Typography } from "@mui/material";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarRail,
-  useSidebar,
-} from "@/components/ui/sidebar";
+import { Avatar, Box, Drawer, Typography } from "@mui/material";
+import { SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_WIDTH, useMuiSidebar } from "./mui-sidebar-context";
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
 import getDashboardMenuItem from "./menu-items/Dashboard";
@@ -22,9 +14,6 @@ import getInvoicesMenuItem from "./menu-items/Invoices";
 import getAdministrationMenuItem from "./menu-items/Administration";
 import getCampaignsMenuItem from "./menu-items/Campaigns";
 import { Palette } from "lucide-react";
-
-// The shared sidebar provider keeps desktop collapse, mobile drawer, keyboard
-// shortcut, and saved open state. MUI renders its visible navigation and account UI.
 
 interface User {
   id: string;
@@ -41,17 +30,13 @@ interface Session {
   user: User;
 }
 
-interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+interface AppSidebarProps {
   dict: any;
   session: Session;
 }
 
-export function AppSidebar({
-  dict,
-  session,
-  ...props
-}: AppSidebarProps) {
-  const { state, isMobile } = useSidebar();
+export function AppSidebar({ dict, session }: AppSidebarProps) {
+  const { state, isMobile, open, openMobile, setOpenMobile, toggleSidebar } = useMuiSidebar();
   const isExpanded = isMobile || state === "expanded";
 
   const navItems = [
@@ -90,9 +75,9 @@ export function AppSidebar({
     avatar: session.user.image,
   };
 
-  return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
+  const sidebarContent = () => (
+    <Box component="aside" aria-label="Sidebar" sx={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", minHeight: 0 }}>
+      <Box sx={{ flexShrink: 0, px: isExpanded ? 2 : 0, py: 1 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: isExpanded ? "flex-start" : "center", gap: 1.5, minHeight: 48, py: 0.5 }}>
           <Avatar sx={{ width: isExpanded ? 44 : 32, height: isExpanded ? 44 : 32, bgcolor: "transparent", border: "1px solid hsl(var(--sidebar-border))", color: "hsl(var(--sidebar-foreground))", fontSize: 16, fontWeight: 600, transform: isExpanded ? "rotate(360deg)" : "rotate(0deg)", transition: "transform 500ms" }}>
             N
@@ -103,17 +88,80 @@ export function AppSidebar({
             </Typography>
           )}
         </Box>
-      </SidebarHeader>
-
-      <SidebarContent>
+      </Box>
+      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden" }}>
         <NavMain items={navItems} dict={dict} />
-      </SidebarContent>
-
-      <SidebarFooter>
+      </Box>
+      <Box sx={{ flexShrink: 0, p: isExpanded ? 2 : 1 }}>
         <NavUser user={userData} />
-      </SidebarFooter>
+      </Box>
+    </Box>
+  );
 
-      <SidebarRail />
-    </Sidebar>
+  const drawerPaper = {
+    bgcolor: "hsl(var(--sidebar-background))",
+    color: "hsl(var(--sidebar-foreground))",
+    borderColor: "hsl(var(--sidebar-border))",
+    backgroundImage: "none",
+    boxSizing: "border-box",
+    overflowX: "hidden",
+  } as const;
+
+  return (
+    <>
+      <Drawer
+        variant="permanent"
+        open
+        sx={{
+          display: { xs: "none", md: "block" },
+          width: open ? SIDEBAR_WIDTH : SIDEBAR_COLLAPSED_WIDTH,
+          flexShrink: 0,
+          transition: "width 200ms ease",
+          "& .MuiDrawer-paper": {
+            ...drawerPaper,
+            width: open ? SIDEBAR_WIDTH : SIDEBAR_COLLAPSED_WIDTH,
+            height: "100svh",
+            transition: "width 200ms ease",
+          },
+        }}
+      >
+        {sidebarContent()}
+      </Drawer>
+      <Box
+        component="button"
+        type="button"
+        aria-label="Toggle Sidebar"
+        title="Toggle Sidebar"
+        onClick={toggleSidebar}
+        sx={{
+          display: { xs: "none", md: "block" },
+          position: "fixed",
+          top: 0,
+          bottom: 0,
+          left: (open ? SIDEBAR_WIDTH : SIDEBAR_COLLAPSED_WIDTH) - 8,
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          width: 16,
+          p: 0,
+          border: 0,
+          bgcolor: "transparent",
+          cursor: "ew-resize",
+          transition: "left 200ms ease",
+          "&::after": { content: '""', position: "absolute", top: 0, bottom: 0, left: 7, width: 2, bgcolor: "hsl(var(--sidebar-border))", opacity: 0 },
+          "&:hover::after": { opacity: 1 },
+        }}
+      />
+      <Drawer
+        variant="temporary"
+        anchor="left"
+        open={openMobile}
+        onClose={() => setOpenMobile(false)}
+        sx={{
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": { ...drawerPaper, width: "min(320px, 100vw)", height: "100svh" },
+        }}
+      >
+        {sidebarContent()}
+      </Drawer>
+    </>
   );
 }

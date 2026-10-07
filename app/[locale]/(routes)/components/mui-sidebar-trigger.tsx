@@ -2,10 +2,10 @@
 
 import { IconButton } from "@mui/material";
 import { PanelLeft } from "lucide-react";
-import { useSidebar } from "@/components/ui/sidebar";
+import { useMuiSidebar } from "./mui-sidebar-context";
 
 export function MuiSidebarTrigger() {
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar } = useMuiSidebar();
 
   return (
     <IconButton

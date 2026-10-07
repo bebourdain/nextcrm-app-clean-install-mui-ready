@@ -5,8 +5,9 @@ import { cookies } from "next/headers";
 import Header from "./components/Header";
 
 import { Metadata } from "next";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { Box } from "@mui/material";
 import { AppSidebar } from "./components/app-sidebar";
+import { MuiSidebarProvider } from "./components/mui-sidebar-context";
 import { getTranslations } from "next-intl/server";
 import { AvatarProvider } from "@/context/avatar-context";
 import { CurrencyProvider } from "@/context/currency-context";
@@ -104,12 +105,12 @@ export default async function AppLayout({
   return (
     <AvatarProvider initialAvatar={user?.image}>
     <CurrencyProvider initialCurrency={displayCurrency} currencies={currencyList}>
-    <SidebarProvider defaultOpen={sidebarOpen}>
+    <MuiSidebarProvider defaultOpen={sidebarOpen}>
       <AppSidebar
         dict={translations}
         session={session}
       />
-      <SidebarInset>
+      <Box component="main" sx={{ position: "relative", display: "flex", minWidth: 0, flex: 1, flexDirection: "column", bgcolor: "background.default" }}>
         <Header
           id={session.user.id as string}
           lang={session.user.userLanguage as string}
@@ -121,8 +122,8 @@ export default async function AppLayout({
             </div>
           </div>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+      </Box>
+    </MuiSidebarProvider>
     </CurrencyProvider>
     </AvatarProvider>
   );

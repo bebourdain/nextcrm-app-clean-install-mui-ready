@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { useTheme as useAppTheme } from "next-themes";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
@@ -105,9 +105,15 @@ export function createCrmMuiTheme(mode: "light" | "dark", fixedPreview = false) 
 
 export function MuiProvider({ children }: { children: ReactNode }) {
   const { resolvedTheme } = useAppTheme();
+  // Match the server's first render, then apply the browser's saved theme.
+  const hydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const theme = useMemo(
-    () => createCrmMuiTheme(resolvedTheme === "dark" ? "dark" : "light"),
-    [resolvedTheme],
+    () => createCrmMuiTheme(hydrated && resolvedTheme === "dark" ? "dark" : "light"),
+    [hydrated, resolvedTheme],
   );
 
   return <ThemeProvider theme={theme}>{children}</ThemeProvider>;

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Box, Collapse, List, ListItemButton, ListItemIcon, Tooltip, Typography } from "@mui/material";
 import { ChevronRight, type LucideIcon } from "lucide-react";
-import { useSidebar } from "@/components/ui/sidebar";
+import { useMuiSidebar } from "./mui-sidebar-context";
 
 export interface NavItem {
   title: string;
@@ -32,7 +32,7 @@ const activeForeground = "hsl(var(--sidebar-accent-foreground))";
 
 export function NavMain({ items }: NavMainProps) {
   const pathname = usePathname();
-  const { state, isMobile, setOpen, setOpenMobile } = useSidebar();
+  const { state, isMobile, setOpen, setOpenMobile } = useMuiSidebar();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const showLabels = isMobile || state === "expanded";
   const currentPath = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, "") || "/";
