@@ -1,9 +1,9 @@
-import { Box, Button, Divider, Paper } from "@mui/material";
+import { Box, Divider, Paper } from "@mui/material";
 import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
+import { MuiLinkButton } from "@/components/mui/MuiLinkButton";
 import { getTranslations } from "next-intl/server";
 import { getInvoices } from "./data/get-invoices";
 import { InvoicesTable } from "./components/invoices-table";
-import Link from "next/link";
 import { Plus } from "lucide-react";
 
 export default async function InvoicesPage() {
@@ -36,7 +36,7 @@ export default async function InvoicesPage() {
 
   return (
     <Box sx={{ width: "100%", pb: 6 }}>
-      <MuiPageHeader title={t("title")} description={t("description")} action={<Button component={Link} href="/invoices/new" variant="contained" startIcon={<Plus size={16} />}>{t("new")}</Button>} />
+      <MuiPageHeader title={t("title")} description={t("description")} action={<MuiLinkButton href="/invoices/new" variant="contained" startIcon={<Plus size={16} />}>{t("new")}</MuiLinkButton>} />
       <Divider sx={{ my: 2 }} />
       <Paper variant="outlined" sx={{ p: 3, borderRadius: "var(--radius)" }}>
       <InvoicesTable
