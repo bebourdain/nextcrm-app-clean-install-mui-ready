@@ -1,9 +1,8 @@
-// app/[locale]/(routes)/profile/page.tsx
 import { Suspense } from "react";
+import { Box, Paper, Typography } from "@mui/material";
 import { getUser } from "@/actions/get-user";
 import { getTranslations } from "next-intl/server";
-
-import Container from "../components/ui/Container";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { ProfileHero } from "./components/ProfileHero";
 import { ProfileTabs } from "./components/ProfileTabs";
 import { ProfileTabContent } from "./components/tabs/ProfileTabContent";
@@ -15,34 +14,27 @@ import { CalendarTabContent } from "./components/tabs/CalendarTabContent";
 import { LlmsTabContent } from "./components/tabs/LlmsTabContent";
 import { getUserApiKeys } from "./actions/api-keys";
 
-const ProfilePage = async () => {
+export default async function ProfilePage() {
   const t = await getTranslations("ProfilePage");
   const data = await getUser();
-
-  if (!data) {
-    return <div>No user data.</div>;
-  }
-
+  if (!data) return <Box sx={{ p: 3 }}><Typography>No user data.</Typography></Box>;
   const llmKeys = await getUserApiKeys();
 
-  return (
-    <Container title={t("title")} description={t("description")}>
-      <div className="rounded-lg border border-border overflow-hidden">
-        <ProfileHero data={data} />
-        <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">Loading...</div>}>
-          <ProfileTabs
-            profileContent={<ProfileTabContent data={data} />}
-            securityContent={<SecurityTabContent userId={data.id} />}
-            preferencesContent={<PreferencesTabContent userId={data.id} />}
-            developerContent={<DeveloperTabContent userId={data.id} />}
-            emailsContent={<EmailAccountsTabContent />}
-            calendarContent={<CalendarTabContent />}
-            llmsContent={<LlmsTabContent initialKeys={llmKeys} />}
-          />
-        </Suspense>
-      </div>
-    </Container>
-  );
-};
-
-export default ProfilePage;
+  return <Box sx={{ p: { xs: 2, md: 3 } }}>
+    <MuiPageHeader title={t("title")} description={t("description")} />
+    <Paper variant="outlined" sx={{ mt: 3, overflow: "hidden" }}>
+      <ProfileHero data={data} />
+      <Suspense fallback={<Typography sx={{ p: 3 }}>Loading...</Typography>}>
+        <ProfileTabs
+          profileContent={<ProfileTabContent data={data} />}
+          securityContent={<SecurityTabContent userId={data.id} />}
+          preferencesContent={<PreferencesTabContent userId={data.id} />}
+          developerContent={<DeveloperTabContent userId={data.id} />}
+          emailsContent={<EmailAccountsTabContent />}
+          calendarContent={<CalendarTabContent />}
+          llmsContent={<LlmsTabContent initialKeys={llmKeys} />}
+        />
+      </Suspense>
+    </Paper>
+  </Box>;
+}

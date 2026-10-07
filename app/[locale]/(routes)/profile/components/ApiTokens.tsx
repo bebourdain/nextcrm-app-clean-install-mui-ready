@@ -1,34 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
-import { createApiToken, getApiTokens, deleteApiToken } from "@/actions/api-tokens";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 
-type TokenRow = {
-  id: string;
-  name: string;
-  tokenPrefix: string;
-  createdAt: Date;
-  expiresAt: Date | null;
-  revokedAt: Date | null;
-};
+import { useEffect, useState } from "react";
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import { createApiToken, deleteApiToken, getApiTokens } from "@/actions/api-tokens";
 
+type TokenRow = { id: string; name: string; tokenPrefix: string; createdAt: Date; expiresAt: Date | null; revokedAt: Date | null };
 export function ApiTokens() {
   const [tokens, setTokens] = useState<TokenRow[]>([]);
   const [name, setName] = useState("");
@@ -37,131 +13,48 @@ export function ApiTokens() {
   const [error, setError] = useState<string | null>(null);
   const [newToken, setNewToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-
-  async function load() {
-    const res = await getApiTokens();
-    if (res.data) setTokens(res.data as TokenRow[]);
-  }
-
-  useEffect(() => { load(); }, []);
-
-  async function handleCreate() {
+  const [revokeId, setRevokeId] = useState<string | null>(null);
+  async function load() { const res = await getApiTokens(); if (res.data) setTokens(res.data as TokenRow[]); }
+  useEffect(() => { void load(); }, []);
+  async function create() {
     if (!name.trim()) return;
-    setLoading(true);
-    setError(null);
-    const res = await createApiToken({
-      name: name.trim(),
-      expiresAt: expiresAt ? new Date(expiresAt) : undefined,
-    });
-    setLoading(false);
-    if (res.error) { setError(res.error); return; }
-    setNewToken(res.data!.rawToken);
-    setName("");
-    setExpiresAt("");
+    setLoading(true); setError(null);
+    try {
+      const res = await createApiToken({ name: name.trim(), expiresAt: expiresAt ? new Date(expiresAt) : undefined });
+      if (res.error) { setError(res.error); return; }
+      setNewToken(res.data!.rawToken); setName(""); setExpiresAt(""); await load();
+    } finally { setLoading(false); }
+  }
+  async function revoke() {
+    if (!revokeId) return;
+    await deleteApiToken(revokeId);
+    setRevokeId(null);
     await load();
   }
-
-  async function handleRevoke(tokenId: string) {
-    if (!confirm("Revoke this token? This cannot be undone.")) return;
-    await deleteApiToken(tokenId);
-    await load();
-  }
-
-  function handleCopy() {
+  function copy() {
     if (!newToken) return;
-    navigator.clipboard.writeText(newToken);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    void navigator.clipboard.writeText(newToken);
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
   }
-
-  const active = tokens.filter(
-    (t) => !t.revokedAt && (!t.expiresAt || new Date(t.expiresAt) > new Date())
-  );
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>API Tokens</CardTitle>
-        <CardDescription>
-          Generate tokens to connect AI agents via MCP. Token prefix: <code>nxtc__</code>
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Generate form */}
-        <div className="flex gap-2">
-          <Input
-            placeholder="Token name (e.g. Claude Desktop)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="max-w-xs"
-          />
-          <Input
-            type="date"
-            value={expiresAt}
-            onChange={(e) => setExpiresAt(e.target.value)}
-            className="max-w-[160px]"
-            title="Optional expiry date"
-          />
-          <Button onClick={handleCreate} disabled={loading || !name.trim()}>
-            {loading ? "Generating…" : "Generate"}
-          </Button>
-        </div>
-        {error && <p className="text-sm text-destructive">{error}</p>}
-
-        {/* Token list */}
-        {active.length > 0 && (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Prefix</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Expires</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {active.map((t) => (
-                <TableRow key={t.id}>
-                  <TableCell>{t.name}</TableCell>
-                  <TableCell className="font-mono text-sm">
-                    nxtc__{t.tokenPrefix}…
-                  </TableCell>
-                  <TableCell>{new Date(t.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    {t.expiresAt ? new Date(t.expiresAt).toLocaleDateString() : "Never"}
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="destructive" size="sm" onClick={() => handleRevoke(t.id)}>
-                      Revoke
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-
-        {/* New token reveal modal */}
-        <Dialog open={!!newToken} onOpenChange={() => setNewToken(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Token Created</DialogTitle>
-              <DialogDescription>
-                Copy this token now. It will not be shown again.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3">
-              <code className="block break-all rounded bg-muted p-3 text-sm">
-                {newToken}
-              </code>
-              <Button onClick={handleCopy} className="w-full">
-                {copied ? "Copied!" : "Copy to clipboard"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </CardContent>
-    </Card>
-  );
+  const active = tokens.filter((token) => !token.revokedAt && (!token.expiresAt || new Date(token.expiresAt) > new Date()));
+  return <Stack spacing={2}>
+    <Typography color="text.secondary" variant="body2">Generate tokens to connect AI agents via MCP. Token prefix: <code>nxtc__</code></Typography>
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
+      <TextField size="small" label="Token name" placeholder="e.g. Claude Desktop" value={name} onChange={(event) => setName(event.target.value)} sx={{ maxWidth: 320 }} />
+      <TextField size="small" label="Optional expiry date" type="date" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ maxWidth: 190 }} />
+      <Button variant="contained" onClick={create} disabled={loading || !name.trim()}>{loading ? "Generating…" : "Generate"}</Button>
+    </Stack>
+    {error && <Alert severity="error">{error}</Alert>}
+    {active.length > 0 && <TableContainer sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}><Table size="small">
+      <TableHead><TableRow><TableCell>Name</TableCell><TableCell>Prefix</TableCell><TableCell>Created</TableCell><TableCell>Expires</TableCell><TableCell align="right">Actions</TableCell></TableRow></TableHead>
+      <TableBody>{active.map((token) => <TableRow key={token.id}>
+        <TableCell>{token.name}</TableCell><TableCell sx={{ fontFamily: "monospace" }}>nxtc__{token.tokenPrefix}…</TableCell>
+        <TableCell>{new Date(token.createdAt).toLocaleDateString()}</TableCell>
+        <TableCell>{token.expiresAt ? new Date(token.expiresAt).toLocaleDateString() : "Never"}</TableCell>
+        <TableCell align="right"><Button color="error" size="small" onClick={() => setRevokeId(token.id)}>Revoke</Button></TableCell>
+      </TableRow>)}</TableBody>
+    </Table></TableContainer>}
+    <Dialog open={!!newToken} onClose={() => setNewToken(null)} fullWidth maxWidth="sm"><DialogTitle>Token Created</DialogTitle><DialogContent><DialogContentText sx={{ mb: 2 }}>Copy this token now. It will not be shown again.</DialogContentText><Box component="code" sx={{ display: "block", overflowWrap: "anywhere", bgcolor: "action.hover", p: 2, borderRadius: 1 }}>{newToken}</Box></DialogContent><DialogActions><Button onClick={() => setNewToken(null)}>Close</Button><Button variant="contained" onClick={copy}>{copied ? "Copied!" : "Copy to clipboard"}</Button></DialogActions></Dialog>
+    <Dialog open={!!revokeId} onClose={() => setRevokeId(null)}><DialogTitle>Revoke token?</DialogTitle><DialogContent><DialogContentText>This cannot be undone.</DialogContentText></DialogContent><DialogActions><Button onClick={() => setRevokeId(null)}>Cancel</Button><Button color="error" variant="contained" onClick={() => void revoke()}>Revoke</Button></DialogActions></Dialog>
+  </Stack>;
 }

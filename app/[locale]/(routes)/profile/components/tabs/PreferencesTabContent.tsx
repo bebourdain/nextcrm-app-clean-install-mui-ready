@@ -1,17 +1,11 @@
-// app/[locale]/(routes)/profile/components/tabs/PreferencesTabContent.tsx
 import { getTranslations } from "next-intl/server";
+import { Paper, Typography } from "@mui/material";
 import { LanguageForm } from "../LanguageForm";
 
-type Props = { userId: string };
-
-export async function PreferencesTabContent({ userId }: Props) {
+export async function PreferencesTabContent({ userId }: { userId: string }) {
   const t = await getTranslations("ProfilePage");
-  return (
-    <div className="rounded-lg border border-border bg-card p-5">
-      <h3 className="mb-4 text-sm font-semibold text-card-foreground">
-        {t("cards.language")}
-      </h3>
-      <LanguageForm userId={userId} />
-    </div>
-  );
+  return <Paper variant="outlined" sx={{ p: 3 }}>
+    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>{t("cards.language")}</Typography>
+    <LanguageForm userId={userId} />
+  </Paper>;
 }

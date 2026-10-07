@@ -1,46 +1,20 @@
-// app/[locale]/(routes)/profile/components/tabs/DeveloperTabContent.tsx
 import { getTranslations } from "next-intl/server";
-import { Download } from "lucide-react";
+import { Button, Paper, Stack, Typography } from "@mui/material";
+import { Download } from "@mui/icons-material";
 import { ApiTokens } from "../ApiTokens";
 import { SkillMdCopyButton } from "../SkillMdCopyButton";
 
-type Props = { userId: string };
-
-export async function DeveloperTabContent({ userId: _userId }: Props) {
+export async function DeveloperTabContent({ userId: _userId }: { userId: string }) {
   const t = await getTranslations("ProfilePage");
-  return (
-    <div className="space-y-4">
-      <div className="rounded-lg border border-border bg-card p-5">
-        <h3 className="mb-4 text-sm font-semibold text-card-foreground">
-          {t("cards.apiTokens")}
-        </h3>
-        <ApiTokens />
-      </div>
-
-      <div className="rounded-lg border border-border bg-card p-5">
-        <h3 className="mb-2 text-sm font-semibold text-card-foreground">
-          Claude Code Skill
-        </h3>
-        <p className="mb-4 text-sm text-muted-foreground">
-          Download the SKILL.md file and place it in your{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-            .claude/skills/
-          </code>{" "}
-          directory. It documents all 127 MCP tools so Claude Code can interact
-          with your CRM data.
-        </p>
-        <div className="flex flex-wrap items-center gap-3">
-          <a
-            href="/SKILL.md"
-            download="SKILL.md"
-            className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
-          >
-            <Download className="h-4 w-4" />
-            Download SKILL.md
-          </a>
-          <SkillMdCopyButton />
-        </div>
-      </div>
-    </div>
-  );
+  return <Stack spacing={2}>
+    <Paper variant="outlined" sx={{ p: 3 }}><Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>{t("cards.apiTokens")}</Typography><ApiTokens /></Paper>
+    <Paper variant="outlined" sx={{ p: 3 }}>
+      <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Claude Code Skill</Typography>
+      <Typography color="text.secondary" sx={{ mb: 2 }}>Download the SKILL.md file and place it in your <code>.claude/skills/</code> directory. It documents all 127 MCP tools so Claude Code can interact with your CRM data.</Typography>
+      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
+        <Button component="a" href="/SKILL.md" download="SKILL.md" variant="contained" startIcon={<Download />}>Download SKILL.md</Button>
+        <SkillMdCopyButton />
+      </Stack>
+    </Paper>
+  </Stack>;
 }

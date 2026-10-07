@@ -1,27 +1,13 @@
-// app/[locale]/(routes)/profile/components/tabs/ProfileTabContent.tsx
-import { Users } from "@prisma/client";
+import type { Users } from "@prisma/client";
 import { getTranslations } from "next-intl/server";
+import { Paper, Stack, Typography } from "@mui/material";
 import { ProfilePhotoForm } from "../ProfilePhotoForm";
 import { ProfileForm } from "../ProfileForm";
 
-type Props = { data: Users };
-
-export async function ProfileTabContent({ data }: Props) {
+export async function ProfileTabContent({ data }: { data: Users }) {
   const t = await getTranslations("ProfilePage");
-  return (
-    <div className="space-y-4">
-      <div className="rounded-lg border border-border bg-card p-5">
-        <h3 className="mb-4 text-sm font-semibold text-card-foreground">
-          {t("cards.photo")}
-        </h3>
-        <ProfilePhotoForm data={data} />
-      </div>
-      <div className="rounded-lg border border-border bg-card p-5">
-        <h3 className="mb-4 text-sm font-semibold text-card-foreground">
-          {t("cards.personalInfo")}
-        </h3>
-        <ProfileForm data={data} />
-      </div>
-    </div>
-  );
+  return <Stack spacing={2}>
+    <Paper variant="outlined" sx={{ p: 3 }}><Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>{t("cards.photo")}</Typography><ProfilePhotoForm data={data} /></Paper>
+    <Paper variant="outlined" sx={{ p: 3 }}><Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>{t("cards.personalInfo")}</Typography><ProfileForm data={data} /></Paper>
+  </Stack>;
 }

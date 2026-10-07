@@ -1,140 +1,36 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { useTranslations } from "next-intl";
-
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import type { Users } from "@prisma/client";
+import { Box, Button, TextField } from "@mui/material";
+import { toast } from "sonner";
 import { updateProfile } from "@/actions/user/update-profile";
 
-interface ProfileFormProps {
-  data: any;
-}
-
-const FormSchema = z.object({
-  id: z.string(),
-  name: z.string().min(3).max(50),
-  username: z.string().min(2).max(50),
-  account_name: z.string().min(2).max(50),
-});
-
-export function ProfileForm({ data }: ProfileFormProps) {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+const schema = z.object({ id: z.string(), name: z.string().min(3).max(50), username: z.string().min(2).max(50), account_name: z.string().min(2).max(50) });
+type Values = z.infer<typeof schema>;
+export function ProfileForm({ data }: { data: Users }) {
+  const [loading, setLoading] = useState(false);
   const t = useTranslations("ProfileForm");
-
   const router = useRouter();
-
-
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: data
-      ? { ...data }
-      : {
-          name: "",
-          username: "",
-          account_name: "",
-        },
-  });
-
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  const { control, handleSubmit } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { id: data.id, name: data.name ?? "", username: data.username ?? "", account_name: data.account_name ?? "" } });
+  const submit = async (values: Values) => {
+    setLoading(true);
     try {
-      setIsLoading(true);
-      const result = await updateProfile({
-        userId: data.id,
-        name: data.name,
-        username: data.username,
-        account_name: data.account_name,
-      });
-
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
-
-      toast.success("Profile saved successfully");
-      router.refresh();
-    } catch (error) {
-      toast.error("Something went wrong while activating your notion integration.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="flex space-x-5 w-full p-5 items-end"
-      >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem className="w-1/3">
-              <FormLabel>{t("fullName")}</FormLabel>
-              <FormControl>
-                <Input disabled={isLoading} placeholder="John Doe" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem className="w-1/3">
-              <FormLabel>{t("username")}</FormLabel>
-              <FormControl>
-                <Input disabled={isLoading} placeholder="jdoe" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="account_name"
-          render={({ field }) => (
-            <FormItem className="w-1/3">
-              <FormLabel>{t("company")}</FormLabel>
-              <FormControl>
-                <Input
-                  disabled={isLoading}
-                  placeholder="Tesla Inc.,"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Button className="w-[150px]" type="submit">
-          {t("updateButton")}
-        </Button>
-      </form>
-    </Form>
-  );
+      const result = await updateProfile({ userId: values.id, name: values.name, username: values.username, account_name: values.account_name });
+      if (result.error) { toast.error(result.error); return; }
+      toast.success("Profile saved successfully"); router.refresh();
+    } catch { toast.error("Something went wrong while activating your notion integration."); }
+    finally { setLoading(false); }
+  };
+  return <Box component="form" onSubmit={handleSubmit(submit)} sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr)) auto" }, alignItems: "start" }}>
+    <Controller name="name" control={control} render={({ field, fieldState }) => <TextField {...field} label={t("fullName")} placeholder="John Doe" disabled={loading} error={!!fieldState.error} helperText={fieldState.error?.message} fullWidth size="small" />} />
+    <Controller name="username" control={control} render={({ field, fieldState }) => <TextField {...field} label={t("username")} placeholder="jdoe" disabled={loading} error={!!fieldState.error} helperText={fieldState.error?.message} fullWidth size="small" />} />
+    <Controller name="account_name" control={control} render={({ field, fieldState }) => <TextField {...field} label={t("company")} placeholder="Tesla Inc.," disabled={loading} error={!!fieldState.error} helperText={fieldState.error?.message} fullWidth size="small" />} />
+    <Button type="submit" variant="contained" disabled={loading} sx={{ minHeight: 40 }}>{t("updateButton")}</Button>
+  </Box>;
 }

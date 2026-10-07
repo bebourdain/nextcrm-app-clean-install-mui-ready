@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check } from "lucide-react";
+import { Button } from "@mui/material";
+import { Check, ContentCopy } from "@mui/icons-material";
 
 const MCP_CONFIG = `{
   "mcpServers": {
@@ -12,27 +13,8 @@ const MCP_CONFIG = `{
     }
   }
 }`;
-
 export function SkillMdCopyButton() {
   const [copied, setCopied] = useState(false);
-
-  function handleCopy() {
-    navigator.clipboard.writeText(MCP_CONFIG);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  return (
-    <button
-      onClick={handleCopy}
-      className="inline-flex h-9 items-center gap-2 rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
-    >
-      {copied ? (
-        <Check className="h-4 w-4" />
-      ) : (
-        <Copy className="h-4 w-4" />
-      )}
-      {copied ? "Copied!" : "Copy MCP Config"}
-    </button>
-  );
+  const copy = () => { void navigator.clipboard.writeText(MCP_CONFIG); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  return <Button variant="outlined" startIcon={copied ? <Check /> : <ContentCopy />} onClick={copy}>{copied ? "Copied!" : "Copy MCP Config"}</Button>;
 }

@@ -1,21 +1,13 @@
-import Heading from "@/components/ui/heading";
-import { Separator } from "@/components/ui/separator";
-import React from "react";
-import Container from "../components/ui/Container";
+import { Box, Paper, Typography } from "@mui/material";
 import { getTranslations } from "next-intl/server";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 
-type Props = {};
-
-const CrmPage = async (props: Props) => {
+export default async function EmployeesPage() {
   const t = await getTranslations("EmployeesPage");
-  return (
-    <Container
-      title={t("title")}
-      description={t("description")}
-    >
-      <div>{t("moduleContent")}</div>
-    </Container>
-  );
-};
-
-export default CrmPage;
+  return <Box sx={{ p: { xs: 2, md: 3 } }}>
+    <MuiPageHeader title={t("title")} description={t("description")} />
+    <Paper variant="outlined" sx={{ p: 3, mt: 3 }}>
+      <Typography color="text.secondary">{t("moduleContent")}</Typography>
+    </Paper>
+  </Box>;
+}

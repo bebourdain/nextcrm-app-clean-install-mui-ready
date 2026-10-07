@@ -1,143 +1,50 @@
-// app/[locale]/(routes)/profile/components/ProfileTabs.tsx
 "use client";
 
+import type { ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
-import { UserCircle, Lock, Globe, Code2, Mail, CalendarClock, KeyRound } from "lucide-react";
+import { Box, Divider, Tab, Tabs, Typography } from "@mui/material";
+import { AccountCircleOutlined, CalendarMonthOutlined, CodeOutlined, EmailOutlined, KeyOutlined, LanguageOutlined, LockOutlined } from "@mui/icons-material";
 
-// Do NOT import tab content components here — they are Server Components
-// and must be passed as ReactNode props from page.tsx
-
-type Tab = "profile" | "security" | "preferences" | "developer" | "emails" | "calendar" | "llms";
-
-const TAB_ICONS: Record<Tab, React.ElementType> = {
-  profile: UserCircle,
-  security: Lock,
-  preferences: Globe,
-  developer: Code2,
-  emails: Mail,
-  calendar: CalendarClock,
-  llms: KeyRound,
-};
-
+type TabId = "profile" | "security" | "preferences" | "developer" | "emails" | "calendar" | "llms";
 type Props = {
-  profileContent: React.ReactNode;
-  securityContent: React.ReactNode;
-  preferencesContent: React.ReactNode;
-  developerContent: React.ReactNode;
-  emailsContent: React.ReactNode;
-  calendarContent: React.ReactNode;
-  llmsContent: React.ReactNode;
+  profileContent: ReactNode; securityContent: ReactNode; preferencesContent: ReactNode;
+  developerContent: ReactNode; emailsContent: ReactNode; calendarContent: ReactNode; llmsContent: ReactNode;
 };
+const ids: TabId[] = ["profile", "security", "preferences", "developer", "emails", "calendar", "llms"];
 
-export function ProfileTabs({
-  profileContent,
-  securityContent,
-  preferencesContent,
-  developerContent,
-  emailsContent,
-  calendarContent,
-  llmsContent,
-}: Props) {
+export function ProfileTabs({ profileContent, securityContent, preferencesContent, developerContent, emailsContent, calendarContent, llmsContent }: Props) {
   const t = useTranslations("ProfilePage");
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  const TAB_IDS: Tab[] = ["profile", "security", "preferences", "developer", "emails", "calendar", "llms"];
   const raw = searchParams.get("tab");
-  const activeTab: Tab = TAB_IDS.includes(raw as Tab) ? (raw as Tab) : "profile";
-
-  const tabs: { id: Tab; label: string; desc: string }[] = [
-    { id: "profile", label: t("tabs.profile"), desc: t("tabs.profileDesc") },
-    { id: "security", label: t("tabs.security"), desc: t("tabs.securityDesc") },
-    { id: "preferences", label: t("tabs.preferences"), desc: t("tabs.preferencesDesc") },
-    { id: "developer", label: t("tabs.developer"), desc: t("tabs.developerDesc") },
-    { id: "emails", label: t("tabs.emails"), desc: t("tabs.emailsDesc") },
-    { id: "calendar", label: t("tabs.calendar"), desc: t("tabs.calendarDesc") },
-    { id: "llms", label: t("tabs.llms"), desc: t("tabs.llmsDesc") },
-  ];
-
-  const activeTabMeta = tabs.find((t) => t.id === activeTab) ?? tabs[0];
-
-  const contentMap: Record<Tab, React.ReactNode> = {
-    profile: profileContent,
-    security: securityContent,
-    preferences: preferencesContent,
-    developer: developerContent,
-    emails: emailsContent,
-    calendar: calendarContent,
-    llms: llmsContent,
+  const active: TabId = ids.includes(raw as TabId) ? raw as TabId : "profile";
+  const tabs = [
+    { id: "profile", label: t("tabs.profile"), desc: t("tabs.profileDesc"), icon: <AccountCircleOutlined /> },
+    { id: "security", label: t("tabs.security"), desc: t("tabs.securityDesc"), icon: <LockOutlined /> },
+    { id: "preferences", label: t("tabs.preferences"), desc: t("tabs.preferencesDesc"), icon: <LanguageOutlined /> },
+    { id: "developer", label: t("tabs.developer"), desc: t("tabs.developerDesc"), icon: <CodeOutlined /> },
+    { id: "emails", label: t("tabs.emails"), desc: t("tabs.emailsDesc"), icon: <EmailOutlined /> },
+    { id: "calendar", label: t("tabs.calendar"), desc: t("tabs.calendarDesc"), icon: <CalendarMonthOutlined /> },
+    { id: "llms", label: t("tabs.llms"), desc: t("tabs.llmsDesc"), icon: <KeyOutlined /> },
+  ] as const;
+  const content: Record<TabId, ReactNode> = { profile: profileContent, security: securityContent, preferences: preferencesContent, developer: developerContent, emails: emailsContent, calendar: calendarContent, llms: llmsContent };
+  const meta = tabs.find((tab) => tab.id === active) ?? tabs[0];
+  const change = (id: TabId) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", id);
+    router.replace(`?${params.toString()}`, { scroll: false });
   };
 
-  return (
-    <div className="flex min-h-[480px]">
-      {/* Sidebar nav — hidden on mobile, shown md+ */}
-      <nav className="hidden md:flex w-48 flex-col flex-shrink-0 border-r border-border p-3 gap-1">
-        {tabs.map(({ id, label }) => {
-          const Icon = TAB_ICONS[id];
-          return (
-            <button
-              key={id}
-              onClick={() => {
-                const params = new URLSearchParams(searchParams.toString());
-                params.set("tab", id);
-                router.replace(`?${params.toString()}`, { scroll: false });
-              }}
-              className={cn(
-                "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-left transition-colors",
-                activeTab === id
-                  ? "bg-accent text-accent-foreground font-semibold"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <Icon className="h-4 w-4 flex-shrink-0" />
-              {label}
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* Content */}
-      <div className="flex-1 p-6 overflow-hidden">
-        {/* Mobile horizontal scroll tabs */}
-        <div className="flex md:hidden gap-1 mb-5 overflow-x-auto pb-1 border-b border-border">
-          {tabs.map(({ id, label }) => {
-            const Icon = TAB_ICONS[id];
-            return (
-              <button
-                key={id}
-                onClick={() => {
-                  const params = new URLSearchParams(searchParams.toString());
-                  params.set("tab", id);
-                  router.replace(`?${params.toString()}`, { scroll: false });
-                }}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs whitespace-nowrap transition-colors",
-                  activeTab === id
-                    ? "bg-accent text-accent-foreground font-semibold"
-                    : "text-muted-foreground hover:bg-muted"
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Tab heading */}
-        <div className="mb-5 pb-4 border-b border-border">
-          <h2 className="text-base font-semibold text-foreground">
-            {activeTabMeta.label}
-          </h2>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {activeTabMeta.desc}
-          </p>
-        </div>
-
-        {contentMap[activeTab]}
-      </div>
-    </div>
-  );
+  return <Box sx={{ minHeight: 480 }}>
+    <Tabs value={active} onChange={(_, id: TabId) => change(id)} variant="scrollable" scrollButtons="auto" aria-label="Profile sections" sx={{ px: 2, borderBottom: 1, borderColor: "divider" }}>
+      {tabs.map((tab) => <Tab key={tab.id} value={tab.id} label={tab.label} icon={tab.icon} iconPosition="start" sx={{ minHeight: 56 }} />)}
+    </Tabs>
+    <Box sx={{ p: { xs: 2, md: 3 } }}>
+      <Typography variant="h6">{meta.label}</Typography>
+      <Typography color="text.secondary" variant="body2" sx={{ mt: 0.5, mb: 2 }}>{meta.desc}</Typography>
+      <Divider sx={{ mb: 3 }} />
+      {content[active]}
+    </Box>
+  </Box>;
 }
