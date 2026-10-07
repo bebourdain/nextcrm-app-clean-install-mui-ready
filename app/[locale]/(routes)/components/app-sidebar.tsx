@@ -116,7 +116,7 @@ export function AppSidebar({
     );
   }
 
-  navItems.push({ title: "MUI Foundation", url: "/mui-foundation", icon: Palette });
+  navItems.push({ title: "User Experience", url: "/user-experience", icon: Palette });
 
   // Prepare user data for NavUser component
   const userData = {
