@@ -1,138 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ProcessingStatusBadge } from "./processing-status-badge";
-import { getDocumentVersions } from "@/actions/documents/get-document-versions";
-import { retryEnrichment } from "@/actions/documents/retry-enrichment";
+import { Box, Button, Chip, Divider, Drawer, Stack, Typography } from "@mui/material";
 import { toast } from "sonner";
 import moment from "moment";
+import { getDocumentVersions } from "@/actions/documents/get-document-versions";
+import { retryEnrichment } from "@/actions/documents/retry-enrichment";
 import { DocumentRow } from "../data/schema";
+import { ProcessingStatusBadge } from "./processing-status-badge";
 
-interface DocumentDetailPanelProps {
-  document: DocumentRow | null;
-  open: boolean;
-  onClose: () => void;
-}
+type Version = { id: string; version: number; createdAt: Date | null; size: number | null; created_by: { name: string | null } | null };
 
-export function DocumentDetailPanel({
-  document,
-  open,
-  onClose,
-}: DocumentDetailPanelProps) {
-  const [versions, setVersions] = useState<
-    { id: string; version: number; createdAt: Date | null; size: number | null; created_by: { name: string | null } | null }[]
-  >([]);
+export function DocumentDetailPanel({ document, open, onClose }: { document: DocumentRow | null; open: boolean; onClose: () => void }) {
+  const [versions, setVersions] = useState<Version[]>([]);
   const router = useRouter();
-
   useEffect(() => {
-    if (document?.id && open) {
-      getDocumentVersions(document.id).then(setVersions).catch(() => {});
-    }
+    if (document?.id && open) getDocumentVersions(document.id).then(setVersions).catch(() => {});
   }, [document?.id, open]);
-
   if (!document) return null;
-
-  const handleRetry = async () => {
-    try {
-      await retryEnrichment(document.id);
-      toast.success("Enrichment re-triggered");
-      router.refresh();
-    } catch {
-      toast.error("Failed to retry enrichment");
-    }
-  };
-
-  return (
-    <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="text-left">{document.document_name}</SheetTitle>
-        </SheetHeader>
-
-        <div className="space-y-6 mt-6">
-          {/* Status */}
-          <div className="flex items-center gap-2">
-            <ProcessingStatusBadge status={document.processing_status} />
-            {document.processing_status === "FAILED" && (
-              <Button variant="outline" size="sm" onClick={handleRetry}>
-                Retry
-              </Button>
-            )}
-          </div>
-
-          {/* Summary */}
-          {document.summary && (
-            <div>
-              <h4 className="text-sm font-medium mb-1">Summary</h4>
-              <p className="text-sm text-muted-foreground">{document.summary}</p>
-            </div>
-          )}
-
-          <Separator />
-
-          {/* Metadata */}
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <span className="text-muted-foreground">Type</span>
-              <div>
-                <Badge variant="outline">{document.document_system_type ?? "OTHER"}</Badge>
-              </div>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Version</span>
-              <div>{document.version}</div>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Created</span>
-              <div>{document.createdAt ? moment(document.createdAt).format("MMM D, YYYY") : "—"}</div>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Account</span>
-              <div>{document.accounts?.[0]?.account?.name ?? "—"}</div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Version History */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium">Version History</h4>
-            </div>
-            <div className="space-y-2">
-              {versions.map((v) => (
-                <div
-                  key={v.id}
-                  className="flex items-center justify-between text-sm py-1"
-                >
-                  <div className="flex items-center gap-2">
-                    {v.version === document.version && (
-                      <Badge variant="default" className="text-xs">
-                        Current
-                      </Badge>
-                    )}
-                    <span>Version {v.version}</span>
-                  </div>
-                  <span className="text-muted-foreground text-xs">
-                    {v.createdAt ? moment(v.createdAt).format("MMM D, YYYY") : ""}{" "}
-                    {v.created_by?.name ? `by ${v.created_by.name}` : ""}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
+  async function handleRetry() {
+    try { await retryEnrichment(document!.id); toast.success("Enrichment re-triggered"); router.refresh(); }
+    catch { toast.error("Failed to retry enrichment"); }
+  }
+  const metadata = [
+    ["Type", document.document_system_type ?? "OTHER"],
+    ["Version", String(document.version)],
+    ["Created", document.createdAt ? moment(document.createdAt).format("MMM D, YYYY") : "—"],
+    ["Account", document.accounts?.[0]?.account?.name ?? "—"],
+  ];
+  return <Drawer anchor="right" open={open} onClose={onClose}><Box sx={{ width: { xs: "100vw", sm: 540 }, maxWidth: "100vw", height: "100%", overflowY: "auto", p: 3 }}><Typography variant="h6">{document.document_name}</Typography><Stack spacing={3} sx={{ mt: 3 }}><Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><ProcessingStatusBadge status={document.processing_status} />{document.processing_status === "FAILED" && <Button size="small" variant="outlined" onClick={handleRetry}>Retry</Button>}</Stack>{document.summary && <Box><Typography variant="subtitle2">Summary</Typography><Typography variant="body2" color="text.secondary">{document.summary}</Typography></Box>}<Divider /><Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 2 }}>{metadata.map(([label, value]) => <Box key={label}><Typography variant="caption" color="text.secondary">{label}</Typography><Typography variant="body2">{value}</Typography></Box>)}</Box><Divider /><Box><Typography variant="subtitle2" sx={{ mb: 1 }}>Version History</Typography><Stack spacing={1}>{versions.map((version) => <Stack key={version.id} direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}><Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>{version.version === document.version && <Chip size="small" color="primary" label="Current" />}<Typography variant="body2">Version {version.version}</Typography></Stack><Typography variant="caption" color="text.secondary">{version.createdAt ? moment(version.createdAt).format("MMM D, YYYY") : ""} {version.created_by?.name ? `by ${version.created_by.name}` : ""}</Typography></Stack>)}</Stack></Box></Stack></Box></Drawer>;
 }

@@ -1,4 +1,5 @@
-import Container from "@/app/[locale]/(routes)/components/ui/Container";
+import { Box } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { getDocuments } from "@/actions/documents/get-documents";
 import { getAccounts } from "@/actions/crm/get-accounts";
 import { DocumentsDataTable } from "./components/data-table";
@@ -16,12 +17,13 @@ const DocumentsPage = async () => {
   }));
 
   return (
-    <Container title={t("title")} description={t("description")}>
-      <div className="flex justify-end py-5">
+    <Box sx={{ px: { xs: 2, md: 3 }, py: 3 }}>
+      <MuiPageHeader title={t("title")} description={t("description")} />
+      <Box sx={{ display: "flex", justifyContent: "flex-end", py: 3 }}>
         <BulkUploadModal />
-      </div>
+      </Box>
       <DocumentsDataTable data={documents} columns={columns} accounts={accountOptions} />
-    </Container>
+    </Box>
   );
 };
 

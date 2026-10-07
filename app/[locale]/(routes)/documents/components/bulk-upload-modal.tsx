@@ -3,14 +3,7 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useDropzone } from "react-dropzone";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, Paper, Stack, Typography } from "@mui/material";
 import { createDocument } from "@/actions/documents/create-document";
 import { checkDuplicate } from "@/actions/documents/check-duplicate";
 import { Plus } from "lucide-react";
@@ -170,110 +163,11 @@ export function BulkUploadModal({ accountId }: BulkUploadModalProps) {
   const uploadedCount = queue.filter((f) => f.status === "uploaded").length;
   const hasQueued = queue.some((f) => f.status === "queued");
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Upload Documents
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Upload Documents</DialogTitle>
-        </DialogHeader>
-
-        <div
-          {...getRootProps()}
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-            isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25"
-          }`}
-        >
-          <input {...getInputProps()} />
-          <p className="font-medium">Drop files here or click to browse</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            PDF, DOCX, DOC, TXT, Images — up to 64MB each
-          </p>
-        </div>
-
-        {queue.length > 0 && (
-          <div className="mt-4 space-y-2 max-h-[300px] overflow-y-auto">
-            {queue.map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-3 py-2 px-3 rounded-md border text-sm"
-              >
-                <StatusIcon status={item.status} />
-                <span className="flex-1 truncate">{item.file.name}</span>
-                <span className="text-muted-foreground text-xs">
-                  {(item.file.size / 1024 / 1024).toFixed(1)} MB
-                </span>
-                {item.status === "duplicate" && (
-                  <span className="flex gap-2 text-xs">
-                    <button
-                      className="text-primary underline"
-                      onClick={() => uploadAnyway(index)}
-                    >
-                      Upload anyway
-                    </button>
-                    <button
-                      className="text-muted-foreground underline"
-                      onClick={() => skipFile(index)}
-                    >
-                      Skip
-                    </button>
-                  </span>
-                )}
-                {item.status === "uploading" && (
-                  <span className="text-xs text-muted-foreground">
-                    {item.progress}%
-                  </span>
-                )}
-                {item.status === "uploaded" && (
-                  <span className="text-xs text-green-600">Uploaded</span>
-                )}
-                {item.status === "error" && (
-                  <span className="text-xs text-red-600">{item.error}</span>
-                )}
-                {item.status === "skipped" && (
-                  <span className="text-xs text-muted-foreground">Skipped</span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {queue.length > 0 && (
-          <div className="flex justify-between items-center mt-4">
-            <span className="text-sm text-muted-foreground">
-              {uploadedCount}/{queue.length} uploaded
-            </span>
-            {hasQueued && (
-              <Button onClick={processQueue} disabled={isProcessing}>
-                {isProcessing ? "Uploading..." : "Upload All"}
-              </Button>
-            )}
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
+  return <><Button variant="contained" startIcon={<Plus size={18} />} onClick={() => setOpen(true)}>Upload Documents</Button><Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm"><DialogTitle>Upload Documents</DialogTitle><DialogContent><Stack spacing={2}><Box {...getRootProps()} sx={{ border: 2, borderStyle: "dashed", borderColor: isDragActive ? "primary.main" : "divider", bgcolor: isDragActive ? "action.hover" : "background.paper", borderRadius: 2, p: 4, textAlign: "center", cursor: "pointer" }}><input {...getInputProps()} /><Typography sx={{ fontWeight: 600 }}>Drop files here or click to browse</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>PDF, DOCX, DOC, TXT, Images — up to 64MB each</Typography></Box>{queue.length > 0 && <Stack spacing={1} sx={{ maxHeight: 300, overflowY: "auto" }}>{queue.map((item, index) => <Paper key={index} variant="outlined" sx={{ p: 1.5 }}><Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", gap: 1 }}><StatusIcon status={item.status} /><Typography variant="body2" noWrap sx={{ flexGrow: 1, minWidth: 100 }}>{item.file.name}</Typography><Typography variant="caption" color="text.secondary">{(item.file.size / 1024 / 1024).toFixed(1)} MB</Typography>{item.status === "duplicate" && <Stack direction="row" spacing={0.5}><Button size="small" onClick={() => uploadAnyway(index)}>Upload anyway</Button><Button size="small" color="inherit" onClick={() => skipFile(index)}>Skip</Button></Stack>}{item.status === "error" && <Typography variant="caption" color="error">{item.error}</Typography>}</Stack>{item.status === "uploading" && <LinearProgress variant="determinate" value={item.progress} sx={{ mt: 1 }} />}</Paper>)}</Stack>}</Stack></DialogContent><DialogActions sx={{ justifyContent: "space-between", px: 3, pb: 2 }}><Typography variant="body2" color="text.secondary">{uploadedCount}/{queue.length} uploaded</Typography><Stack direction="row" spacing={1}><Button onClick={() => setOpen(false)}>Close</Button>{hasQueued && <Button variant="contained" onClick={processQueue} disabled={isProcessing}>{isProcessing ? "Uploading..." : "Upload All"}</Button>}</Stack></DialogActions></Dialog></>;
 }
 
 function StatusIcon({ status }: { status: FileStatus }) {
-  switch (status) {
-    case "uploaded":
-      return <span className="text-green-600">&#10003;</span>;
-    case "uploading":
-    case "checking":
-      return <span className="text-yellow-600 animate-spin">&#10227;</span>;
-    case "duplicate":
-      return <span className="text-yellow-600">&#9888;</span>;
-    case "error":
-      return <span className="text-red-600">&#10007;</span>;
-    case "skipped":
-      return <span className="text-muted-foreground">&mdash;</span>;
-    default:
-      return <span className="text-muted-foreground">&#9203;</span>;
-  }
+  if (status === "checking" || status === "uploading") return <CircularProgress size={18} />;
+  const color = status === "uploaded" ? "success" : status === "duplicate" ? "warning" : status === "error" ? "error" : "default";
+  return <Chip size="small" variant="outlined" color={color} label={status} sx={{ textTransform: "capitalize" }} />;
 }
