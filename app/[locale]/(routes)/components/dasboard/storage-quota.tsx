@@ -1,39 +1,20 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, LinearProgress, Stack, Typography } from "@mui/material";
 import { Database } from "lucide-react";
 
-// Single KPI card in the demo dashboard with sample inputs
-export default function StorageQuota({
-  actual,
-  title,
-}: {
-  actual: number;
-  title: string;
-}) {
+export default function StorageQuota({ actual, title }: { actual: number; title: string }) {
   const percent = parseFloat((100 * (actual / 2000)).toFixed(2));
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Database className="w-4 h-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-medium">{actual}/MB</div>
-        <div className="flex justify-between mt-4">
-          <p className="truncate text-sm text-muted-foreground">
-            {percent}% ({actual}MB)
-          </p>
-          <p className="text-sm text-muted-foreground">2000MB</p>
-        </div>
-        <div className="mt-2 h-2 w-full rounded-full bg-muted overflow-hidden">
-          <div
-            className="h-full rounded-full bg-orange-500"
-            style={{ width: `${Math.min(percent, 100)}%` }}
-          />
-        </div>
-      </CardContent>
-    </Card>
-  );
+  return <Card variant="outlined" sx={{ height: "100%" }}><CardContent>
+    <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>{title}</Typography>
+      <Database size={18} />
+    </Stack>
+    <Typography variant="h5" sx={{ fontWeight: 700 }}>{actual}/MB</Typography>
+    <Stack direction="row" sx={{ justifyContent: "space-between", mt: 2, mb: 1 }}>
+      <Typography variant="caption" color="text.secondary">{percent}% ({actual}MB)</Typography>
+      <Typography variant="caption" color="text.secondary">2000MB</Typography>
+    </Stack>
+    <LinearProgress variant="determinate" value={Math.min(Math.max(percent, 0), 100)} color="warning" />
+  </CardContent></Card>;
 }

@@ -1,23 +1,19 @@
 import { Suspense } from "react";
-import Container from "../components/ui/Container";
+import { Box, Divider, Skeleton } from "@mui/material";
 import MainPageView from "./components/MainPageView";
-import CrmTableSkeleton from "@/components/skeletons/crm-table-skeleton";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { getTranslations } from "next-intl/server";
 
 const CrmPage = async () => {
   const t = await getTranslations("CrmPage");
   return (
-    <Container
-      title={t("title")}
-      description={t("description")}
-    >
-      {/*
-      TODO: Think about how to handle the loading of the data to make better UX with suspense
-      */}
-      <Suspense fallback={<CrmTableSkeleton />}>
+    <Box sx={{ width: "100%", pb: 6 }}>
+      <MuiPageHeader title={t("title")} description={t("description")} />
+      <Divider sx={{ my: 2 }} />
+      <Suspense fallback={<Box><Skeleton height={56} /><Skeleton variant="rounded" height={240} /></Box>}>
         <MainPageView />
       </Suspense>
-    </Container>
+    </Box>
   );
 };
 

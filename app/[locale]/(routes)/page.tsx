@@ -1,28 +1,12 @@
 import { Suspense } from "react";
-import { getSession } from "@/lib/auth-server";
-import {
-  CoinsIcon,
-  Contact,
-  DollarSignIcon,
-  FilePenLine,
-  FileText,
-  HeartHandshakeIcon,
-  LandmarkIcon,
-  Megaphone,
-  Target,
-  UserIcon,
-} from "lucide-react";
+import { Box, Card, CardContent, Divider, Stack, Typography } from "@mui/material";
 import Link from "next/link";
-
-import Container from "./components/ui/Container";
+import { CoinsIcon, Contact, DollarSignIcon, FilePenLine, FileText, HeartHandshakeIcon, LandmarkIcon, Megaphone, Target, UserIcon, type LucideIcon } from "lucide-react";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import LoadingBox from "./components/dasboard/loading-box";
 import StorageQuota from "./components/dasboard/storage-quota";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-import {
-  getTasksCount,
-  getUsersTasksCount,
-} from "@/actions/dashboard/get-tasks-count";
+import { getSession } from "@/lib/auth-server";
+import { getTasksCount, getUsersTasksCount } from "@/actions/dashboard/get-tasks-count";
 import { getInvoicesCount } from "@/actions/dashboard/get-invoices-count";
 import { getCampaignsCount } from "@/actions/dashboard/get-campaigns-count";
 import { getTargetsCount } from "@/actions/dashboard/get-targets-count";
@@ -41,21 +25,13 @@ import { cookies } from "next/headers";
 import { getDefaultCurrency, formatCurrency as formatCurrencyUtil } from "@/lib/currency";
 import { Decimal } from "@prisma/client/runtime/client";
 
-const DashboardPage = async () => {
+export default async function DashboardPage() {
   const session = await getSession();
-
   if (!session) return null;
-
-  const userId = session?.user?.id;
-
+  const userId = session.user.id;
   const cookieStore = await cookies();
   const defaultCurrency = await getDefaultCurrency();
   const displayCurrency = cookieStore.get("display_currency")?.value || defaultCurrency;
-
-  //Get user language
-  const lang = session?.user?.userLanguage;
-
-  //Fetch translations from dictionary
   const dict = await getTranslations("DashboardPage");
   const leads = await getLeadsCount();
   const tasks = await getTasksCount();
@@ -72,153 +48,42 @@ const DashboardPage = async () => {
   const documents = await getDocumentsCount();
   const opportunities = await getOpportunitiesCount();
   const usersTasks = await getUsersTasksCount(userId);
+  const metrics: { href?: string; title: string; IconComponent: LucideIcon; content: number | string }[] = [
+    { title: dict("totalRevenue"), IconComponent: DollarSignIcon, content: "0" },
+    { title: dict("expectedRevenue"), IconComponent: DollarSignIcon, content: formatCurrencyUtil(new Decimal(revenue), displayCurrency) },
+    { href: "/admin/users", title: dict("activeUsers"), IconComponent: UserIcon, content: users },
+    { href: "/invoices", title: dict("invoices"), IconComponent: FileText, content: invoices },
+    { href: "/campaigns", title: dict("campaigns"), IconComponent: Megaphone, content: campaigns },
+    { href: "/crm/targets", title: dict("targets"), IconComponent: Target, content: targets },
+    { href: "/crm/accounts", title: dict("accounts"), IconComponent: LandmarkIcon, content: accounts },
+    { href: "/crm/opportunities", title: dict("opportunities"), IconComponent: HeartHandshakeIcon, content: opportunities },
+    { href: "/crm/contacts", title: dict("contacts"), IconComponent: Contact, content: contacts },
+    { href: "/crm/leads", title: dict("leads"), IconComponent: CoinsIcon, content: leads },
+    { href: "/crm/contracts", title: dict("contracts"), IconComponent: FilePenLine, content: contracts },
+    { href: "/projects", title: dict("projects"), IconComponent: CoinsIcon, content: projects },
+    { href: "/projects/tasks", title: dict("tasks"), IconComponent: CoinsIcon, content: tasks },
+    { href: `/projects/tasks/${userId}`, title: dict("myTasks"), IconComponent: CoinsIcon, content: usersTasks },
+    { href: "/documents", title: dict("documents"), IconComponent: CoinsIcon, content: documents },
+  ];
+  return <Box sx={{ width: "100%", pb: 6 }}>
+    <MuiPageHeader title={dict("containerTitle")} description="Welcome to NextCRM cockpit, here you can see your company overview" />
+    <Divider sx={{ my: 2 }} />
+    <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))" } }}>
+      {metrics.map((metric) => <Suspense key={metric.title} fallback={<LoadingBox />}><DashboardCard {...metric} /></Suspense>)}
+      <StorageQuota actual={storage} title={dict("storage")} />
+    </Box>
+  </Box>;
+}
 
-  return (
-    <Container
-      title={dict("containerTitle")}
-      description={
-        "Welcome to NextCRM cockpit, here you can see your company overview"
-      }
-    >
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        <Suspense fallback={<LoadingBox />}>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {dict("totalRevenue")}
-              </CardTitle>
-              <DollarSignIcon className="w-4 h-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-medium">{"0"}</div>
-            </CardContent>
-          </Card>
-        </Suspense>
-        <Suspense fallback={<LoadingBox />}>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {dict("expectedRevenue")}
-              </CardTitle>
-              <DollarSignIcon className="w-4 h-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-medium">
-                {formatCurrencyUtil(new Decimal(revenue), displayCurrency)}
-              </div>
-            </CardContent>
-          </Card>
-        </Suspense>
-
-        <DashboardCard
-          href="/admin/users"
-          title={dict("activeUsers")}
-          IconComponent={UserIcon}
-          content={users}
-        />
-        <DashboardCard
-          href="/invoices"
-          title={dict("invoices")}
-          IconComponent={FileText}
-          content={invoices}
-        />
-        <DashboardCard
-          href="/campaigns"
-          title={dict("campaigns")}
-          IconComponent={Megaphone}
-          content={campaigns}
-        />
-        <DashboardCard
-          href="/crm/targets"
-          title={dict("targets")}
-          IconComponent={Target}
-          content={targets}
-        />
-        <DashboardCard
-          href="/crm/accounts"
-          title={dict("accounts")}
-          IconComponent={LandmarkIcon}
-          content={accounts}
-        />
-        <DashboardCard
-          href="/crm/opportunities"
-          title={dict("opportunities")}
-          IconComponent={HeartHandshakeIcon}
-          content={opportunities}
-        />
-        <DashboardCard
-          href="/crm/contacts"
-          title={dict("contacts")}
-          IconComponent={Contact}
-          content={contacts}
-        />
-        <DashboardCard
-          href="/crm/leads"
-          title={dict("leads")}
-          IconComponent={CoinsIcon}
-          content={leads}
-        />
-        <DashboardCard
-          href="/crm/contracts"
-          title={dict("contracts")}
-          IconComponent={FilePenLine}
-          content={contracts}
-        />
-        <DashboardCard
-          href="/projects"
-          title={dict("projects")}
-          IconComponent={CoinsIcon}
-          content={projects}
-        />
-        <DashboardCard
-          href="/projects/tasks"
-          title={dict("tasks")}
-          IconComponent={CoinsIcon}
-          content={tasks}
-        />
-        <DashboardCard
-          href={`/projects/tasks/${userId}`}
-          title={dict("myTasks")}
-          IconComponent={CoinsIcon}
-          content={usersTasks}
-        />
-        <DashboardCard
-          href="/documents"
-          title={dict("documents")}
-          IconComponent={CoinsIcon}
-          content={documents}
-        />
-
-        <StorageQuota actual={storage} title={dict("storage")} />
-      </div>
-    </Container>
-  );
-};
-
-export default DashboardPage;
-
-const DashboardCard = ({
-  href,
-  title,
-  IconComponent,
-  content,
-}: {
-  href?: string;
-  title: string;
-  IconComponent: any;
-  content: number;
-}) => (
-  <Link href={href || "#"}>
-    <Suspense fallback={<LoadingBox />}>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
-          <IconComponent className="w-4 h-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-medium">{content}</div>
-        </CardContent>
-      </Card>
-    </Suspense>
-  </Link>
-);
+function DashboardCard({ href, title, IconComponent, content }: { href?: string; title: string; IconComponent: LucideIcon; content: number | string }) {
+  const card = <Card variant="outlined" sx={{ height: "100%", transition: "border-color .2s, box-shadow .2s", ...(href ? { "&:hover": { borderColor: "primary.main", boxShadow: 2 } } : {}) }}>
+    <CardContent>
+      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>{title}</Typography>
+        <Box component="span" sx={{ color: "text.secondary", display: "inline-flex" }}><IconComponent size={18} /></Box>
+      </Stack>
+      <Typography variant="h5" sx={{ fontWeight: 700 }}>{content}</Typography>
+    </CardContent>
+  </Card>;
+  return href ? <Link href={href} style={{ textDecoration: "none", color: "inherit" }}>{card}</Link> : card;
+}

@@ -1,22 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LightbulbIcon } from "lucide-react";
+import { Card, CardContent, Skeleton, Stack } from "@mui/material";
 
-const LoadingBox = () => {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium bg-gray-200 text-gray-200 animate-pulse ">
-          Loading
-        </CardTitle>
-        <LightbulbIcon className="w-4 h-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-medium text-gray-200 bg-gray-200 animate-pulse ">
-          Loading...
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-export default LoadingBox;
+export default function LoadingBox() {
+  return <Card variant="outlined"><CardContent><Stack direction="row" sx={{ justifyContent: "space-between" }}><Skeleton width="45%" /><Skeleton variant="circular" width={18} height={18} /></Stack><Skeleton width="35%" height={42} sx={{ mt: 1 }} /></CardContent></Card>;
+}

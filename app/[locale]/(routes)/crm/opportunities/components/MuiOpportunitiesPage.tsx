@@ -102,9 +102,13 @@ function budgetLabel(record: OpportunityRecord, displayCurrency: string, rates: 
 export function MuiOpportunitiesPage({
   data,
   crmData,
+  embedded = false,
+  accountId,
 }: {
   data: OpportunityRecord[];
   crmData: CrmData;
+  embedded?: boolean;
+  accountId?: string;
 }) {
   const router = useRouter();
   const theme = useTheme();
@@ -197,15 +201,14 @@ export function MuiOpportunitiesPage({
   };
 
   return (
-    <Box sx={{ width: "100%", pb: 6 }}>
-      <MuiPageHeader title={t("opportunities.pageTitle")} description={t("opportunities.pageDescription")} />
-      <Divider sx={{ my: 2 }} />
+    <Box sx={{ width: "100%", pb: embedded ? 0 : 6 }}>
+      {!embedded && <><MuiPageHeader title={t("opportunities.pageTitle")} description={t("opportunities.pageDescription")} /><Divider sx={{ my: 2 }} /></>}
 
       <Paper variant="outlined" sx={{ borderRadius: "var(--radius)", overflow: "hidden", boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)" }}>
         <Box sx={{ p: 3, pb: 1.5 }}>
           <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
-            <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>{t("opportunities.viewTitle")}</Typography>
-            <Button variant="contained" aria-label={t("opportunities.addNew")} onClick={() => setCreateOpen(true)} sx={{ minWidth: 36, my: 1 }}>+</Button>
+            <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>{embedded ? <Link href="/crm/opportunities" style={{ color: "inherit", textDecoration: "none" }}>{t("opportunities.viewTitle")}</Link> : t("opportunities.viewTitle")}</Typography>
+            <Button variant="contained" aria-label={t("opportunities.addNew")} data-testid={embedded ? "add-opportunity-btn" : undefined} onClick={() => setCreateOpen(true)} sx={{ minWidth: 36, my: 1 }}>+</Button>
           </Stack>
           <Divider sx={{ mt: 2.5 }} />
         </Box>
@@ -335,7 +338,7 @@ export function MuiOpportunitiesPage({
         </Box>
         <Divider />
         <Box sx={{ overflowY: "auto", py: 3 }}>
-          <NewOpportunityForm accounts={crmData.accounts} contacts={crmData.contacts} salesType={crmData.saleTypes} saleStages={crmData.saleStages} campaigns={crmData.campaigns} currencies={crmData.currencies} onDialogClose={closeCreate} />
+          <NewOpportunityForm accounts={crmData.accounts} contacts={crmData.contacts} salesType={crmData.saleTypes} saleStages={crmData.saleStages} campaigns={crmData.campaigns} currencies={crmData.currencies} accountId={accountId} onDialogClose={closeCreate} />
         </Box>
       </Drawer>
       <Drawer anchor="right" open={Boolean(updateRow)} onClose={() => setUpdateRow(null)} sx={{ zIndex: 40 }} slotProps={{ paper: { sx: { width: { xs: "100%", md: 771 }, maxWidth: "100%" } } }}>

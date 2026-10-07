@@ -1,5 +1,5 @@
-import React from "react";
-import Container from "../../components/ui/Container";
+import { Box, Divider } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { getSaleStages } from "@/actions/crm/get-sales-stage";
 import CRMKanban from "./_components/CRMKanban";
 import { getOpportunities } from "@/actions/crm/get-opportunities";
@@ -12,23 +12,17 @@ const CrmDashboardPage = async () => {
   const crmData = await getAllCrmData();
 
   return (
-    <Container
-      title="CRM Dashboard"
-      description="In development. After this compoment is finished, there will be a optimistic update of the data."
-    >
-      <div className="w-full h-full  overflow-hidden">
+    <Box sx={{ width: "100%", pb: 6 }}>
+      <MuiPageHeader title="CRM Dashboard" description="In development. After this compoment is finished, there will be a optimistic update of the data." />
+      <Divider sx={{ my: 2 }} />
+      <Box sx={{ width: "100%", overflow: "hidden" }}>
         <CRMKanban
           salesStages={salesStages}
           opportunities={opportunities}
           crmData={crmData}
         />
-      </div>
-
-      {/*     <CRMKanbanServer
-        salesStages={salesStages}
-        opportunities={opportunities}
-      /> */}
-    </Container>
+      </Box>
+    </Box>
   );
 };
 
