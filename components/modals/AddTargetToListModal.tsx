@@ -3,190 +3,76 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, List, ListItemButton, ListItemText, Stack, TextField, Typography } from "@mui/material";
 import { getTargets } from "@/actions/crm/get-targets";
 import { addTargetsToList } from "@/actions/crm/target-lists/add-targets-to-list";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface Target {
-  id: string;
-  first_name: string | null;
-  last_name: string;
-  email: string | null;
-  company: string | null;
-}
+interface Target { id: string; first_name: string | null; last_name: string; email: string | null; company: string | null }
+interface AddTargetToListModalProps { targetListId: string; existingTargetIds: string[]; open: boolean; onOpenChange: (open: boolean) => void }
 
-interface AddTargetToListModalProps {
-  targetListId: string;
-  existingTargetIds: string[];
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-const AddTargetToListModal = ({
-  targetListId,
-  existingTargetIds,
-  open,
-  onOpenChange,
-}: AddTargetToListModalProps) => {
+const AddTargetToListModal = ({ targetListId, existingTargetIds, open, onOpenChange }: AddTargetToListModalProps) => {
   const router = useRouter();
   const [targets, setTargets] = useState<Target[]>([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
+  const [fetchDone, setFetchDone] = useState(false);
+  const isFetching = open && !fetchDone;
 
   useEffect(() => {
     if (!open) return;
-    setIsFetching(true);
-    getTargets()
-      .then((all) => {
-        setTargets(all.filter((t) => !existingTargetIds.includes(t.id)));
-      })
-      .catch(() => {
-        toast.error("Failed to load targets");
-      })
-      .finally(() => setIsFetching(false));
-  }, [open]);
+    getTargets().then((all) => setTargets(all.filter((target) => !existingTargetIds.includes(target.id))))
+      .catch(() => toast.error("Failed to load targets"))
+      .finally(() => setFetchDone(true));
+  }, [open, existingTargetIds]);
 
-  const filtered = targets.filter((t) => {
-    const q = search.toLowerCase();
-    return (
-      t.first_name?.toLowerCase().includes(q) ||
-      t.last_name?.toLowerCase().includes(q) ||
-      t.email?.toLowerCase().includes(q) ||
-      t.company?.toLowerCase().includes(q)
-    );
+  const handleClose = () => { setFetchDone(false); onOpenChange(false); };
+
+  const filtered = targets.filter((target) => {
+    const query = search.toLowerCase();
+    return target.first_name?.toLowerCase().includes(query) || target.last_name?.toLowerCase().includes(query) || target.email?.toLowerCase().includes(query) || target.company?.toLowerCase().includes(query);
   });
-
-  const toggle = (id: string) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  };
-
-  const allFilteredSelected =
-    filtered.length > 0 && filtered.every((t) => selected.includes(t.id));
-  const someFilteredSelected = filtered.some((t) => selected.includes(t.id));
-
+  const toggle = (id: string) => setSelected((previous) => previous.includes(id) ? previous.filter((item) => item !== id) : [...previous, id]);
+  const allFilteredSelected = filtered.length > 0 && filtered.every((target) => selected.includes(target.id));
+  const someFilteredSelected = filtered.some((target) => selected.includes(target.id));
   const toggleAll = () => {
-    if (allFilteredSelected) {
-      setSelected((prev) => prev.filter((id) => !filtered.some((t) => t.id === id)));
-    } else {
-      const newIds = filtered.map((t) => t.id);
-      setSelected((prev) => Array.from(new Set([...prev, ...newIds])));
-    }
+    if (allFilteredSelected) setSelected((previous) => previous.filter((id) => !filtered.some((target) => target.id === id)));
+    else setSelected((previous) => Array.from(new Set([...previous, ...filtered.map((target) => target.id)])));
   };
-
   const handleSubmit = async () => {
-    if (selected.length === 0) return;
+    if (!selected.length) return;
     setIsLoading(true);
     const result = await addTargetsToList(targetListId, selected);
     setIsLoading(false);
-    if (result.error) {
-      toast.error(result.error);
-      return;
-    }
+    if (result.error) { toast.error(result.error); return; }
     toast.success(`Added ${selected.length} target(s) to the list`);
-    setSelected([]);
-    setSearch("");
-    onOpenChange(false);
-    router.refresh();
+    setSelected([]); setSearch(""); handleClose(); router.refresh();
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Add Targets to List</DialogTitle>
-          <DialogDescription>
-            Select targets to add to this list. Already-added targets are not shown.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3">
-          <Input
-            placeholder="Search by name, email or company..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            disabled={isFetching}
-          />
-          {!isFetching && filtered.length > 0 && (
-            <div
-              className="flex items-center space-x-3 rounded-md px-2 py-1.5 hover:bg-accent cursor-pointer"
-              onClick={toggleAll}
-            >
-              <Checkbox
-                checked={allFilteredSelected ? true : someFilteredSelected ? "indeterminate" : false}
-                onCheckedChange={toggleAll}
-              />
-              <span className="text-sm font-medium">Select all ({filtered.length})</span>
-            </div>
-          )}
-          <ScrollArea className="h-72 rounded-md border p-2">
-            {isFetching ? (
-              <p className="text-sm text-muted-foreground p-2">Loading targets...</p>
-            ) : filtered.length === 0 ? (
-              <p className="text-sm text-muted-foreground p-2">No targets available.</p>
-            ) : (
-              <div className="space-y-1">
-                {filtered.map((t) => (
-                  <div
-                    key={t.id}
-                    className="flex items-center space-x-3 rounded-md px-2 py-1.5 hover:bg-accent cursor-pointer"
-                    onClick={() => toggle(t.id)}
-                  >
-                    <Checkbox
-                      checked={selected.includes(t.id)}
-                      onCheckedChange={() => toggle(t.id)}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {t.first_name} {t.last_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {t.email || t.company || "No contact info"}
-                      </p>
-                    </div>
-                    {t.company && (
-                      <span className="text-xs text-muted-foreground shrink-0">{t.company}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-          {selected.length > 0 && (
-            <p className="text-xs text-muted-foreground">{selected.length} target(s) selected</p>
-          )}
-        </div>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isLoading || selected.length === 0}
-          >
-            {isLoading ? "Adding..." : `Add Selected (${selected.length})`}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+  return <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+    <DialogTitle>Add Targets to List</DialogTitle>
+    <DialogContent dividers>
+      <DialogContentText sx={{ mb: 2 }}>Select targets to add to this list. Already-added targets are not shown.</DialogContentText>
+      <Stack spacing={1.5}>
+        <TextField size="small" placeholder="Search by name, email or company..." value={search} onChange={(event) => setSearch(event.target.value)} disabled={isFetching} />
+        {!isFetching && filtered.length > 0 && <ListItemButton onClick={toggleAll} sx={{ borderRadius: 1 }}>
+          <Checkbox size="small" checked={allFilteredSelected} indeterminate={!allFilteredSelected && someFilteredSelected} tabIndex={-1} />
+          <ListItemText primary={`Select all (${filtered.length})`} slotProps={{ primary: { variant: "body2", sx: { fontWeight: 600 } } }} />
+        </ListItemButton>}
+        <Box sx={{ height: 288, overflowY: "auto", border: 1, borderColor: "divider", borderRadius: 1 }}>
+          {isFetching ? <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>Loading targets...</Typography> :
+            !filtered.length ? <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>No targets available.</Typography> :
+            <List dense disablePadding>{filtered.map((target) => <ListItemButton key={target.id} onClick={() => toggle(target.id)}>
+              <Checkbox size="small" checked={selected.includes(target.id)} tabIndex={-1} />
+              <ListItemText primary={`${target.first_name ?? ""} ${target.last_name}`.trim()} secondary={target.email || target.company || "No contact info"} />
+              {target.company && <Typography variant="caption" color="text.secondary" sx={{ ml: 1, flexShrink: 0 }}>{target.company}</Typography>}
+            </ListItemButton>)}</List>}
+        </Box>
+        {selected.length > 0 && <Typography variant="caption" color="text.secondary">{selected.length} target(s) selected</Typography>}
+      </Stack>
+    </DialogContent>
+    <DialogActions><Button onClick={handleClose} disabled={isLoading}>Cancel</Button><Button variant="contained" onClick={handleSubmit} disabled={isLoading || !selected.length}>{isLoading ? "Adding..." : `Add Selected (${selected.length})`}</Button></DialogActions>
+  </Dialog>;
 };
 
 export default AddTargetToListModal;
