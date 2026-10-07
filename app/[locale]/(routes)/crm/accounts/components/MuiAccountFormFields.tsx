@@ -24,6 +24,8 @@ function UserPicker({ value, onChange, disabled }: { value: string; onChange: (i
   const [options, setOptions] = useState<UserOption[]>([]);
   const [selected, setSelected] = useState<UserOption | null>(null);
   const [loading, setLoading] = useState(false);
+  const [skip, setSkip] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   useEffect(() => {
     if (!value) { setSelected(null); return; }
     let current = true;
@@ -36,15 +38,19 @@ function UserPicker({ value, onChange, disabled }: { value: string; onChange: (i
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const result = await searchUsers({ search: query, skip: 0, take: 50 });
-        if (current) setOptions(result.users.map((user) => ({ id: user.id, name: user.name || "" })));
-      } catch { if (current) setOptions([]); }
+        const result = await searchUsers({ search: query, skip, take: 50 });
+        if (current) {
+          const next = result.users.map((user) => ({ id: user.id, name: user.name || "" }));
+          setOptions((previous) => skip === 0 ? next : [...previous, ...next.filter((user) => !previous.some((existing) => existing.id === user.id))]);
+          setHasMore(result.hasMore);
+        }
+      } catch { if (current) setHasMore(false); }
       finally { if (current) setLoading(false); }
     }, 250);
     return () => { current = false; clearTimeout(timer); };
-  }, [open, query]);
+  }, [open, query, skip]);
   const chosen = options.find((option) => option.id === value) || (selected?.id === value ? selected : null);
-  return <Autocomplete<UserOption, false, false, false> fullWidth open={open} onOpen={() => setOpen(true)} onClose={() => setOpen(false)} value={chosen} options={chosen && !options.some((option) => option.id === chosen.id) ? [chosen, ...options] : options} onChange={(_, option) => onChange(option?.id || "")} onInputChange={(_, text, reason) => { if (reason === "input" || reason === "clear") setQuery(text); }} getOptionLabel={(option) => option.name} isOptionEqualToValue={(a, b) => a.id === b.id} filterOptions={(items) => items} loading={loading} disabled={disabled} renderInput={(params) => <TextField {...params} label="Assigned to" />} />;
+  return <Autocomplete<UserOption, false, false, false> fullWidth open={open} onOpen={() => setOpen(true)} onClose={() => setOpen(false)} value={chosen} options={chosen && !options.some((option) => option.id === chosen.id) ? [chosen, ...options] : options} onChange={(_, option) => onChange(option?.id || "")} onInputChange={(_, text, reason) => { if (reason === "input" || reason === "clear") { setQuery(text); setSkip(0); setOptions([]); } }} getOptionLabel={(option) => option.name} isOptionEqualToValue={(a, b) => a.id === b.id} filterOptions={(items) => items} loading={loading} disabled={disabled} slotProps={{ listbox: { onScroll: (event) => { const list = event.currentTarget; if (hasMore && !loading && list.scrollTop + list.clientHeight >= list.scrollHeight - 24) setSkip((previous) => previous + 50); } } }} renderInput={(params) => <TextField {...params} label="Assigned to" />} />;
 }
 
 export function MuiAccountFormFields({ form, industries, mode }: { form: UseFormReturn<any>; industries: Industry[]; mode: "create" | "update" }) {

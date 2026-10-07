@@ -8,7 +8,6 @@ import moment from "moment";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, MoreHorizontal, PanelTopClose, PanelTopOpen, X } from "lucide-react";
 import { Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Drawer, IconButton, Menu, MenuItem, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Select } from "@mui/material";
-import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { deleteAccount } from "@/actions/crm/accounts/delete-account";
 import { watchAccount } from "@/actions/crm/accounts/watch-account";
 import { unwatchAccount } from "@/actions/crm/accounts/unwatch-account";
@@ -73,9 +72,7 @@ export default function AccountsView({ data, crmData }: { data: Account[]; crmDa
     finally { setDeleting(false); setDeleteRow(null); }
   };
   const drawerProps = { paper: { sx: { width: { xs: "100%", md: 771 }, maxWidth: "100%" } } };
-  return <Box sx={{ width: "100%", pb: 6 }}>
-    <MuiPageHeader title={t("accounts.pageTitle")} description={t("accounts.pageDescription")} />
-    <Divider sx={{ my: 2 }} />
+  return <>
     <Paper variant="outlined" sx={{ borderRadius: "var(--radius)", overflow: "hidden" }}>
       <Box sx={{ p: 3, pb: 1.5 }}><Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography component="h2" variant="h5" sx={{ fontWeight: 600 }}>{t("accounts.viewTitle")}</Typography><Button variant="contained" aria-label={t("accounts.addNew")} data-testid="add-account-btn" onClick={() => setCreateOpen(true)} sx={{ minWidth: 36 }}>+</Button></Stack><Divider sx={{ mt: 2.5 }} /></Box>
       <Box sx={{ px: 3, pb: 3 }}>
@@ -101,5 +98,5 @@ export default function AccountsView({ data, crmData }: { data: Account[]; crmDa
     <Drawer anchor="right" open={createOpen} onClose={() => setCreateOpen(false)} slotProps={drawerProps}><Box sx={{ p: 3, display: "flex", justifyContent: "space-between" }}><Box><Typography variant="h5">{t("accounts.sheetTitle")}</Typography><Typography variant="body2" color="text.secondary">{t("accounts.sheetDescription")}</Typography></Box><IconButton aria-label="Close" onClick={() => setCreateOpen(false)}><X size={18} /></IconButton></Box><Divider /><Box sx={{ overflowY: "auto", py: 3 }}><NewAccountForm industries={crmData.industries} onFinish={refreshAndClose} /></Box></Drawer>
     <Drawer anchor="right" open={Boolean(updateRow)} onClose={() => setUpdateRow(null)} slotProps={drawerProps}><Box sx={{ p: 3, display: "flex", justifyContent: "space-between" }}><Box><Typography variant="h5">Update Account - {updateRow?.name}</Typography><Typography variant="body2" color="text.secondary">Update account details</Typography></Box><IconButton aria-label="Close" onClick={() => setUpdateRow(null)}><X size={18} /></IconButton></Box><Divider /><Box sx={{ overflowY: "auto", py: 3 }}>{updateRow && <UpdateAccountForm initialData={updateRow} open={(open) => { if (!open) refreshAndClose(); }} />}</Box></Drawer>
     <Dialog open={Boolean(deleteRow)} onClose={() => { if (!deleting) setDeleteRow(null); }}><DialogTitle>Delete account?</DialogTitle><DialogContent><DialogContentText>This will delete {deleteRow?.name}. This action cannot be undone.</DialogContentText></DialogContent><DialogActions><Button onClick={() => setDeleteRow(null)} disabled={deleting}>Cancel</Button><Button variant="contained" color="error" disabled={deleting} onClick={confirmDelete}>{deleting ? "Deleting..." : "Delete"}</Button></DialogActions></Dialog>
-  </Box>;
+  </>;
 }
