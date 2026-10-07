@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import Container from "../../components/ui/Container";
+import { Box, Divider } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import {
   requireRole,
   AuthenticationError,
@@ -19,12 +20,11 @@ const ApprovalsPage = async () => {
   const pending = await getPendingApprovals();
   const rows = Array.isArray(pending) ? pending : [];
   return (
-    <Container
-      title="Quote approvals"
-      description="Deals waiting for a quote/SOW decision"
-    >
+    <Box sx={{ width: "100%", pb: 6 }}>
+      <MuiPageHeader title="Quote approvals" description="Deals waiting for a quote/SOW decision" />
+      <Divider sx={{ my: 2 }} />
       <ApprovalsTable rows={rows} />
-    </Container>
+    </Box>
   );
 };
 
