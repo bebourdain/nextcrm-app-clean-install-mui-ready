@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
 import Header from "./components/Header";
-import Footer from "./components/Footer";
 
 import { Metadata } from "next";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
@@ -115,19 +114,12 @@ export default async function AppLayout({
           id={session.user.id as string}
           lang={session.user.userLanguage as string}
         />
-        {/*
-          Task Group 3.3: Footer Relocation
-          - Footer has been moved inside the scrollable content area
-          - This allows the footer to scroll with the page content
-          - Footer will appear at the bottom of the content, not fixed at viewport bottom
-        */}
         <div className="flex flex-col flex-grow overflow-y-auto h-full w-full min-w-0">
           <div className="flex-grow py-5 w-full min-w-0">
             <div className="w-full px-4 min-w-0">
               {children}
             </div>
           </div>
-          <Footer />
         </div>
       </SidebarInset>
     </SidebarProvider>
