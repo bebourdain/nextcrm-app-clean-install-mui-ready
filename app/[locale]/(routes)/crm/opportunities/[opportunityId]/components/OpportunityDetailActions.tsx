@@ -1,21 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { MoreHorizontal } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { useState, type MouseEvent } from "react";
+import { MoreHorizontal, X } from "lucide-react";
+import { Box, Divider, Drawer, IconButton, Menu, MenuItem, Stack, Typography } from "@mui/material";
 import { UpdateOpportunityForm } from "../../components/UpdateOpportunityForm";
 
 type ConfigItem = { id: string; name: string };
@@ -35,46 +22,51 @@ export function OpportunityDetailActions({
   campaigns,
   currencies,
 }: OpportunityDetailActionsProps) {
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [updateOpen, setUpdateOpen] = useState(false);
+
+  const openMenu = (event: MouseEvent<HTMLElement>) => setAnchor(event.currentTarget);
 
   return (
     <>
-      <Sheet open={updateOpen} onOpenChange={setUpdateOpen}>
-        <SheetContent className="w-full md:max-w-[771px] overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Update Opportunity - {opportunity?.name}</SheetTitle>
-            <SheetDescription>Update opportunity details</SheetDescription>
-          </SheetHeader>
-          <div className="mt-6 space-y-4">
-            <UpdateOpportunityForm
-              initialData={opportunity}
-              setOpen={setUpdateOpen}
-              saleTypes={saleTypes}
-              saleStages={saleStages}
-              campaigns={campaigns}
-              currencies={currencies}
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
-            data-testid="opportunity-detail-actions-btn"
-          >
-            <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
-            <span className="sr-only">Open menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[160px]">
-          <DropdownMenuItem onClick={() => setUpdateOpen(true)}>
-            Update
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <IconButton
+        aria-label="Opportunity actions"
+        aria-haspopup="menu"
+        aria-expanded={Boolean(anchor)}
+        data-testid="opportunity-detail-actions-btn"
+        onClick={openMenu}
+        size="small"
+      >
+        <MoreHorizontal size={20} />
+      </IconButton>
+      <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
+        <MenuItem onClick={() => { setAnchor(null); setUpdateOpen(true); }}>Update</MenuItem>
+      </Menu>
+      <Drawer
+        anchor="right"
+        open={updateOpen}
+        onClose={() => setUpdateOpen(false)}
+        slotProps={{ paper: { sx: { width: { xs: "100%", md: 771 }, maxWidth: "100%" } } }}
+      >
+        <Stack direction="row" sx={{ p: 3, alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}>
+          <Box>
+            <Typography variant="h5">Update Opportunity - {opportunity?.name}</Typography>
+            <Typography variant="body2" color="text.secondary">Update opportunity details</Typography>
+          </Box>
+          <IconButton aria-label="Close" onClick={() => setUpdateOpen(false)}><X size={18} /></IconButton>
+        </Stack>
+        <Divider />
+        <Box sx={{ overflowY: "auto", py: 3 }}>
+          <UpdateOpportunityForm
+            initialData={opportunity}
+            setOpen={setUpdateOpen}
+            saleTypes={saleTypes}
+            saleStages={saleStages}
+            campaigns={campaigns}
+            currencies={currencies}
+          />
+        </Box>
+      </Drawer>
     </>
   );
 }

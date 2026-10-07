@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { FileCheck2, Loader2 } from "lucide-react";
+import { Button, CircularProgress } from "@mui/material";
+import { FileCheck2 } from "lucide-react";
 import { requestApproval } from "@/actions/crm/opportunities/approval";
 
 const RequestApprovalButton = ({ opportunityId }: { opportunityId: string }) => {
@@ -26,12 +26,13 @@ const RequestApprovalButton = ({ opportunityId }: { opportunityId: string }) => 
   };
 
   return (
-    <Button variant="outline" size="sm" onClick={submit} disabled={loading}>
-      {loading ? (
-        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-      ) : (
-        <FileCheck2 className="h-4 w-4 mr-2" />
-      )}
+    <Button
+      variant="outlined"
+      size="small"
+      onClick={submit}
+      disabled={loading}
+      startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <FileCheck2 size={16} />}
+    >
       Request approval
     </Button>
   );
