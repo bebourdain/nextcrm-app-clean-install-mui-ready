@@ -2,21 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createTargetList } from "@/actions/crm/target-lists/create-target-list";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
+  Button,
   Dialog,
+  DialogActions,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
+  DialogContentText,
   DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+  Stack,
+  TextField,
+} from "@mui/material";
+import { toast } from "sonner";
+import { createTargetList } from "@/actions/crm/target-lists/create-target-list";
 
 const CreateTargetListModal = () => {
   const router = useRouter();
@@ -32,63 +29,66 @@ const CreateTargetListModal = () => {
     }
 
     setIsLoading(true);
-    const result = await createTargetList({ name, description });
-    setIsLoading(false);
-    if (result.error) {
-      toast.error(result.error);
-      return;
+    try {
+      const result = await createTargetList({ name, description });
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Target list created successfully");
+      setOpen(false);
+      setName("");
+      setDescription("");
+      router.refresh();
+    } catch {
+      toast.error("Could not create target list.");
+    } finally {
+      setIsLoading(false);
     }
-    toast.success("Target list created successfully");
-    setOpen(false);
-    setName("");
-    setDescription("");
-    router.refresh();
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">+ New List</Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Create Target List</DialogTitle>
-          <DialogDescription>
+    <>
+      <Button variant="contained" size="small" onClick={() => setOpen(true)}>
+        + New List
+      </Button>
+      <Dialog open={open} onClose={() => !isLoading && setOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Create Target List</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
             Create a new list to group your targets for campaigns or outreach.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
-            <Input
-              id="name"
+          </DialogContentText>
+          <Stack spacing={2} sx={{ mt: 3 }}>
+            <TextField
+              autoFocus
+              fullWidth
+              required
+              label="Name"
               placeholder="Q1 Outreach List"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(event) => setName(event.target.value)}
               disabled={isLoading}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
+            <TextField
+              fullWidth
+              multiline
+              minRows={3}
+              label="Description"
               placeholder="A list of targets for Q1 outreach campaign"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(event) => setDescription(event.target.value)}
               disabled={isLoading}
             />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button onClick={handleCreate} disabled={isLoading || !name.trim()}>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setOpen(false)} disabled={isLoading}>Cancel</Button>
+          <Button variant="contained" onClick={handleCreate} disabled={isLoading || !name.trim()}>
             {isLoading ? "Creating..." : "Create"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 };
 

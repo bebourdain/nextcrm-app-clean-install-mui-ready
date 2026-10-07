@@ -7,24 +7,23 @@ import { suggestMapping } from "@/actions/crm/targets/suggest-mapping";
 import { parseSpreadsheetFile } from "@/lib/spreadsheet/parse";
 import { TARGET_FIELDS } from "@/lib/spreadsheet/target-fields";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
   Dialog,
+  DialogActions,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
+  DialogContentText,
   DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Upload, Loader2 } from "lucide-react";
+  MenuItem,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { Upload } from "lucide-react";
 
 type Step = "upload" | "mapping" | "preview";
 
@@ -163,186 +162,102 @@ const ImportTargetsModal = () => {
   const preview = step === "preview" ? computePreview() : null;
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Upload className="h-4 w-4 mr-2" />
-          Import CSV / Excel
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            Import Targets
-            <span className="ml-2 text-sm font-normal text-muted-foreground">
-              Step {step === "upload" ? 1 : step === "mapping" ? 2 : 3} of 3
-            </span>
-          </DialogTitle>
-          <DialogDescription>
+    <>
+      <Button variant="outlined" size="small" startIcon={<Upload size={16} />} onClick={() => setOpen(true)}>
+        Import CSV / Excel
+      </Button>
+      <Dialog open={open} onClose={() => !isLoading && handleOpenChange(false)} fullWidth maxWidth="md" slotProps={{ paper: { sx: { maxHeight: "90vh" } } }}>
+        <DialogTitle>
+          Import Targets
+          <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+            Step {step === "upload" ? 1 : step === "mapping" ? 2 : 3} of 3
+          </Typography>
+        </DialogTitle>
+        <DialogContent dividers>
+          <DialogContentText sx={{ mb: 3 }}>
             {step === "upload" && "Select a CSV or Excel (.xlsx) file to import targets."}
             {step === "mapping" && "Map your CSV columns to target fields. AI has pre-filled suggestions — adjust as needed."}
             {step === "preview" && "Review the import summary before proceeding."}
-          </DialogDescription>
-        </DialogHeader>
+          </DialogContentText>
 
-        {/* Step 1: Upload */}
-        {step === "upload" && (
-          <div className="space-y-4 py-2">
-            <div className="border-2 border-dashed rounded-md p-8 text-center">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv,.xlsx"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-              <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                Select file
-              </Button>
-              {selectedFile && (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Selected: {selectedFile.name}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Map Columns */}
-        {step === "mapping" && (
-          <div className="space-y-3 py-2">
-            {isSuggesting ? (
-              <div className="flex items-center gap-2 text-muted-foreground py-8 justify-center">
-                <Loader2 className="h-5 w-5 animate-spin" />
-                <span>AI is suggesting column mappings…</span>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <div className="grid grid-cols-2 gap-2 text-xs font-medium text-muted-foreground px-1 pb-1">
-                  <span>CRM Field</span>
-                  <span>CSV Column</span>
-                </div>
-                {TARGET_FIELDS.map((field) => (
-                  <div key={field.key} className="grid grid-cols-2 gap-2 items-center">
-                    <span className="text-sm">
-                      {field.label}
-                      {field.required && (
-                        <span className="text-destructive ml-1">*</span>
-                      )}
-                    </span>
-                    <Select
-                      value={mapping[field.key] ?? SKIP_VALUE}
-                      onValueChange={(val) =>
-                        setMapping((prev) => ({ ...prev, [field.key]: val }))
-                      }
-                    >
-                      <SelectTrigger className="h-8 text-sm">
-                        <SelectValue placeholder="— skip —" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={SKIP_VALUE}>— skip —</SelectItem>
-                        {csvHeaders.map((h) => (
-                          <SelectItem key={h} value={h}>
-                            {h}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
-                <p className="text-xs text-muted-foreground pt-1">
-                  <span className="text-destructive">*</span> last_name or company is required per row.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Step 3: Preview */}
-        {step === "preview" && preview && (
-          <div className="space-y-4 py-2">
-            <div className="rounded-md border p-4 space-y-1">
-              <p className="text-sm font-medium">
-                Ready to import{" "}
-                <span className="text-green-600 dark:text-green-400">
-                  {preview.valid} row{preview.valid !== 1 ? "s" : ""}
-                </span>
-                {preview.skipped > 0 && (
-                  <>
-                    {" "}— {" "}
-                    <span className="text-yellow-600 dark:text-yellow-400">
-                      {preview.skipped} row{preview.skipped !== 1 ? "s" : ""} will be skipped
-                    </span>
-                  </>
-                )}
-                .
-              </p>
-              {preview.skipReasons.length > 0 && (
-                <ul className="text-xs text-muted-foreground list-disc list-inside space-y-0.5 pt-1">
-                  {preview.skipReasons.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                  {preview.skipped > preview.skipReasons.length && (
-                    <li>…and {preview.skipped - preview.skipReasons.length} more</li>
-                  )}
-                </ul>
-              )}
-            </div>
-            {preview.valid === 0 && (
-              <p className="text-sm text-destructive">
-                No valid rows to import. Go back and adjust your column mapping.
-              </p>
-            )}
-          </div>
-        )}
-
-        <DialogFooter className="flex gap-2 sm:gap-0">
           {step === "upload" && (
-            <Button variant="outline" onClick={() => handleOpenChange(false)}>
-              Cancel
-            </Button>
+            <Paper variant="outlined" sx={{ borderStyle: "dashed", borderWidth: 2, p: 4, textAlign: "center" }}>
+              <input ref={fileInputRef} type="file" accept=".csv,.xlsx" onChange={handleFileChange} hidden />
+              <Button variant="outlined" onClick={() => fileInputRef.current?.click()}>Select file</Button>
+              {selectedFile && <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>Selected: {selectedFile.name}</Typography>}
+            </Paper>
           )}
 
           {step === "mapping" && (
-            <>
-              <Button variant="outline" onClick={() => setStep("upload")}>
-                Back
-              </Button>
-              <Button
-                onClick={() => setStep("preview")}
-                disabled={isSuggesting}
-              >
-                Next
-              </Button>
-            </>
+            isSuggesting ? (
+              <Stack direction="row" spacing={1} sx={{ py: 5, justifyContent: "center", alignItems: "center" }}>
+                <CircularProgress size={20} />
+                <Typography variant="body2" color="text.secondary">AI is suggesting column mappings…</Typography>
+              </Stack>
+            ) : (
+              <Stack spacing={1.5}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, px: 1 }}>
+                  <Typography variant="caption" color="text.secondary">CRM Field</Typography>
+                  <Typography variant="caption" color="text.secondary">CSV Column</Typography>
+                </Box>
+                {TARGET_FIELDS.map((field) => (
+                  <Box key={field.key} sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, alignItems: "center" }}>
+                    <Typography variant="body2">
+                      {field.label}{field.required && <Typography component="span" color="error" sx={{ ml: 0.5 }}>*</Typography>}
+                    </Typography>
+                    <TextField
+                      select
+                      size="small"
+                      fullWidth
+                      aria-label={`CSV column for ${field.label}`}
+                      value={mapping[field.key] ?? SKIP_VALUE}
+                      onChange={(event) => setMapping((current) => ({ ...current, [field.key]: event.target.value }))}
+                    >
+                      <MenuItem value={SKIP_VALUE}>— skip —</MenuItem>
+                      {csvHeaders.map((header) => <MenuItem key={header} value={header}>{header}</MenuItem>)}
+                    </TextField>
+                  </Box>
+                ))}
+                <Typography variant="caption" color="text.secondary">
+                  <Typography component="span" color="error">*</Typography> last_name or company is required per row.
+                </Typography>
+              </Stack>
+            )
           )}
 
-          {step === "preview" && (
-            <>
-              <Button variant="outline" onClick={() => setStep("mapping")} disabled={isLoading}>
-                Back
-              </Button>
-              <Button
-                onClick={handleImport}
-                disabled={isLoading || !preview || preview.valid === 0}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Importing…
-                  </>
-                ) : (
-                  "Import"
+          {step === "preview" && preview && (
+            <Stack spacing={2}>
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Typography variant="body2">
+                  Ready to import <Box component="span" sx={{ color: "success.main", fontWeight: 600 }}>{preview.valid} row{preview.valid !== 1 ? "s" : ""}</Box>
+                  {preview.skipped > 0 && <> — <Box component="span" sx={{ color: "warning.main", fontWeight: 600 }}>{preview.skipped} row{preview.skipped !== 1 ? "s" : ""} will be skipped</Box></>}.
+                </Typography>
+                {preview.skipReasons.length > 0 && (
+                  <Box component="ul" sx={{ pl: 2.5, mb: 0, color: "text.secondary" }}>
+                    {preview.skipReasons.map((reason, index) => <Typography component="li" variant="caption" key={index}>{reason}</Typography>)}
+                    {preview.skipped > preview.skipReasons.length && <Typography component="li" variant="caption">…and {preview.skipped - preview.skipReasons.length} more</Typography>}
+                  </Box>
                 )}
-              </Button>
-            </>
+              </Paper>
+              {preview.valid === 0 && <Alert severity="error">No valid rows to import. Go back and adjust your column mapping.</Alert>}
+            </Stack>
           )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          {step === "upload" && <Button onClick={() => handleOpenChange(false)}>Cancel</Button>}
+          {step === "mapping" && <>
+            <Button onClick={() => setStep("upload")}>Back</Button>
+            <Button variant="contained" onClick={() => setStep("preview")} disabled={isSuggesting}>Next</Button>
+          </>}
+          {step === "preview" && <>
+            <Button onClick={() => setStep("mapping")} disabled={isLoading}>Back</Button>
+            <Button variant="contained" onClick={handleImport} disabled={isLoading || !preview || preview.valid === 0} startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : undefined}>
+              {isLoading ? "Importing…" : "Import"}
+            </Button>
+          </>}
+        </DialogActions>
+      </Dialog>
+    </>
   );
 };
 
