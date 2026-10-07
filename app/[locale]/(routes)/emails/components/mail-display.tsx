@@ -1,334 +1,84 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEventHandler, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { addDays, nextSaturday } from "date-fns";
-import { format, addHours } from "date-fns";
-
-import {
-  Archive,
-  ArchiveX,
-  Clock,
-  Forward,
-  MoreVertical,
-  Reply,
-  ReplyAll,
-  Trash2,
-} from "lucide-react";
-
-import {
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { addDays, addHours, format, nextSaturday } from "date-fns";
+import { Archive, ArchiveX, Clock, Forward, MoreVertical, Reply, ReplyAll, Trash2 } from "lucide-react";
+import { Avatar, Box, Button, Divider, FormControlLabel, IconButton, Menu, MenuItem, Popover, Stack, Switch, TextField, Tooltip, Typography } from "@mui/material";
 import type { Mail } from "@/app/[locale]/(routes)/emails/data";
 import { getEmail, deleteEmail } from "@/actions/emails/messages";
 import { ComposeModal } from "@/app/[locale]/(routes)/emails/components/ComposeModal";
 
-interface MailDisplayProps {
-  mail: Mail | null;
-  activeAccountId: string | null;
-}
-
-export function MailDisplay({ mail, activeAccountId }: MailDisplayProps) {
+export function MailDisplay({ mail, activeAccountId }: { mail: Mail | null; activeAccountId: string | null }) {
   const today = new Date();
   const router = useRouter();
-
-  const [fullEmail, setFullEmail] = useState<Awaited<ReturnType<typeof getEmail>> | null>(null);
+  const [fetchedEmail, setFetchedEmail] = useState<Awaited<ReturnType<typeof getEmail>> | null>(null);
+  const [snoozeAnchor, setSnoozeAnchor] = useState<HTMLElement | null>(null);
+  const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (!mail?.id) {
-      setFullEmail(null);
-      return;
-    }
+    if (!mail?.id) return;
     let cancelled = false;
-    getEmail(mail.id)
-      .then((data) => { if (!cancelled) setFullEmail(data); })
-      .catch(() => { if (!cancelled) setFullEmail(null); });
+    getEmail(mail.id).then((data) => { if (!cancelled) setFetchedEmail(data); }).catch(() => { if (!cancelled) setFetchedEmail(null); });
     return () => { cancelled = true; };
   }, [mail?.id]);
 
+  const fullEmail = mail && fetchedEmail?.id === mail.id ? fetchedEmail : null;
   const senderName = fullEmail?.fromName ?? fullEmail?.fromEmail ?? "?";
-  const senderInitials = senderName
-    .split(" ")
-    .map((c) => c[0])
-    .join("")
-    .toUpperCase();
-
+  const senderInitials = senderName.split(" ").map((part) => part[0]).join("").toUpperCase();
   async function handleDelete() {
     if (!mail?.id) return;
-    try {
-      await deleteEmail(mail.id);
-      router.refresh();
-    } catch (e) {
-      console.error("Failed to delete email", e);
-    }
+    try { await deleteEmail(mail.id); router.refresh(); }
+    catch (error) { console.error("Failed to delete email", error); }
   }
+  const action = (label: string, icon: ReactNode, onClick?: MouseEventHandler<HTMLButtonElement>) => <Tooltip title={label}><span><IconButton size="small" aria-label={label} disabled={!mail} onClick={onClick}>{icon}</IconButton></span></Tooltip>;
 
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center p-2">
-        <div className="flex items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" disabled={!mail}>
-                <Archive className="h-4 w-4" />
-                <span className="sr-only">Archive</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Archive</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" disabled={!mail}>
-                <ArchiveX className="h-4 w-4" />
-                <span className="sr-only">Move to junk</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Move to junk</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={!mail}
-                onClick={handleDelete}
-              >
-                <Trash2 className="h-4 w-4" />
-                <span className="sr-only">Move to trash</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Move to trash</TooltipContent>
-          </Tooltip>
-          <Separator orientation="vertical" className="mx-1 h-6" />
-          <Tooltip>
-            <Popover>
-              <PopoverTrigger asChild>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" disabled={!mail}>
-                    <Clock className="h-4 w-4" />
-                    <span className="sr-only">Snooze</span>
-                  </Button>
-                </TooltipTrigger>
-              </PopoverTrigger>
-              <PopoverContent className="flex w-[535px] p-0">
-                <div className="flex flex-col gap-2 border-r px-2 py-4">
-                  <div className="px-4 text-sm font-medium">Snooze until</div>
-                  <div className="grid min-w-[250px] gap-1">
-                    <Button
-                      variant="ghost"
-                      className="justify-start font-normal"
-                    >
-                      Later today{" "}
-                      <span className="ml-auto text-muted-foreground">
-                        {format(addHours(today, 4), "E, h:m b")}
-                      </span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="justify-start font-normal"
-                    >
-                      Tomorrow
-                      <span className="ml-auto text-muted-foreground">
-                        {format(addDays(today, 1), "E, h:m b")}
-                      </span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="justify-start font-normal"
-                    >
-                      This weekend
-                      <span className="ml-auto text-muted-foreground">
-                        {format(nextSaturday(today), "E, h:m b")}
-                      </span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="justify-start font-normal"
-                    >
-                      Next week
-                      <span className="ml-auto text-muted-foreground">
-                        {format(addDays(today, 7), "E, h:m b")}
-                      </span>
-                    </Button>
-                  </div>
-                </div>
-                <div className="p-2">
-                  <Calendar />
-                </div>
-              </PopoverContent>
-            </Popover>
-            <TooltipContent>Snooze</TooltipContent>
-          </Tooltip>
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <ComposeModal
-                accountId={activeAccountId ?? ""}
-                mode="reply"
-                replyTo={fullEmail ? (fullEmail as unknown as Mail) : undefined}
-                trigger={
-                  <Button variant="ghost" size="icon" disabled={!mail}>
-                    <Reply className="h-4 w-4" />
-                    <span className="sr-only">Reply</span>
-                  </Button>
-                }
-              />
-            </TooltipTrigger>
-            <TooltipContent>Reply</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" disabled={!mail}>
-                <ReplyAll className="h-4 w-4" />
-                <span className="sr-only">Reply all</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Reply all</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <ComposeModal
-                accountId={activeAccountId ?? ""}
-                mode="forward"
-                replyTo={fullEmail ? (fullEmail as unknown as Mail) : undefined}
-                trigger={
-                  <Button variant="ghost" size="icon" disabled={!mail}>
-                    <Forward className="h-4 w-4" />
-                    <span className="sr-only">Forward</span>
-                  </Button>
-                }
-              />
-            </TooltipTrigger>
-            <TooltipContent>Forward</TooltipContent>
-          </Tooltip>
-        </div>
-        <Separator orientation="vertical" className="mx-2 h-6" />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" disabled={!mail}>
-              <MoreVertical className="h-4 w-4" />
-              <span className="sr-only">More</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Mark as unread</DropdownMenuItem>
-            <DropdownMenuItem>Star thread</DropdownMenuItem>
-            <DropdownMenuItem>Add label</DropdownMenuItem>
-            <DropdownMenuItem>Mute thread</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <Separator />
-      {mail ? (
-        <div className="flex flex-1 flex-col">
-          <div className="flex items-start p-4">
-            <div className="flex items-start gap-4 text-sm">
-              <Avatar>
-                <AvatarImage alt={senderName} />
-                <AvatarFallback>{senderInitials}</AvatarFallback>
-              </Avatar>
-              <div className="grid gap-1">
-                <div className="font-semibold">
-                  {fullEmail?.fromName ?? fullEmail?.fromEmail ?? "(unknown)"}
-                </div>
-                <div className="line-clamp-1 text-xs">
-                  {fullEmail?.subject ?? "(no subject)"}
-                </div>
-                <div className="line-clamp-1 text-xs">
-                  <span className="font-medium">From:</span>{" "}
-                  {fullEmail?.fromEmail ?? ""}
-                </div>
-                {Array.isArray(fullEmail?.toRecipients) && fullEmail.toRecipients.length > 0 && (
-                  <div className="line-clamp-1 text-xs">
-                    <span className="font-medium">To:</span>{" "}
-                    {(fullEmail.toRecipients as { name?: string; email: string }[])
-                      .map((r) => r.name ?? r.email).join(", ")}
-                  </div>
-                )}
-                {Array.isArray(fullEmail?.ccRecipients) && fullEmail.ccRecipients.length > 0 && (
-                  <div className="line-clamp-1 text-xs">
-                    <span className="font-medium">CC:</span>{" "}
-                    {(fullEmail.ccRecipients as { name?: string; email: string }[])
-                      .map((r) => r.name ?? r.email).join(", ")}
-                  </div>
-                )}
-              </div>
-            </div>
-            {fullEmail?.sentAt && (
-              <div className="ml-auto text-xs text-muted-foreground">
-                {format(new Date(fullEmail.sentAt), "PPpp")}
-              </div>
-            )}
-          </div>
-          <Separator />
-          <div className="flex-1 overflow-auto">
-            {fullEmail?.bodyHtml ? (
-              <iframe
-                srcDoc={fullEmail.bodyHtml}
-                sandbox="allow-popups allow-popups-to-escape-sandbox"
-                referrerPolicy="no-referrer"
-                className="w-full border-0"
-                style={{ height: "600px", maxHeight: "600px" }}
-                title="Email body"
-              />
-            ) : (
-              <pre className="whitespace-pre-wrap p-4 text-sm font-sans">
-                {fullEmail?.bodyText ?? (fullEmail ? "(No content)" : "Loading...")}
-              </pre>
-            )}
-          </div>
-          <Separator className="mt-auto" />
-          <div className="p-4">
-            <form>
-              <div className="grid gap-4">
-                <Textarea
-                  className="p-4"
-                  placeholder={`Reply to ${fullEmail?.fromName ?? fullEmail?.fromEmail ?? "..."}...`}
-                />
-                <div className="flex items-center">
-                  <Label
-                    htmlFor="mute"
-                    className="flex items-center gap-2 text-xs font-normal"
-                  >
-                    <Switch id="mute" aria-label="Mute thread" /> Mute this
-                    thread
-                  </Label>
-                  <Button size="sm" className="ml-auto">
-                    Send
-                  </Button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      ) : (
-        <div className="p-8 text-center text-muted-foreground">
-          No message selected
-        </div>
-      )}
-    </div>
-  );
+  return <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+    <Stack direction="row" spacing={0.25} sx={{ p: 1, alignItems: "center" }}>
+      {action("Archive", <Archive size={16} />)}
+      {action("Move to junk", <ArchiveX size={16} />)}
+      {action("Move to trash", <Trash2 size={16} />, () => { void handleDelete(); })}
+      <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+      {action("Snooze", <Clock size={16} />, (event) => setSnoozeAnchor(event.currentTarget))}
+      <Box sx={{ flex: 1 }} />
+      <Tooltip title="Reply"><span><ComposeModal accountId={activeAccountId ?? ""} mode="reply" replyTo={fullEmail ? fullEmail as unknown as Mail : undefined} trigger={<IconButton size="small" aria-label="Reply" disabled={!mail}><Reply size={16} /></IconButton>} /></span></Tooltip>
+      {action("Reply all", <ReplyAll size={16} />)}
+      <Tooltip title="Forward"><span><ComposeModal accountId={activeAccountId ?? ""} mode="forward" replyTo={fullEmail ? fullEmail as unknown as Mail : undefined} trigger={<IconButton size="small" aria-label="Forward" disabled={!mail}><Forward size={16} /></IconButton>} /></span></Tooltip>
+      <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+      {action("More", <MoreVertical size={16} />, (event) => setMoreAnchor(event.currentTarget))}
+    </Stack>
+    <Divider />
+    <Popover open={Boolean(snoozeAnchor)} anchorEl={snoozeAnchor} onClose={() => setSnoozeAnchor(null)} anchorOrigin={{ vertical: "bottom", horizontal: "left" }}>
+      <Box sx={{ p: 2, width: 300 }}><Typography variant="subtitle2" sx={{ mb: 1 }}>Snooze until</Typography><Stack spacing={0.5}>
+        {[{ label: "Later today", date: addHours(today, 4) }, { label: "Tomorrow", date: addDays(today, 1) }, { label: "This weekend", date: nextSaturday(today) }, { label: "Next week", date: addDays(today, 7) }].map((option) => <Button key={option.label} variant="text" color="inherit" sx={{ justifyContent: "space-between", textTransform: "none" }}>{option.label}<Typography variant="caption" color="text.secondary">{format(option.date, "E, h:m b")}</Typography></Button>)}
+        <TextField size="small" type="date" label="Choose date" slotProps={{ inputLabel: { shrink: true } }} />
+      </Stack></Box>
+    </Popover>
+    <Menu anchorEl={moreAnchor} open={Boolean(moreAnchor)} onClose={() => setMoreAnchor(null)}>
+      {["Mark as unread", "Star thread", "Add label", "Mute thread"].map((label) => <MenuItem key={label} onClick={() => setMoreAnchor(null)}>{label}</MenuItem>)}
+    </Menu>
+    {mail ? <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      <Stack direction="row" spacing={2} sx={{ p: 2, alignItems: "flex-start" }}>
+        <Avatar sx={{ width: 40, height: 40 }}>{senderInitials}</Avatar>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>{fullEmail?.fromName ?? fullEmail?.fromEmail ?? "(unknown)"}</Typography>
+          <Typography variant="caption" sx={{ display: "block" }}>{fullEmail?.subject ?? "(no subject)"}</Typography>
+          <Typography variant="caption" sx={{ display: "block" }}><strong>From:</strong> {fullEmail?.fromEmail ?? ""}</Typography>
+          {Array.isArray(fullEmail?.toRecipients) && fullEmail.toRecipients.length > 0 && <Typography variant="caption" sx={{ display: "block" }}><strong>To:</strong> {(fullEmail.toRecipients as { name?: string; email: string }[]).map((recipient) => recipient.name ?? recipient.email).join(", ")}</Typography>}
+          {Array.isArray(fullEmail?.ccRecipients) && fullEmail.ccRecipients.length > 0 && <Typography variant="caption" sx={{ display: "block" }}><strong>CC:</strong> {(fullEmail.ccRecipients as { name?: string; email: string }[]).map((recipient) => recipient.name ?? recipient.email).join(", ")}</Typography>}
+        </Box>
+        {fullEmail?.sentAt && <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>{format(new Date(fullEmail.sentAt), "PPpp")}</Typography>}
+      </Stack>
+      <Divider />
+      <Box sx={{ flex: 1, minHeight: 120, overflow: "auto" }}>
+        {fullEmail?.bodyHtml ? <iframe srcDoc={fullEmail.bodyHtml} sandbox="allow-popups allow-popups-to-escape-sandbox" referrerPolicy="no-referrer" style={{ width: "100%", height: 600, maxHeight: 600, border: 0 }} title="Email body" /> :
+          <Typography component="pre" variant="body2" sx={{ whiteSpace: "pre-wrap", fontFamily: "inherit", p: 2 }}>{fullEmail?.bodyText ?? (fullEmail ? "(No content)" : "Loading...")}</Typography>}
+      </Box>
+      <Divider />
+      <Box component="form" sx={{ p: 2, display: "grid", gap: 1.5 }}>
+        <TextField multiline minRows={3} placeholder={`Reply to ${fullEmail?.fromName ?? fullEmail?.fromEmail ?? "..."}...`} fullWidth />
+        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}><FormControlLabel control={<Switch size="small" />} label="Mute this thread" /><Button type="submit" variant="contained" size="small">Send</Button></Stack>
+      </Box>
+    </Box> : <Typography variant="body2" color="text.secondary" sx={{ p: 4, textAlign: "center" }}>No message selected</Typography>}
+  </Box>;
 }

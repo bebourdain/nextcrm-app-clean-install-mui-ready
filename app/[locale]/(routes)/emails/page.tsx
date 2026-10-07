@@ -1,10 +1,11 @@
 import React, { Suspense } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import { Box, Divider, Paper, Typography } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
+import { MuiLinkButton } from "@/components/mui/MuiLinkButton";
 import { MailComponent } from "./components/mail";
-import Container from "../components/ui/Container";
-import EmailsSkeleton from "@/components/skeletons/emails-skeleton";
+import { EmailsSkeleton } from "./components/emails-skeleton";
 import { getSession } from "@/lib/auth-server";
 import { getTranslations } from "next-intl/server";
 import { getEmailAccounts } from "@/actions/emails/accounts";
@@ -56,19 +57,14 @@ const EmailRoute = async ({
 
   if (connectedAccounts.length === 0) {
     return (
-      <Container title={t("emails")} description="Your connected mailboxes">
-        <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-          <p className="text-muted-foreground text-sm">
-            You don&apos;t have any mailbox registered yet.
-          </p>
-          <Link
-            href="/profile"
-            className="text-sm font-medium underline underline-offset-4"
-          >
-            Go to your profile to set up your first mailbox
-          </Link>
-        </div>
-      </Container>
+      <Box sx={{ width: "100%", pb: 6 }}>
+        <MuiPageHeader title={t("emails")} description="Your connected mailboxes" />
+        <Divider sx={{ my: 2 }} />
+        <Paper variant="outlined" sx={{ p: 6, textAlign: "center" }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>You don&apos;t have any mailbox registered yet.</Typography>
+          <MuiLinkButton href="/profile" variant="outlined">Go to your profile to set up your first mailbox</MuiLinkButton>
+        </Paper>
+      </Box>
     );
   }
 
@@ -81,10 +77,9 @@ const EmailRoute = async ({
     : { emails: [], total: 0, page: 1, totalPages: 0 };
 
   return (
-    <Container
-      title={t("emails")}
-      description="Your connected mailboxes"
-    >
+    <Box sx={{ width: "100%", pb: 6 }}>
+      <MuiPageHeader title={t("emails")} description="Your connected mailboxes" />
+      <Divider sx={{ my: 2 }} />
       <Suspense fallback={<EmailsSkeleton />}>
         <MailComponent
           accounts={connectedAccounts}
@@ -98,7 +93,7 @@ const EmailRoute = async ({
           navCollapsedSize={8}
         />
       </Suspense>
-    </Container>
+    </Box>
   );
 };
 

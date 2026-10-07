@@ -1,50 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { cloneElement, useState, type MouseEventHandler, type ReactElement } from "react";
+import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from "@mui/material";
 import { sendEmail } from "@/actions/emails/messages";
 import { useRouter } from "next/navigation";
 import type { Mail } from "@/app/[locale]/(routes)/emails/data";
 
 type Mode = "new" | "reply" | "forward";
+type Trigger = ReactElement<{ onClick?: MouseEventHandler<HTMLElement> }>;
+type Props = { accountId: string; mode?: Mode; replyTo?: Mail; trigger?: Trigger };
 
-type Props = {
-  accountId: string;
-  mode?: Mode;
-  replyTo?: Mail;
-  trigger?: React.ReactNode;
-};
-
-export function ComposeModal({
-  accountId,
-  mode = "new",
-  replyTo,
-  trigger,
-}: Props) {
+export function ComposeModal({ accountId, mode = "new", replyTo, trigger }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const defaultTo =
-    mode === "reply" ? replyTo?.fromEmail ?? "" : "";
-  const defaultSubject =
-    mode === "reply"
-      ? `Re: ${replyTo?.subject ?? ""}`
-      : mode === "forward"
-        ? `Fwd: ${replyTo?.subject ?? ""}`
-        : "";
-  const defaultBody =
-    mode === "reply" || mode === "forward"
-      ? `\n\n--- Original ---\n${replyTo?.bodyText ?? ""}`
-      : "";
-
+  const defaultTo = mode === "reply" ? replyTo?.fromEmail ?? "" : "";
+  const defaultSubject = mode === "reply" ? `Re: ${replyTo?.subject ?? ""}` : mode === "forward" ? `Fwd: ${replyTo?.subject ?? ""}` : "";
+  const defaultBody = mode === "reply" || mode === "forward" ? `\n\n--- Original ---\n${replyTo?.bodyText ?? ""}` : "";
   const [to, setTo] = useState(defaultTo);
   const [cc, setCc] = useState("");
   const [subject, setSubject] = useState(defaultSubject);
@@ -56,13 +29,12 @@ export function ComposeModal({
     try {
       await sendEmail({
         accountId,
-        to: to.split(",").map((e) => e.trim()).filter(Boolean),
-        cc: cc.split(",").map((e) => e.trim()).filter(Boolean),
+        to: to.split(",").map((email) => email.trim()).filter(Boolean),
+        cc: cc.split(",").map((email) => email.trim()).filter(Boolean),
         subject,
         body,
         inReplyTo: mode === "reply" ? replyTo?.rfcMessageId : undefined,
-        references:
-          mode === "reply" ? replyTo?.rfcMessageId : undefined,
+        references: mode === "reply" ? replyTo?.rfcMessageId : undefined,
       });
       setOpen(false);
       router.refresh();
@@ -73,40 +45,19 @@ export function ComposeModal({
     }
   }
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? <Button size="sm">Compose</Button>}
-      </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            {mode === "reply" ? "Reply" : mode === "forward" ? "Forward" : "New Email"}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <Label>To</Label>
-            <Input value={to} onChange={(e) => setTo(e.target.value)} placeholder="recipient@example.com" />
-          </div>
-          <div className="space-y-1">
-            <Label>CC</Label>
-            <Input value={cc} onChange={(e) => setCc(e.target.value)} placeholder="cc@example.com" />
-          </div>
-          <div className="space-y-1">
-            <Label>Subject</Label>
-            <Input value={subject} onChange={(e) => setSubject(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label>Message</Label>
-            <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={8} />
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button onClick={handleSend} disabled={sending} className="w-full">
-            {sending ? "Sending…" : "Send"}
-          </Button>
-        </div>
-      </DialogContent>
+  const triggerControl = trigger ? cloneElement(trigger, { onClick: (event) => { trigger.props.onClick?.(event); if (!event.defaultPrevented) setOpen(true); } }) : <Button size="small" variant="contained" onClick={() => setOpen(true)}>Compose</Button>;
+  return <>
+    {triggerControl}
+    <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
+      <DialogTitle>{mode === "reply" ? "Reply" : mode === "forward" ? "Forward" : "New Email"}</DialogTitle>
+      <DialogContent><Stack spacing={2} sx={{ pt: 1 }}>
+        <TextField label="To" value={to} onChange={(event) => setTo(event.target.value)} placeholder="recipient@example.com" disabled={sending} fullWidth />
+        <TextField label="CC" value={cc} onChange={(event) => setCc(event.target.value)} placeholder="cc@example.com" disabled={sending} fullWidth />
+        <TextField label="Subject" value={subject} onChange={(event) => setSubject(event.target.value)} disabled={sending} fullWidth />
+        <TextField label="Message" value={body} onChange={(event) => setBody(event.target.value)} multiline minRows={8} disabled={sending} fullWidth />
+        {error && <Alert severity="error" role="alert">{error}</Alert>}
+      </Stack></DialogContent>
+      <DialogActions sx={{ px: 3, pb: 3 }}><Button onClick={() => setOpen(false)} disabled={sending}>Cancel</Button><Button variant="contained" onClick={handleSend} disabled={sending}>{sending ? "Sending…" : "Send"}</Button></DialogActions>
     </Dialog>
-  );
+  </>;
 }

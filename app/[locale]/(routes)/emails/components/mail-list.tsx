@@ -2,102 +2,30 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
-
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Box, Button, Divider, List, ListItemButton, Stack, Typography } from "@mui/material";
 import type { Mail } from "@/app/[locale]/(routes)/emails/data";
 import { useMail } from "@/app/[locale]/(routes)/emails/use-mail";
 
-interface MailListProps {
-  items: Mail[];
-  page: number;
-  totalPages: number;
-}
-
-export function MailList({ items, page, totalPages }: MailListProps) {
+export function MailList({ items, page, totalPages }: { items: Mail[]; page: number; totalPages: number }) {
   const [mail, setMail] = useMail();
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  function navigate(toPage: number) {
-    const p = new URLSearchParams(searchParams.toString());
-    p.set("page", String(toPage));
-    router.push(`?${p.toString()}`);
-  }
-
-  return (
-    <ScrollArea className="h-full">
-      <div className="flex flex-col gap-2 p-4 pt-0">
-        {items.map((item) => (
-          <button
-            key={item.id}
-            className={cn(
-              "flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent",
-              mail.selected === item.id && "bg-muted"
-            )}
-            onClick={() =>
-              setMail({
-                ...mail,
-                selected: item.id,
-              })
-            }
-          >
-            <div className="flex w-full flex-col gap-1">
-              <div className="flex items-center">
-                <div className="flex items-center gap-2">
-                  <div className="font-semibold">
-                    {item.fromName ?? item.fromEmail ?? "Unknown"}
-                  </div>
-                  {!item.isRead && (
-                    <span className="flex h-2 w-2 rounded-full bg-blue-600" />
-                  )}
-                </div>
-                <div
-                  className={cn(
-                    "ml-auto text-xs",
-                    mail.selected === item.id
-                      ? "text-foreground"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  {item.sentAt
-                    ? formatDistanceToNow(new Date(item.sentAt), {
-                        addSuffix: true,
-                      })
-                    : ""}
-                </div>
-              </div>
-              <div className="text-xs font-medium">
-                {item.subject ?? "(no subject)"}
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t px-4 py-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => navigate(page - 1)}
-          >
-            Previous
-          </Button>
-          <span className="text-xs text-muted-foreground">
-            {page} / {totalPages}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={page >= totalPages}
-            onClick={() => navigate(page + 1)}
-          >
-            Next
-          </Button>
-        </div>
-      )}
-    </ScrollArea>
-  );
+  const navigate = (toPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(toPage));
+    router.push(`?${params.toString()}`);
+  };
+  return <Box sx={{ height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>
+    <List sx={{ flex: 1, overflowY: "auto", px: 1.5, py: 1 }}>
+      {items.map((item) => <ListItemButton key={item.id} selected={mail.selected === item.id} onClick={() => setMail({ ...mail, selected: item.id })} sx={{ mb: 1, p: 1.5, border: 1, borderColor: "divider", borderRadius: 1, alignItems: "stretch", flexDirection: "column", "&:hover": { bgcolor: "action.hover" } }}>
+        <Stack direction="row" spacing={1} sx={{ width: "100%", alignItems: "center", minWidth: 0 }}>
+          <Typography variant="body2" noWrap sx={{ fontWeight: 600, flex: 1 }}>{item.fromName ?? item.fromEmail ?? "Unknown"}</Typography>
+          {!item.isRead && <Box aria-label="Unread" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "primary.main", flexShrink: 0 }} />}
+          <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>{item.sentAt ? formatDistanceToNow(new Date(item.sentAt), { addSuffix: true }) : ""}</Typography>
+        </Stack>
+        <Typography variant="caption" noWrap sx={{ width: "100%", mt: 0.5 }}>{item.subject ?? "(no subject)"}</Typography>
+      </ListItemButton>)}
+    </List>
+    {totalPages > 1 && <><Divider /><Stack direction="row" sx={{ px: 1.5, py: 1, justifyContent: "space-between", alignItems: "center" }}><Button size="small" disabled={page <= 1} onClick={() => navigate(page - 1)}>Previous</Button><Typography variant="caption" color="text.secondary">{page} / {totalPages}</Typography><Button size="small" disabled={page >= totalPages} onClick={() => navigate(page + 1)}>Next</Button></Stack></>}
+  </Box>;
 }
