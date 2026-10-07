@@ -1,4 +1,6 @@
 import { InvoicesTabs } from "./_components/InvoicesTabs";
+import { Box, Divider } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 
 export default function InvoicesLayout({
   children,
@@ -6,15 +8,11 @@ export default function InvoicesLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Invoices</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage invoice settings, number series, and tax rates.
-        </p>
-      </div>
+    <Box sx={{ width: "100%", pb: 6 }}>
+      <MuiPageHeader title="Invoices" description="Manage invoice settings, number series, and tax rates." />
+      <Divider sx={{ my: 2 }} />
       <InvoicesTabs />
-      {children}
-    </div>
+      <Box sx={{ mt: 3 }}>{children}</Box>
+    </Box>
   );
 }

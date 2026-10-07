@@ -2,242 +2,65 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Add, DeleteOutlined, EditOutlined } from "@mui/icons-material";
+import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControlLabel, IconButton, MenuItem, Stack, Switch, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Pencil, Trash2 } from "lucide-react";
 
-interface Series {
-  id: string;
-  name: string;
-  prefixTemplate: string;
-  resetPolicy: string;
-  isDefault: boolean;
-  active: boolean;
-}
-
-interface SeriesTableProps {
-  series: Series[];
-}
-
+interface Series { id: string; name: string; prefixTemplate: string; resetPolicy: string; isDefault: boolean; active: boolean }
 const RESET_POLICIES = ["YEARLY", "MONTHLY", "NEVER"] as const;
 
-export function SeriesTable({ series }: SeriesTableProps) {
+export function SeriesTable({ series }: { series: Series[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [prefixTemplate, setPrefixTemplate] = useState("");
-  const [resetPolicy, setResetPolicy] = useState<string>("YEARLY");
+  const [resetPolicy, setResetPolicy] = useState("YEARLY");
   const [isDefault, setIsDefault] = useState(false);
   const [active, setActive] = useState(true);
+  const [deleting, setDeleting] = useState<Series | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  const resetForm = () => {
-    setEditId(null);
-    setName("");
-    setPrefixTemplate("");
-    setResetPolicy("YEARLY");
-    setIsDefault(false);
-    setActive(true);
-  };
-
-  const openEdit = (s: Series) => {
-    setEditId(s.id);
-    setName(s.name);
-    setPrefixTemplate(s.prefixTemplate);
-    setResetPolicy(s.resetPolicy);
-    setIsDefault(s.isDefault);
-    setActive(s.active);
-    setOpen(true);
-  };
-
-  const handleSave = async () => {
-    const body = { name, prefixTemplate, resetPolicy, isDefault, active };
+  const reset = () => { setEditId(null); setName(""); setPrefixTemplate(""); setResetPolicy("YEARLY"); setIsDefault(false); setActive(true); };
+  const edit = (item: Series) => { setEditId(item.id); setName(item.name); setPrefixTemplate(item.prefixTemplate); setResetPolicy(item.resetPolicy); setIsDefault(item.isDefault); setActive(item.active); setOpen(true); };
+  const close = () => { setOpen(false); reset(); };
+  const save = async () => {
+    setBusy(true);
     try {
-      const url = editId
-        ? `/api/admin/invoices/series/${editId}`
-        : "/api/admin/invoices/series";
-      const method = editId ? "PATCH" : "POST";
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      toast.success(editId ? "Series updated" : "Series created");
-      setOpen(false);
-      resetForm();
-      router.refresh();
-    } catch {
-      toast.error("Failed to save series");
-    }
+      const response = await fetch(editId ? `/api/admin/invoices/series/${editId}` : "/api/admin/invoices/series", { method: editId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, prefixTemplate, resetPolicy, isDefault, active }) });
+      if (!response.ok) throw new Error(await response.text());
+      toast.success(editId ? "Series updated" : "Series created"); close(); router.refresh();
+    } catch { toast.error("Failed to save series"); }
+    finally { setBusy(false); }
   };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this series?")) return;
+  const remove = async () => {
+    if (!deleting) return;
+    setBusy(true);
     try {
-      const res = await fetch(`/api/admin/invoices/series/${id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error(await res.text());
-      toast.success("Series deleted");
-      router.refresh();
-    } catch {
-      toast.error("Failed to delete series");
-    }
+      const response = await fetch(`/api/admin/invoices/series/${deleting.id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error(await response.text());
+      toast.success("Series deleted"); setDeleting(null); router.refresh();
+    } catch { toast.error("Failed to delete series"); }
+    finally { setBusy(false); }
   };
 
-  return (
-    <div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Prefix Template</TableHead>
-            <TableHead>Reset Policy</TableHead>
-            <TableHead>Default</TableHead>
-            <TableHead>Active</TableHead>
-            <TableHead className="w-20">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {series.map((s) => (
-            <TableRow key={s.id} className={!s.active ? "opacity-50" : ""}>
-              <TableCell className="font-medium">{s.name}</TableCell>
-              <TableCell className="font-mono text-sm">
-                {s.prefixTemplate}
-              </TableCell>
-              <TableCell>{s.resetPolicy}</TableCell>
-              <TableCell>{s.isDefault ? "Yes" : "No"}</TableCell>
-              <TableCell>{s.active ? "Active" : "Inactive"}</TableCell>
-              <TableCell>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openEdit(s)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(s.id)}
-                    disabled={s.isDefault}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-          {series.length === 0 && (
-            <TableRow>
-              <TableCell
-                colSpan={6}
-                className="text-center text-muted-foreground"
-              >
-                No series configured
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-
-      <Dialog
-        open={open}
-        onOpenChange={(v) => {
-          setOpen(v);
-          if (!v) resetForm();
-        }}
-      >
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="mt-4">
-            + Add Series
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editId ? "Edit Series" : "Add Series"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <Input
-                placeholder="e.g. Standard Invoices"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Prefix Template</Label>
-              <Input
-                placeholder="e.g. INV-{YYYY}-"
-                value={prefixTemplate}
-                onChange={(e) => setPrefixTemplate(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Use {"{YYYY}"} for year, {"{MM}"} for month
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label>Reset Policy</Label>
-              <Select value={resetPolicy} onValueChange={setResetPolicy}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {RESET_POLICIES.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch checked={isDefault} onCheckedChange={setIsDefault} />
-              <Label>Default</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch checked={active} onCheckedChange={setActive} />
-              <Label>Active</Label>
-            </div>
-            <Button
-              onClick={handleSave}
-              disabled={!name || !prefixTemplate}
-            >
-              {editId ? "Update" : "Create"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
+  return <Stack spacing={2}>
+    <TableContainer sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}><Table size="small">
+      <TableHead><TableRow><TableCell>Name</TableCell><TableCell>Prefix Template</TableCell><TableCell>Reset Policy</TableCell><TableCell>Default</TableCell><TableCell>Active</TableCell><TableCell align="right">Actions</TableCell></TableRow></TableHead>
+      <TableBody>{series.map((item) => <TableRow key={item.id} hover sx={{ opacity: item.active ? 1 : 0.6 }}>
+        <TableCell sx={{ fontWeight: 600 }}>{item.name}</TableCell><TableCell sx={{ fontFamily: "monospace" }}>{item.prefixTemplate}</TableCell><TableCell>{item.resetPolicy}</TableCell>
+        <TableCell>{item.isDefault ? "Yes" : "No"}</TableCell><TableCell><Chip size="small" color={item.active ? "success" : "default"} label={item.active ? "Active" : "Inactive"} /></TableCell>
+        <TableCell align="right"><IconButton size="small" aria-label={`Edit ${item.name}`} onClick={() => edit(item)}><EditOutlined fontSize="small" /></IconButton><IconButton size="small" color="error" aria-label={`Delete ${item.name}`} disabled={item.isDefault} onClick={() => setDeleting(item)}><DeleteOutlined fontSize="small" /></IconButton></TableCell>
+      </TableRow>)}{!series.length && <TableRow><TableCell colSpan={6} align="center" sx={{ py: 4 }}><Typography color="text.secondary">No series configured</Typography></TableCell></TableRow>}</TableBody>
+    </Table></TableContainer>
+    <Box><Button variant="outlined" size="small" startIcon={<Add />} onClick={() => { reset(); setOpen(true); }}>Add Series</Button></Box>
+    <Dialog open={open} onClose={close} fullWidth maxWidth="sm"><DialogTitle>{editId ? "Edit Series" : "Add Series"}</DialogTitle><DialogContent dividers><Stack spacing={2} sx={{ pt: 1 }}>
+      <TextField label="Name" value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Standard Invoices" fullWidth />
+      <TextField label="Prefix Template" value={prefixTemplate} onChange={(event) => setPrefixTemplate(event.target.value)} placeholder="e.g. INV-{YYYY}-" helperText={'Use {YYYY} for year, {MM} for month'} fullWidth />
+      <TextField select label="Reset Policy" value={resetPolicy} onChange={(event) => setResetPolicy(event.target.value)} fullWidth>{RESET_POLICIES.map((policy) => <MenuItem key={policy} value={policy}>{policy}</MenuItem>)}</TextField>
+      <FormControlLabel label="Default" control={<Switch checked={isDefault} onChange={(_, checked) => setIsDefault(checked)} />} />
+      <FormControlLabel label="Active" control={<Switch checked={active} onChange={(_, checked) => setActive(checked)} />} />
+    </Stack></DialogContent><DialogActions><Button onClick={close}>Cancel</Button><Button variant="contained" disabled={busy || !name || !prefixTemplate} onClick={save}>{busy ? "Saving..." : editId ? "Update" : "Create"}</Button></DialogActions></Dialog>
+    <Dialog open={!!deleting} onClose={() => setDeleting(null)}><DialogTitle>Delete series?</DialogTitle><DialogContent><DialogContentText>Delete {deleting?.name}?</DialogContentText></DialogContent><DialogActions><Button onClick={() => setDeleting(null)} disabled={busy}>Cancel</Button><Button color="error" variant="contained" onClick={remove} disabled={busy}>{busy ? "Deleting..." : "Delete"}</Button></DialogActions></Dialog>
+  </Stack>;
 }

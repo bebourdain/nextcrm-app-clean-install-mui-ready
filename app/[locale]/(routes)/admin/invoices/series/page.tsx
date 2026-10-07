@@ -1,5 +1,5 @@
 import { prismadb } from "@/lib/prisma";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Paper, Typography } from "@mui/material";
 import { SeriesTable } from "./_components/SeriesTable";
 
 export default async function InvoiceSeriesPage() {
@@ -8,15 +8,9 @@ export default async function InvoiceSeriesPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Invoice Series</CardTitle>
-        </CardHeader>
-        <CardContent>
+    <Paper variant="outlined" sx={{ p: 3 }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>Invoice Series</Typography>
           <SeriesTable series={JSON.parse(JSON.stringify(series))} />
-        </CardContent>
-      </Card>
-    </div>
+    </Paper>
   );
 }

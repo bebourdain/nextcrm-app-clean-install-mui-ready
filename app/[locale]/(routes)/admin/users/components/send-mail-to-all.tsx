@@ -1,87 +1,33 @@
 "use client";
 
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import React, { ElementRef, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-
+import { Box, Button, Drawer, Stack, TextField, Typography } from "@mui/material";
+import { toast } from "sonner";
 import { sendMailToAll } from "@/actions/admin/send-mail-to-all";
-
-import { Button } from "@/components/ui/button";
-import { FormInput } from "@/components/form/form-input";
-import { FormSubmit } from "@/components/form/form-submit";
-import { FormTextarea } from "@/components/form/form-textarea";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger
-} from "@/components/ui/sheet";
-
 import { useAction } from "@/hooks/use-action";
 
-const SendMailToAll = () => {
-  const closeRef = useRef<ElementRef<"button">>(null);
+export default function SendMailToAll() {
+  const [open, setOpen] = useState(false);
   const t = useTranslations("AdminPage");
-
   const { execute, fieldErrors, isLoading } = useAction(sendMailToAll, {
-    onSuccess: (data) => {
-      toast.success(t("sendMail.sent"));
-      closeRef.current?.click();
-    },
-    onError: (error) => {
-      toast.error(error);
-    },
+    onSuccess: () => { toast.success(t("sendMail.sent")); setOpen(false); },
+    onError: (error) => toast.error(error),
   });
-
-  const onSendMail = async (formData: FormData) => {
-    const title = formData.get("title") as string;
-    const message = formData.get("message") as string;
-
-    await execute({ title, message });
+  const submit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    void execute({ title: String(data.get("title") ?? ""), message: String(data.get("message") ?? "") });
   };
-
-  return (
-    <Sheet>
-      <SheetTrigger ref={closeRef} asChild>
-        <Button>{t("sendMail.trigger")}</Button>
-      </SheetTrigger>
-      <SheetContent className="max-w-3xl overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>{t("sendMail.title")}</SheetTitle>
-          <SheetDescription>
-            {t("sendMail.description")}
-          </SheetDescription>
-        </SheetHeader>
-        <div className="mt-6 space-y-4">
-          <form action={onSendMail} className="space-y-4">
-            <FormInput
-              id="title"
-              label={t("sendMail.messageTitle")}
-              type="text"
-              errors={fieldErrors}
-            />
-            <FormTextarea
-              id="message"
-              label={t("sendMail.message")}
-              placeholder={t("sendMail.message")}
-              required
-              errors={fieldErrors}
-            />
-            <FormSubmit className="w-full">
-              {isLoading ? (
-                <Loader2 className="h-6 w-6  animate-spin" />
-              ) : (
-                t("sendMail.sendButton")
-              )}
-            </FormSubmit>
-          </form>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-};
-
-export default SendMailToAll;
+  return <>
+    <Button variant="outlined" onClick={() => setOpen(true)}>{t("sendMail.trigger")}</Button>
+    <Drawer anchor="right" open={open} onClose={() => setOpen(false)} slotProps={{ paper: { sx: { width: { xs: "100%", sm: 560 }, p: 3 } } }}>
+      <Stack spacing={1} sx={{ mb: 3 }}><Typography variant="h6">{t("sendMail.title")}</Typography><Typography color="text.secondary">{t("sendMail.description")}</Typography></Stack>
+      <Box component="form" onSubmit={submit}><Stack spacing={2}>
+        <TextField name="title" label={t("sendMail.messageTitle")} error={!!fieldErrors?.title} helperText={fieldErrors?.title?.join(", ")} fullWidth />
+        <TextField name="message" label={t("sendMail.message")} placeholder={t("sendMail.message")} multiline minRows={6} required error={!!fieldErrors?.message} helperText={fieldErrors?.message?.join(", ")} fullWidth />
+        <Stack direction="row" sx={{ justifyContent: "flex-end" }} spacing={1}><Button onClick={() => setOpen(false)} disabled={isLoading}>Cancel</Button><Button type="submit" variant="contained" disabled={isLoading}>{isLoading ? "Sending..." : t("sendMail.sendButton")}</Button></Stack>
+      </Stack></Box>
+    </Drawer>
+  </>;
+}

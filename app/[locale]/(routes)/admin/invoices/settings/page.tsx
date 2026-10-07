@@ -1,5 +1,5 @@
 import { prismadb } from "@/lib/prisma";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Paper, Typography } from "@mui/material";
 import { InvoiceSettingsForm } from "./_components/InvoiceSettingsForm";
 
 export default async function InvoiceSettingsPage() {
@@ -20,20 +20,14 @@ export default async function InvoiceSettingsPage() {
   ]);
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Invoice Settings</CardTitle>
-        </CardHeader>
-        <CardContent>
+    <Paper variant="outlined" sx={{ p: 3 }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>Invoice Settings</Typography>
           <InvoiceSettingsForm
             settings={settings ? JSON.parse(JSON.stringify(settings)) : null}
             currencies={JSON.parse(JSON.stringify(currencies))}
             series={JSON.parse(JSON.stringify(series))}
             taxRates={JSON.parse(JSON.stringify(taxRates))}
           />
-        </CardContent>
-      </Card>
-    </div>
+    </Paper>
   );
 }
