@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
-import Container from "../../components/ui/Container";
-import CrmTableSkeleton from "@/components/skeletons/crm-table-skeleton";
+import { Box, Divider, Skeleton } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { getAllCrmData } from "@/actions/crm/get-crm-data";
 import { getProductsFull } from "@/actions/crm/products/get-products";
 import { getProductCategories } from "@/actions/crm/products/get-product-categories";
@@ -17,11 +17,10 @@ const ProductsPage = async () => {
   const serializedProducts = serializeDecimalsList(products);
 
   return (
-    <Container
-      title="Products"
-      description="Manage your product and service catalog"
-    >
-      <Suspense fallback={<CrmTableSkeleton />}>
+    <Box sx={{ width: "100%", pb: 6 }}>
+      <MuiPageHeader title="Products" description="Manage your product and service catalog" />
+      <Divider sx={{ my: 2 }} />
+      <Suspense fallback={<Skeleton variant="rounded" height={360} />}>
         <ProductsView
           data={serializedProducts}
           categories={categories}
@@ -32,7 +31,7 @@ const ProductsPage = async () => {
           }))}
         />
       </Suspense>
-    </Container>
+    </Box>
   );
 };
 

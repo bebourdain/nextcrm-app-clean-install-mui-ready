@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { Button } from "@mui/material";
+import { EditOutlined } from "@mui/icons-material";
 import UpdateProductForm from "@/app/[locale]/(routes)/crm/products/_forms/update-product";
 import type { crm_ProductCategories } from "@prisma/client";
 
@@ -36,10 +36,7 @@ export function EditProductButton({
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-        <Pencil className="mr-2 h-4 w-4" />
-        Edit
-      </Button>
+      <Button variant="outlined" startIcon={<EditOutlined />} onClick={() => setOpen(true)}>Edit</Button>
       <UpdateProductForm
         onOpen={open}
         setOpen={setOpen}
