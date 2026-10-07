@@ -2,8 +2,8 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Box, Chip } from "@mui/material";
+
 
 import { labels, priorities, statuses } from "../data/data";
 import { Task } from "../data/schema";
@@ -18,13 +18,13 @@ export const columns: ColumnDef<Task>[] = [
     ),
 
     cell: ({ row }) => (
-      <div className="w-[150px]">
+      <Box sx={{ width: 150 }}>
         {
           //@ts-ignore
           //TODO: fix this
           row.getValue("assigned_to_user")?.name ?? "Unassigned"
         }
-      </div>
+      </Box>
     ),
     enableSorting: false,
     enableHiding: false,
@@ -40,12 +40,12 @@ export const columns: ColumnDef<Task>[] = [
       );
 
       return (
-        <div className="flex space-x-2">
-          {label && <Badge variant="outline">{label.label}</Badge>}
+        <Box sx={{ display: "flex", gap: 1 }}>
+          {label && <Chip size="small" variant="outlined" label={label.label} />}
           <span className="max-w-[500px] truncate font-medium">
             {row.original.document_name}
           </span>
-        </div>
+        </Box>
       );
     },
   },

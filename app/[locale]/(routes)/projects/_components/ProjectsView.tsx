@@ -7,8 +7,7 @@ import { getBoards } from "@/actions/projects/get-boards";
 import NewTaskDialog from "../dialogs/NewTask";
 import NewProjectDialog from "../dialogs/NewProject";
 
-import { Button } from "@/components/ui/button";
-import H2Title from "@/components/typography/h2";
+import { Button, Stack, Typography } from "@mui/material";
 
 import { ProjectsDataTable } from "../table-components/data-table";
 import { columns } from "../table-components/columns";
@@ -26,23 +25,17 @@ const ProjectsView = async () => {
 
   return (
     <>
-      <div className="flex gap-2 py-10">
+      <Stack direction="row" spacing={1} sx={{ py: 3, flexWrap: "wrap", gap: 1 }}>
         <NewProjectDialog />
         <NewTaskDialog boards={boards} />
-        <Button asChild>
-          <Link href="/projects/tasks">{t("allTasks")}</Link>
-        </Button>
-        <Button asChild>
-          <Link href={`/projects/tasks/${userId}`}>{t("myTasks")}</Link>
-        </Button>
-        <Button asChild>
-          <Link href="/projects/dashboard">{t("dashboard")}</Link>
-        </Button>
-      </div>
-      <div className="pt-2 space-y-3">
-        <H2Title>{t("projects")}</H2Title>
+        <Button component={Link} href="/projects/tasks" variant="outlined">{t("allTasks")}</Button>
+        <Button component={Link} href={`/projects/tasks/${userId}`} variant="outlined">{t("myTasks")}</Button>
+        <Button component={Link} href="/projects/dashboard" variant="outlined">{t("dashboard")}</Button>
+      </Stack>
+      <Stack spacing={2}>
+        <Typography variant="h6">{t("projects")}</Typography>
         <ProjectsDataTable data={boards} columns={columns} />
-      </div>
+      </Stack>
     </>
   );
 };

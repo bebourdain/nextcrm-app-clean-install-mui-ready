@@ -1,96 +1,21 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTrigger,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { TrashIcon } from "lucide-react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-
-import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import { TrashIcon } from "lucide-react";
 import { deleteProject } from "@/actions/projects/delete-project";
 
-type Props = {
-  boardId: string;
-  boardName: string;
-};
-
-const DeleteProjectDialog = ({ boardId, boardName }: Props) => {
+export default function DeleteProjectDialog({ boardId, boardName }: { boardId: string; boardName: string }) {
   const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const [isMounted, setIsMounted] = useState(false);
-
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return null;
+  async function onDelete() {
+    setLoading(true);
+    try { const result = await deleteProject(boardId); if (result?.error) toast.error(result.error); else toast.success(`Project: ${boardName} deleted successfully`); }
+    catch { toast.error("Something went wrong while deleting project. Please try again."); }
+    finally { setOpen(false); setLoading(false); router.refresh(); router.push("/projects"); }
   }
-
-  //Actions
-
-  const onDelete = async () => {
-    setIsLoading(true);
-    try {
-      const result = await deleteProject(boardId);
-      if (result?.error) {
-        toast.error(result.error);
-      } else {
-        toast.success(`Project: ${boardName} deleted successfully`);
-      }
-    } catch (error) {
-      toast.error("Something went wrong while deleting project. Please try again.");
-    } finally {
-      setOpen(false);
-      setIsLoading(false);
-      router.refresh();
-      router.push("/projects");
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <Button className="px-2" variant={"destructive"} asChild>
-          <div className="px-3 gap-2">
-            Delete project
-            <TrashIcon size={15} />
-          </div>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Delete project</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete this project? You will not be able
-            to recover it. All tasks will be deleted as well.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => setOpen(false)}
-          >
-            Cancel
-          </Button>
-          <Button variant="destructive" onClick={onDelete}>
-            {isLoading ? "Deleting..." : "Delete"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-export default DeleteProjectDialog;
+  return <><Button color="error" variant="outlined" startIcon={<TrashIcon size={16} />} onClick={() => setOpen(true)}>Delete project</Button><Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="xs"><DialogTitle>Delete project</DialogTitle><DialogContent><DialogContentText>Are you sure you want to delete this project? You will not be able to recover it. All tasks will be deleted as well.</DialogContentText></DialogContent><DialogActions><Button onClick={() => setOpen(false)}>Cancel</Button><Button color="error" variant="contained" onClick={onDelete} disabled={loading}>{loading ? "Deleting..." : "Delete"}</Button></DialogActions></Dialog></>;
+}

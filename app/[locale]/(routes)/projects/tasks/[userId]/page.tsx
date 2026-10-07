@@ -1,6 +1,6 @@
-import { getTask } from "@/actions/projects/get-task";
 import { getUserTasks } from "@/actions/projects/get-user-tasks";
-import Container from "@/app/[locale]/(routes)/components/ui/Container";
+import { Box } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import React from "react";
 import { TasksDataTable } from "../components/data-table";
 import { columns } from "../components/columns";
@@ -21,12 +21,10 @@ const TaskDetailPage = async (props: TaskDetailPageProps) => {
   const tasks: any = await getUserTasks(userId);
 
   return (
-    <Container
-      title={`${session?.user.name}'s Tasks`}
-      description={"Everything you need to know about tasks"}
-    >
+    <Box sx={{ px: { xs: 2, md: 3 }, py: 3 }}>
+      <MuiPageHeader title={`${session?.user.name}'s Tasks`} description="Everything you need to know about tasks" />
       <TasksDataTable data={tasks} columns={columns} />
-    </Container>
+    </Box>
   );
 };
 

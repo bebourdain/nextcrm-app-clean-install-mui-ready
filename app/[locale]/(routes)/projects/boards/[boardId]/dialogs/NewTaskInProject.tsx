@@ -1,305 +1,37 @@
 "use client";
 
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTrigger,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { UserSearchCombobox } from "@/components/ui/user-search-combobox";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { z } from "zod";
 import { useRouter } from "next/navigation";
 
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { toast } from "sonner";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, MenuItem, Stack, TextField } from "@mui/material";
+import { MuiUserSearch } from "../../../MuiUserSearch";
 import { createTaskInBoard } from "@/actions/projects/create-task-in-board";
 
-type Props = {
-  boardId: string;
-  sections: any;
-};
-
-const NewTaskInProjectDialog = ({ boardId, sections }: Props) => {
+const schema = z.object({ title: z.string().min(3).max(255), user: z.string().min(3).max(255), section: z.string().min(3).max(255), priority: z.string().min(3).max(10), content: z.string().min(3).max(500), dueDateAt: z.date() });
+type Values = z.infer<typeof schema>;
+export default function NewTaskDialog({ boardId, sections }: { boardId: string; sections: { id: string; title: string }[] }) {
   const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const formSchema = z.object({
-    title: z.string().min(3).max(255),
-    user: z.string().min(3).max(255),
-    dueDateAt: z.date(),
-    priority: z.string().min(3).max(10),
-    section: z.string().min(3).max(255),
-    content: z.string().min(3).max(500),
-  });
-
-  type NewAccountFormValues = z.infer<typeof formSchema>;
-
-  const form = useForm<NewAccountFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      dueDateAt: new Date(),
-    },
-  });
-
-  //Actions
-
-  const onSubmit = async (data: NewAccountFormValues) => {
-    console.log(data);
-    setIsLoading(true);
-    try {
-      const result = await createTaskInBoard({
-        boardId,
-        section: data.section,
-        title: data.title,
-        priority: data.priority,
-        content: data.content,
-        user: data.user,
-        dueDateAt: data.dueDateAt,
-      });
-      if (result?.error) {
-        toast.error(result.error);
-      } else {
-        toast.success(`New task: ${data.title}, created successfully`);
-      }
-    } catch (error: any) {
-      toast.error(error?.message);
-    } finally {
-      setIsLoading(false);
-      setOpen(false);
-      form.reset({
-        title: "",
-        content: "",
-        user: "",
-        priority: "",
-        section: "",
-      });
-      router.refresh();
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="px-2">Create new task</Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
-          <DialogDescription>
-            Fill out the form below to create a new task.
-          </DialogDescription>
-        </DialogHeader>
-        {isLoading ? (
-          <div className="flex flex-col gap-2 py-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-          </div>
-        ) : (
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-4"
-            >
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>New task name</FormLabel>
-                      <FormControl>
-                        <Input
-                          disabled={isLoading}
-                          placeholder="Enter task name"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="content"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Task description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          disabled={isLoading}
-                          placeholder="Enter task description"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="dueDateAt"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Due date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-[240px] pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a expected close date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            //@ts-ignore
-                            //TODO: fix this
-                            onSelect={field.onChange}
-                            disabled={(date) => date < new Date("1900-01-01")}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="user"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Assigned to</FormLabel>
-                      <FormControl>
-                        <UserSearchCombobox
-                          value={field.value ?? ""}
-                          onChange={field.onChange}
-                          placeholder="Select assigned user"
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="section"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Choose section</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select tasks section" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {sections.map((section: any) => (
-                            <SelectItem key={section.id} value={section.id}>
-                              {section.title}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="priority"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Choose task priority</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select tasks priority" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
-                          <SelectItem value="critical">Critical</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit">Create</Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-export default NewTaskInProjectDialog;
+  const { control, handleSubmit, reset, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { title: "", content: "", user: "", section: "", priority: "", dueDateAt: new Date() } });
+  async function submit(data: Values) {
+    setLoading(true);
+    try { const result = await createTaskInBoard({ boardId, section: data.section, title: data.title, priority: data.priority, content: data.content, user: data.user, dueDateAt: data.dueDateAt }); if (result?.error) toast.error(result.error); else toast.success(`New task: ${data.title}, created successfully`); }
+    catch (error: any) { toast.error(error?.message); }
+    finally { setLoading(false); setOpen(false); reset(); router.refresh(); }
+  }
+  return <><Button variant="contained" onClick={() => setOpen(true)}>Create new task</Button><Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm"><DialogTitle>Create New Task</DialogTitle><DialogContent><DialogContentText sx={{ mb: 2 }}>Fill out the form below to create a new task.</DialogContentText><Stack component="form" id="new-task-form" onSubmit={handleSubmit(submit)} spacing={2}>
+    <Controller name="title" control={control} render={({ field }) => <TextField {...field} label="Task name" error={!!errors.title} helperText={errors.title?.message} disabled={loading} required />} />
+    <Controller name="content" control={control} render={({ field }) => <TextField {...field} label="Task description" multiline minRows={3} error={!!errors.content} helperText={errors.content?.message} disabled={loading} required />} />
+    <Controller name="dueDateAt" control={control} render={({ field }) => <TextField type="date" label="Due date" value={field.value ? new Date(field.value).toISOString().slice(0, 10) : ""} onChange={(event) => field.onChange(new Date(`${event.target.value}T12:00:00`))} slotProps={{ inputLabel: { shrink: true } }} error={!!errors.dueDateAt} helperText={errors.dueDateAt?.message} disabled={loading} required />} />
+    <Controller name="user" control={control} render={({ field }) => <MuiUserSearch value={field.value ?? ""} onChange={field.onChange} placeholder="Assigned to" disabled={loading} />} />
+    {errors.user && <span role="alert">{errors.user.message}</span>}
+    <Controller name="section" control={control} render={({ field }) => <TextField {...field} select label="Choose section" error={!!errors.section} helperText={errors.section?.message} disabled={loading} required>{sections.map((item) => <MenuItem key={item.id} value={item.id}>{item.title}</MenuItem>)}</TextField>} />
+    <Controller name="priority" control={control} render={({ field }) => <TextField {...field} select label="Priority" error={!!errors.priority} helperText={errors.priority?.message} disabled={loading} required>{["low", "medium", "high", "critical"].map((priority) => <MenuItem key={priority} value={priority} sx={{ textTransform: "capitalize" }}>{priority}</MenuItem>)}</TextField>} />
+  </Stack></DialogContent><DialogActions><Button onClick={() => setOpen(false)}>Cancel</Button><Button type="submit" form="new-task-form" variant="contained" disabled={loading}>Create</Button></DialogActions></Dialog></>;
+}

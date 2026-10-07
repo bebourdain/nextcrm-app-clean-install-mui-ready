@@ -1,141 +1,27 @@
 "use client";
-import { Comment } from "@/app/[locale]/(routes)/projects/dashboard/components/ProjectDasboard";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Icons } from "@/components/ui/icons";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import { zodResolver } from "@hookform/resolvers/zod";
-import moment from "moment";
-import { useRouter } from "next/navigation";
+
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import moment from "moment";
+import { Avatar, Box, Button, Divider, Paper, Stack, TextField, Typography } from "@mui/material";
 import { addCommentToTask } from "@/actions/projects/add-comment-to-task";
+import { Comment } from "@/app/[locale]/(routes)/projects/dashboard/components/ProjectDasboard";
 
-const FormSchema = z.object({
-  comment: z.string().min(3).max(160),
-});
-
-export function TeamConversations({
-  data: comments,
-  taskId,
-}: {
-  data: Comment[];
-  taskId: string;
-}) {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
+const schema = z.object({ comment: z.string().min(3).max(160) });
+type Values = z.infer<typeof schema>;
+export function TeamConversations({ data: comments, taskId }: { data: Comment[]; taskId: string }) {
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-
-
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-  });
-
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
-    setIsLoading(true);
-    try {
-      const result = await addCommentToTask({ taskId, comment: data.comment });
-      if (result?.error) {
-        toast.error(result.error);
-      } else {
-        toast.success("Success");
-      }
-    } catch (error) {
-      toast.error("Something went wrong while sending comment to the DB");
-    } finally {
-      form.reset({
-        comment: "",
-      });
-      router.refresh();
-      setIsLoading(false);
-    }
+  const { control, handleSubmit, reset, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { comment: "" } });
+  async function submit(data: Values) {
+    setLoading(true);
+    try { const result = await addCommentToTask({ taskId, comment: data.comment }); if (result?.error) toast.error(result.error); else toast.success("Success"); }
+    catch { toast.error("Something went wrong while sending comment to the DB"); }
+    finally { reset(); router.refresh(); setLoading(false); }
   }
-
-  return (
-    <>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="flex space-x-5 w-full py-2 items-end pb-5"
-        >
-          <FormField
-            control={form.control}
-            name="comment"
-            render={({ field }) => (
-              <FormItem className="w-full">
-                <FormControl>
-                  <Input
-                    disabled={isLoading}
-                    placeholder="Your comment ..."
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <Button className="w-[80px]" disabled={isLoading} type="submit">
-            {isLoading ? <Icons.spinner className="animate-spin" /> : "Add"}
-          </Button>
-        </form>
-      </Form>
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Team conversation</CardTitle>
-          <CardDescription>
-            Invite your team members to collaborate.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-6">
-          {comments?.map((comment: any) => (
-            <>
-              {/*               <pre>
-                <code>{JSON.stringify(comment, null, 2)}</code>
-              </pre> */}
-              <div key={comment.id} className="flex items-center space-x-4">
-                <Avatar>
-                  <AvatarImage
-                    src={comment.assigned_user?.avatar || "/images/nouser.png"}
-                  />
-                  <AvatarFallback>{comment.assigned_user?.name}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <div>
-                    <p className="text-sm font-medium leading-none">
-                      {comment.assigned_user?.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground py-2">
-                      {comment.comment}
-                    </p>
-                  </div>
-                  <div className="text-xs opacity-50">
-                    {moment(comment.createdAt).format("YYYY-MM-DD-HH:mm")}
-                  </div>
-                </div>
-              </div>
-            </>
-          ))}
-        </CardContent>
-      </Card>
-    </>
-  );
+  return <Stack spacing={2}><Stack component="form" direction="row" spacing={1} onSubmit={handleSubmit(submit)} sx={{ alignItems: "flex-start" }}><Controller name="comment" control={control} render={({ field }) => <TextField {...field} size="small" fullWidth placeholder="Your comment ..." error={!!errors.comment} helperText={errors.comment?.message} disabled={loading} />} /><Button type="submit" variant="contained" disabled={loading}>{loading ? "Adding…" : "Add"}</Button></Stack><Paper variant="outlined" sx={{ p: 2 }}><Typography variant="h6">Team conversation</Typography><Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Invite your team members to collaborate.</Typography><Stack spacing={2}>{comments?.map((comment: any) => <Box key={comment.id}><Stack direction="row" spacing={1.5} sx={{ alignItems: "flex-start" }}><Avatar src={comment.assigned_user?.avatar || "/images/nouser.png"}>{comment.assigned_user?.name?.[0]}</Avatar><Box><Typography variant="body2" sx={{ fontWeight: 600 }}>{comment.assigned_user?.name}</Typography><Typography variant="body2">{comment.comment}</Typography><Typography variant="caption" color="text.secondary">{moment(comment.createdAt).format("YYYY-MM-DD HH:mm")}</Typography></Box></Stack><Divider sx={{ mt: 1.5 }} /></Box>)}</Stack></Paper></Stack>;
 }

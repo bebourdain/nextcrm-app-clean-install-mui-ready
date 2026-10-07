@@ -6,7 +6,6 @@ import {
   ColumnFiltersState,
   SortingState,
   VisibilityState,
-  flexRender,
   getCoreRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
@@ -16,14 +15,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { MuiTableBody } from "../../table-components/MuiTableBody";
+import { Box, Stack, Typography, IconButton } from "@mui/material";
 
 import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar } from "./data-table-toolbar";
@@ -71,84 +64,26 @@ export function TasksDataTable<TData, TValue>({
   });
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-start gap-3">
-        <div></div>
-        <div className="flex justify-end space-x-2">
+    <Stack spacing={2}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+        <Box>
           {hide ? (
-            <PanelTopOpen
-              onClick={() => setHide(!hide)}
-              className="text-muted-foreground"
-            />
+            <IconButton onClick={() => setHide(false)} aria-label="Show tasks"><PanelTopOpen /></IconButton>
           ) : (
-            <PanelTopClose
-              onClick={() => setHide(!hide)}
-              className="text-muted-foreground"
-            />
+            <IconButton onClick={() => setHide(true)} aria-label="Hide tasks"><PanelTopClose /></IconButton>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {hide ? (
-        <div className="flex gap-2">
-          This content is hidden now. Click on <PanelTopOpen /> to show content
-        </div>
+        <Typography color="text.secondary">This content is hidden now. Use the show tasks button to reveal it.</Typography>
       ) : (
         <>
           <DataTableToolbar table={table} />
-          <div className="rounded-md border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      No results.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+      <MuiTableBody table={table} columnCount={columns.length} />
           <DataTablePagination table={table} />
         </>
       )}
-    </div>
+    </Stack>
   );
 }

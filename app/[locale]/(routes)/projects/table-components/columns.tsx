@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
-import { Badge } from "@/components/ui/badge";
+import { Box, Chip } from "@mui/material";
 
 import { visibility } from "../data/data";
 import { Task } from "../data/schema";
@@ -18,9 +18,9 @@ export const columns: ColumnDef<Task>[] = [
       <DataTableColumnHeader column={column} title="Date Created" />
     ),
     cell: ({ row }) => (
-      <div className="w-[80px]">
+      <Box sx={{ width: 80 }}>
         {moment(row.getValue("date_created")).format("YY-MM-DD")}
-      </div>
+      </Box>
     ),
     enableSorting: true,
     enableHiding: false,
@@ -32,9 +32,9 @@ export const columns: ColumnDef<Task>[] = [
     ),
 
     cell: ({ row }) => (
-      <div className="w-[150px]">
+      <Box sx={{ width: 150 }}>
         {row.original.assigned_user.name ?? "Unassigned"}
-      </div>
+      </Box>
     ),
     enableSorting: true,
     enableHiding: true,
@@ -47,7 +47,7 @@ export const columns: ColumnDef<Task>[] = [
     ),
     cell: ({ row }) => (
       <Link href={`/projects/boards/${row.original.id}`}>
-        <div className="w-[300px]">{row.getValue("title")}</div>
+        <Box sx={{ width: 300 }}>{row.getValue("title")}</Box>
       </Link>
     ),
   },
@@ -57,7 +57,7 @@ export const columns: ColumnDef<Task>[] = [
       <DataTableColumnHeader column={column} title="Description" />
     ),
     cell: ({ row }) => (
-      <div className="w-[300px]">{row.getValue("description")}</div>
+      <Box sx={{ width: 300 }}>{row.getValue("description")}</Box>
     ),
   },
   {
@@ -75,9 +75,9 @@ export const columns: ColumnDef<Task>[] = [
       }
 
       return (
-        <div className="flex w-[100px] items-center">
-          {status.label && <Badge variant="outline">{status.label}</Badge>}
-        </div>
+        <Box sx={{ display: "flex", alignItems: "center", width: 100 }}>
+          {status.label && <Chip size="small" variant="outlined" label={status.label} />}
+        </Box>
       );
     },
     filterFn: (row, id, value) => {

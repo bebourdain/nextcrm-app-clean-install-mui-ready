@@ -2,8 +2,8 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Box, Chip } from "@mui/material";
+
 
 import { labels, priorities, statuses } from "../data/data";
 import { Task } from "../data/schema";
@@ -39,9 +39,9 @@ export const columns: ColumnDef<Task>[] = [
       <DataTableColumnHeader column={column} title="Due date" />
     ),
     cell: ({ row }) => (
-      <div className="w-[80px]">
+      <Box sx={{ width: 80 }}>
         {moment(row.getValue("dueDateAt")).format("YY-MM-DD")}
-      </div>
+      </Box>
     ),
     enableSorting: false,
     enableHiding: false,
@@ -53,13 +53,13 @@ export const columns: ColumnDef<Task>[] = [
     ),
 
     cell: ({ row }) => (
-      <div className="w-[180px]">
+      <Box sx={{ width: 180 }}>
         {
           //@ts-ignore
           //TODO: fix this
           row.getValue("assigned_user")?.name ?? "Unassigned"
         }
-      </div>
+      </Box>
     ),
     enableSorting: false,
     enableHiding: false,
@@ -75,12 +75,12 @@ export const columns: ColumnDef<Task>[] = [
       );
 
       return (
-        <div className="flex space-x-2">
-          {label && <Badge variant="outline">{label.label}</Badge>}
+        <Box sx={{ display: "flex", gap: 1 }}>
+          {label && <Chip size="small" variant="outlined" label={label.label} />}
           <span className="max-w-[500px] truncate font-medium">
             {row.getValue("title")}
           </span>
-        </div>
+        </Box>
       );
     },
   },
@@ -99,12 +99,12 @@ export const columns: ColumnDef<Task>[] = [
       }
 
       return (
-        <div className="flex w-[100px] items-center">
+        <Box sx={{ display: "flex", alignItems: "center", width: 100 }}>
           {status.icon && (
             <status.icon className="mr-2 h-4 w-4 text-muted-foreground" />
           )}
           <span>{status.label}</span>
-        </div>
+        </Box>
       );
     },
     filterFn: (row, id, value) => {
@@ -126,12 +126,12 @@ export const columns: ColumnDef<Task>[] = [
       }
 
       return (
-        <div className="flex items-center">
+        <Box sx={{ display: "flex", alignItems: "center" }}>
           {priority.icon && (
             <priority.icon className="mr-2 h-4 w-4 text-muted-foreground" />
           )}
           <span>{priority.label}</span>
-        </div>
+        </Box>
       );
     },
     filterFn: (row, id, value) => {

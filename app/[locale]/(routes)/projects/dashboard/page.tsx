@@ -1,5 +1,6 @@
 import React from "react";
-import Container from "../../components/ui/Container";
+import { Box } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import ProjectDashboardCockpit from "./components/ProjectDasboard";
 import { getTasksPastDue } from "@/actions/projects/get-tasks-past-due";
 import { getBoards } from "@/actions/projects/get-boards";
@@ -21,16 +22,14 @@ const ProjectDashboard = async () => {
   }
 
   return (
-    <Container
-      title={t("dashboardTitle")}
-      description={t("dashboardDescription")}
-    >
+    <Box sx={{ px: { xs: 2, md: 3 }, py: 3 }}>
+      <MuiPageHeader title={t("dashboardTitle")} description={t("dashboardDescription")} />
       <ProjectDashboardCockpit
         dashboardData={dashboardData}
         boards={boards}
         sections={sections}
       />
-    </Container>
+    </Box>
   );
 };
 

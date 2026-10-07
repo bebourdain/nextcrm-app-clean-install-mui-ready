@@ -3,8 +3,7 @@
 import { Cross2Icon } from "@radix-ui/react-icons";
 import { Table } from "@tanstack/react-table";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button, Stack, TextField } from "@mui/material";
 import { DataTableViewOptions } from "./data-table-view-options";
 
 import { priorities, statuses } from "../data/data";
@@ -20,15 +19,16 @@ export function DataTableToolbar<TData>({
   const isFiltered = table.getState().columnFilters.length > 0;
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex flex-1 items-center space-x-2">
-        <Input
+    <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ justifyContent: "space-between", alignItems: "center" }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+        <TextField
+          size="small"
           placeholder="Filter tasks..."
           value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("title")?.setFilterValue(event.target.value)
           }
-          className="h-8 w-[150px] lg:w-[250px]"
+          sx={{ width: 250 }}
         />
         {table.getColumn("taskStatus") && (
           <DataTableFacetedFilter
@@ -46,16 +46,15 @@ export function DataTableToolbar<TData>({
         )}
         {isFiltered && (
           <Button
-            variant="ghost"
+            variant="text"
             onClick={() => table.resetColumnFilters()}
-            className="h-8 px-2 lg:px-3"
           >
             Reset
             <Cross2Icon className="ml-2 h-4 w-4" />
           </Button>
         )}
-      </div>
+      </Stack>
       <DataTableViewOptions table={table} />
-    </div>
+    </Stack>
   );
 }

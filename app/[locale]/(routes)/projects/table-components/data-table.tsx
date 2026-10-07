@@ -6,7 +6,6 @@ import {
   ColumnFiltersState,
   SortingState,
   VisibilityState,
-  flexRender,
   getCoreRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
@@ -16,14 +15,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { MuiTableBody } from "./MuiTableBody";
+import { Box, Stack, Typography, IconButton } from "@mui/material";
 
 import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar } from "./data-table-toolbar";
@@ -68,59 +61,10 @@ export function ProjectsDataTable<TData, TValue>({
   });
 
   return (
-    <div className="space-y-4">
+    <Stack spacing={2}>
       <DataTableToolbar table={table} />
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <MuiTableBody table={table} columnCount={columns.length} />
       <DataTablePagination table={table} />
-    </div>
+    </Stack>
   );
 }

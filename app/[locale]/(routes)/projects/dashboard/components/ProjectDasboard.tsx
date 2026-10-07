@@ -1,298 +1,35 @@
 "use client";
 
-import moment from "moment";
+import { useState } from "react";
 import Link from "next/link";
-
-import { TeamConversations } from "../../tasks/viewtask/[taskId]/components/team-conversation";
-import { toast } from "sonner";
-
+import moment from "moment";
 import { useRouter } from "next/navigation";
-import { getTaskDone } from "../../actions/get-task-done";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { toast } from "sonner";
+import { Box, Button, Chip, Drawer, Paper, Stack, Typography } from "@mui/material";
 import { CheckSquare, Eye, MessagesSquare, Pencil } from "lucide-react";
-import UpdateTaskDialog from "../../dialogs/UpdateTask";
-import { Button } from "@/components/ui/button";
 import { Sections } from "@prisma/client";
-import { ElementRef, useRef, useState } from "react";
-import FormSheet from "@/components/sheets/form-sheet";
+import { getTaskDone } from "../../actions/get-task-done";
+import { TeamConversations } from "../../tasks/viewtask/[taskId]/components/team-conversation";
+import UpdateTaskDialog from "../../dialogs/UpdateTask";
 
-interface DashboardData {
-  getTaskPastDue: Tasks[];
-  getTaskPastDueInSevenDays: Tasks[];
-}
+interface DashboardData { getTaskPastDue: Tasks[]; getTaskPastDueInSevenDays: Tasks[] }
+export interface Tasks { id: string; title: string; content: string; dueDateAt: Date; priority: string; section: string; comments: Comment[] }
+export interface Comment { id: string; content: string; createdAt: Date; updatedAt: Date }
 
-export interface Tasks {
-  id: string;
-  title: string;
-  content: string;
-  dueDateAt: Date;
-  priority: string;
-  section: string;
-  comments: Comment[];
-}
-
-export interface Comment {
-  id: string;
-  content: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const ProjectDashboardCockpit = ({
-  dashboardData,
-  boards,
-  sections,
-}: {
-  dashboardData: DashboardData;
-  boards: any;
-  sections: Sections[];
-}) => {
+function DashboardTaskCard({ task, boards, sections }: { task: Tasks; boards: any; sections: Sections[] }) {
   const router = useRouter();
+  const [chatOpen, setChatOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  async function markDone() {
+    setLoading(true);
+    try { await getTaskDone(task.id); toast.success("Success"); }
+    catch { toast.error("Error"); }
+    finally { setLoading(false); router.refresh(); }
+  }
+  return <Paper variant="outlined" sx={{ p: 2 }}><Stack spacing={1}><Typography variant="h6">{task.title || "Untitled"}</Typography><Typography variant="body2" color="text.secondary">{task.content}</Typography><Typography variant="body2" color={new Date(task.dueDateAt) < new Date() ? "error" : "text.secondary"}>Due date: {moment(task.dueDateAt).format("YYYY-MM-DD")}</Typography><Chip size="small" variant="outlined" color={task.priority === "high" || task.priority === "critical" ? "error" : "default"} label={`Priority: ${task.priority}`} sx={{ alignSelf: "flex-start" }} /><Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}><Button component={Link} href={`/projects/tasks/viewtask/${task.id}`} size="small" variant="outlined" startIcon={<Eye size={16} />}>View task</Button><Button size="small" variant="outlined" startIcon={<MessagesSquare size={16} />} onClick={() => setChatOpen(true)}>Chat</Button><Button size="small" variant="outlined" startIcon={<CheckSquare size={16} />} onClick={markDone} disabled={loading}>Mark as done</Button><Button size="small" variant="outlined" startIcon={<Pencil size={16} />} onClick={() => setEditOpen(true)}>Edit</Button></Stack></Stack><Drawer anchor="right" open={chatOpen} onClose={() => setChatOpen(false)}><Box sx={{ width: { xs: "100vw", sm: 600 }, maxWidth: "100vw", p: 3 }}><Typography variant="h6">Team conversation</Typography><Typography color="text.secondary" sx={{ mb: 2 }}>Collaborate with your team on this task</Typography><TeamConversations taskId={task.id} data={task.comments} /></Box></Drawer><Drawer anchor="right" open={editOpen} onClose={() => setEditOpen(false)}><Box sx={{ width: { xs: "100vw", sm: 600 }, maxWidth: "100vw", p: 3 }}><Typography variant="h6">Update task</Typography><Typography color="text.secondary" sx={{ mb: 2 }}>Edit task details including title, description, due date, and priority</Typography><UpdateTaskDialog boards={boards} boardId={sections.find((section) => section.id === task.section)?.board} initialData={task} onDone={() => setEditOpen(false)} /></Box></Drawer></Paper>;
+}
 
-  const [updateOpenSheet, setUpdateOpenSheet] = useState(false);
-  const closeRef = useRef<ElementRef<"button">>(null);
-
-  //Actions
-  const onDone = async (taskId: string) => {
-    try {
-      await getTaskDone(taskId);
-    } catch (error) {
-      toast.error("Error");
-    } finally {
-      toast.success("Success");
-      router.refresh();
-    }
-  };
-
-  //Console logs
-
-  return (
-    <div className="flex flex-col md:flex-row items-start justify-center h-full w-full overflow-auto">
-      <div className="w-full md:w-1/2">
-        <div>
-          <h2 className="font-bold text-lg ">
-            Tasks due Today ({dashboardData?.getTaskPastDue?.length})
-          </h2>
-          {/*         <pre>
-            <code>{JSON.stringify(dashboardData, null, 2)}</code>
-          </pre> */}
-        </div>
-
-        {dashboardData?.getTaskPastDue?.map((task: Tasks) => (
-          <Card key={task.id} className="m-2">
-            <CardHeader>
-              <CardTitle className="text-xl">
-                {task.title === "" ? "Untitled" : task.title}
-              </CardTitle>
-              <CardDescription>{task.content}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div
-                className={
-                  task.dueDateAt < new Date() ? "text-red-500 text-xs" : ""
-                }
-              >
-                Due date: {moment(task.dueDateAt).format("YYYY-MM-DD")}
-              </div>
-              <div>
-                <p
-                  className={
-                    task.priority === "normal"
-                      ? `text-yellow-500`
-                      : task.priority === "high"
-                      ? `text-red-500`
-                      : task.priority === "low"
-                      ? `text-green-500`
-                      : `text-slate-600`
-                  }
-                >
-                  Priorita: {task.priority}
-                </p>
-              </div>
-            </CardContent>
-            <CardFooter className="space-x-2 ">
-              <Link href={`/projects/tasks/viewtask/${task.id}`}>
-                <Badge variant={"outline"}>
-                  <Eye className="w-4 h-4 mr-2" />
-                  <span>View task</span>
-                </Badge>
-              </Link>
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Badge variant={"outline"} className="cursor-pointer">
-                    <MessagesSquare className="w-4 h-4 mr-2" />
-                    <span>Chat</span>
-                  </Badge>
-                </SheetTrigger>
-                <SheetContent className="max-w-3xl overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle>Team conversation</SheetTitle>
-                    <SheetDescription>
-                      Collaborate with your team on this task
-                    </SheetDescription>
-                  </SheetHeader>
-                  <div className="mt-6 space-y-4">
-                    <TeamConversations taskId={task.id} data={task.comments} />
-                  </div>
-                </SheetContent>
-              </Sheet>
-              <Badge
-                variant={"outline"}
-                onClick={() => onDone(task.id)}
-                className="cursor-pointer"
-              >
-                <CheckSquare className="w-4 h-4 mr-2" />
-                <span>Mark as done</span>
-              </Badge>
-
-              <FormSheet
-                trigger={"Edit"}
-                title="Update task"
-                description="Edit task details including title, description, due date, and priority"
-                onClose={closeRef}
-              >
-                <UpdateTaskDialog
-                  boards={boards}
-                  boardId={
-                    sections.find(
-                      (section: Sections) => section.id === task.section
-                    )?.board
-                  }
-                  initialData={task}
-                  onDone={() => closeRef.current?.click()}
-                />
-                <div className="w-full justify-end items-end flex pt-2">
-                  <Button
-                    className="ml-auto"
-                    variant={"destructive"}
-                    onClick={() => closeRef.current?.click()}
-                  >
-                    Close
-                  </Button>
-                </div>
-              </FormSheet>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-      <div className="w-full pt-5 md:w-1/2 md:pt-0">
-        <div>
-          <h2 className="font-bold text-lg ">
-            Tasks due in 7 days (
-            {dashboardData?.getTaskPastDueInSevenDays?.length})
-          </h2>
-        </div>
-        {dashboardData?.getTaskPastDueInSevenDays?.map((task: Tasks) => (
-          <Card key={task.id} className="m-2">
-            <CardHeader>
-              <CardTitle className="text-xl">
-                {task.title === "" ? "Untitled" : task.title}
-              </CardTitle>
-              <CardDescription>{task.content}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div
-                className={
-                  task.dueDateAt < new Date()
-                    ? "text-red-500 text-xs"
-                    : "text-xs"
-                }
-              >
-                Due date: {moment(task.dueDateAt).format("YYYY-MM-DD")}
-              </div>
-              <div>
-                <p
-                  className={
-                    task.priority === "normal"
-                      ? `text-yellow-500`
-                      : task.priority === "high"
-                      ? `text-red-500`
-                      : task.priority === "low"
-                      ? `text-green-500`
-                      : `text-slate-600`
-                  }
-                >
-                  Priorita: {task.priority}
-                </p>
-              </div>
-            </CardContent>
-            <CardFooter className="space-x-2">
-              <Link href={`/projects/tasks/viewtask/${task.id}`}>
-                <Badge variant={"outline"}>
-                  <Eye className="w-4 h-4 mr-2" />
-                  <span>View task</span>
-                </Badge>
-              </Link>
-
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Badge variant={"outline"} className="cursor-pointer">
-                    <MessagesSquare className="w-4 h-4 mr-2" />
-                    <span>Chat</span>
-                  </Badge>
-                </SheetTrigger>
-
-                <SheetContent className="max-w-3xl overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle>Team conversation</SheetTitle>
-                    <SheetDescription>
-                      Collaborate with your team on this task
-                    </SheetDescription>
-                  </SheetHeader>
-                  <div className="mt-6 space-y-4">
-                    <TeamConversations taskId={task.id} data={task.comments} />
-                  </div>
-                </SheetContent>
-              </Sheet>
-
-              <Badge variant={"outline"} onClick={() => onDone(task.id)} className="cursor-pointer">
-                <CheckSquare className="w-4 h-4 mr-2" />
-                <span>Mark as done</span>
-              </Badge>
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Badge variant={"outline"} className="cursor-pointer">
-                    <Pencil className="w-4 h-4 mr-2" />
-                    <span>Edit</span>
-                  </Badge>
-                </SheetTrigger>
-                <SheetContent className="max-w-3xl overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle>Edit Task</SheetTitle>
-                    <SheetDescription>
-                      Update task details including title, description, due date, and priority
-                    </SheetDescription>
-                  </SheetHeader>
-                  <div className="mt-6 space-y-4">
-                    <UpdateTaskDialog
-                      boards={boards}
-                      initialData={task}
-                    />
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-export default ProjectDashboardCockpit;
+export default function ProjectDashboardCockpit({ dashboardData, boards, sections }: { dashboardData: DashboardData; boards: any; sections: Sections[] }) {
+  return <Stack direction={{ xs: "column", md: "row" }} spacing={3} sx={{ alignItems: "flex-start" }}><Box sx={{ width: { xs: "100%", md: "50%" } }}><Typography variant="h6" sx={{ mb: 2 }}>Tasks due Today ({dashboardData?.getTaskPastDue?.length})</Typography><Stack spacing={2}>{dashboardData?.getTaskPastDue?.map((task) => <DashboardTaskCard key={task.id} task={task} boards={boards} sections={sections} />)}</Stack></Box><Box sx={{ width: { xs: "100%", md: "50%" } }}><Typography variant="h6" sx={{ mb: 2 }}>Tasks due in 7 days ({dashboardData?.getTaskPastDueInSevenDays?.length})</Typography><Stack spacing={2}>{dashboardData?.getTaskPastDueInSevenDays?.map((task) => <DashboardTaskCard key={task.id} task={task} boards={boards} sections={sections} />)}</Stack></Box></Stack>;
+}

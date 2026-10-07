@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
-import Container from "../components/ui/Container";
+import { Box } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 
 import { getSession } from "@/lib/auth-server";
 import { redirect } from "next/navigation";
@@ -17,14 +18,12 @@ const ProjectsPage = async () => {
   if (!session) return redirect("/sign-in");
 
   return (
-    <Container
-      title={t("title")}
-      description={t("description")}
-    >
+    <Box sx={{ px: { xs: 2, md: 3 }, py: 3 }}>
+      <MuiPageHeader title={t("title")} description={t("description")} />
       <Suspense fallback={<ProjectsSkeleton />}>
         <ProjectsView />
       </Suspense>
-    </Container>
+    </Box>
   );
 };
 

@@ -1,7 +1,8 @@
 import { getBoard } from "@/actions/projects/get-board";
 import React, { Suspense } from "react";
 
-import Container from "@/app/[locale]/(routes)/components/ui/Container";
+import { Box, Chip, Stack } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import NewSectionDialog from "./dialogs/NewSection";
 
 import NewTaskInProjectDialog from "./dialogs/NewTaskInProject";
@@ -11,7 +12,7 @@ import { getKanbanData } from "@/actions/projects/get-kanban-data";
 import Kanban from "./components/Kanban";
 import { getBoards } from "@/actions/projects/get-boards";
 import { getSession } from "@/lib/auth-server";
-import { Lock } from "lucide-react";
+
 
 interface BoardDetailProps {
   params: Promise<{ boardId: string }>;
@@ -31,32 +32,21 @@ const BoardPage = async (props: BoardDetailProps) => {
 
   //console.log(board, "board");
   return (
-    <Container
-      title={board?.board?.title}
-      description={board?.board?.description}
-      visibility={board?.board?.visibility}
-    >
-      <div className="flex justify-between py-5 w-full">
-        <div className="space-x-2">
-          <NewSectionDialog boardId={boardId} />
-          <NewTaskInProjectDialog
-            boardId={boardId}
-            sections={sections}
-          />
-        </div>
-        <div>
-          <DeleteProjectDialog
-            boardId={boardId}
-            boardName={board.board.title}
-          />
-        </div>
-      </div>
+    <Box sx={{ px: { xs: 2, md: 3 }, py: 3 }}>
+      <MuiPageHeader title={board?.board?.title ?? "Project"} description={board?.board?.description ?? ""} />
+      <Stack direction="row" spacing={1} sx={{ my: 2, alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+        <Chip size="small" variant="outlined" label={board?.board?.visibility ?? "private"} />
+        <NewSectionDialog boardId={boardId} />
+        <NewTaskInProjectDialog boardId={boardId} sections={sections} />
+        <Box sx={{ flexGrow: 1 }} />
+        <DeleteProjectDialog boardId={boardId} boardName={board.board.title} />
+      </Stack>
       <Kanban
         data={kanbanData.sections}
         boardId={boardId}
         boards={boards}
       />
-    </Container>
+    </Box>
   );
 };
 

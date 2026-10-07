@@ -1,193 +1,36 @@
 "use client";
 
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTrigger,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
+import { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-
-import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { toast } from "sonner";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, MenuItem, Stack, TextField } from "@mui/material";
 import { createProject } from "@/actions/projects/create-project";
 
-const NewProjectDialog = () => {
+const schema = z.object({ title: z.string().min(3).max(255), description: z.string().min(3).max(500), visibility: z.string().min(3).max(255) });
+type Values = z.infer<typeof schema>;
+
+export default function NewProjectDialog() {
   const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const [isMounted, setIsMounted] = useState(false);
-
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const t = useTranslations("ProjectsPage");
-
-  const formSchema = z.object({
-    title: z.string().min(3).max(255),
-    description: z.string().min(3).max(500),
-    visibility: z.string().min(3).max(255),
-  });
-
-  type NewAccountFormValues = z.infer<typeof formSchema>;
-
-  const form = useForm<NewAccountFormValues>({
-    resolver: zodResolver(formSchema),
-  });
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return null;
-  }
-
-  //Actions
-
-  const onSubmit = async (data: NewAccountFormValues) => {
-    console.log(data);
-    setIsLoading(true);
+  const { control, handleSubmit, reset, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { title: "", description: "", visibility: "" } });
+  async function submit(data: Values) {
+    setLoading(true);
     try {
       const result = await createProject(data);
-      if (result?.error) {
-        toast.error(result.error);
-      } else {
-        toast.success(`New project: ${data.title}, created successfully`);
-      }
-    } catch (error: any) {
-      toast.error(error?.message);
-    } finally {
-      setIsLoading(false);
-      setOpen(false);
-      router.refresh();
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="px-2">{t("newProject.trigger")}</Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>{t("newProject.title")}</DialogTitle>
-          <DialogDescription>
-            {t("newProject.description")}
-          </DialogDescription>
-        </DialogHeader>
-        {isLoading ? (
-          <div className="flex flex-col gap-2 py-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-          </div>
-        ) : (
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-4"
-            >
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("newProject.nameLabel")}</FormLabel>
-                      <FormControl>
-                        <Input
-                          disabled={isLoading}
-                          placeholder={t("newProject.namePlaceholder")}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("newProject.descLabel")}</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          disabled={isLoading}
-                          placeholder={t("newProject.descPlaceholder")}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="visibility"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("newProject.visibilityLabel")}</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t("newProject.visibilityLabel")} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value={"public"}>{t("newProject.public")}</SelectItem>
-                          <SelectItem value={"private"}>{t("newProject.private")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setOpen(false)}
-                >
-                  {t("newProject.cancel")}
-                </Button>
-                <Button type="submit">{t("newProject.create")}</Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-export default NewProjectDialog;
+      if (result?.error) toast.error(result.error);
+      else toast.success(`New project: ${data.title}, created successfully`);
+    } catch (error: any) { toast.error(error?.message); }
+    finally { setLoading(false); setOpen(false); reset(); router.refresh(); }
+  }
+  return <><Button variant="contained" onClick={() => setOpen(true)}>{t("newProject.trigger")}</Button><Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm"><DialogTitle>{t("newProject.title")}</DialogTitle><DialogContent><DialogContentText sx={{ mb: 2 }}>{t("newProject.description")}</DialogContentText><Stack component="form" id="new-project-form" onSubmit={handleSubmit(submit)} spacing={2}>
+    <Controller name="title" control={control} render={({ field }) => <TextField {...field} label={t("newProject.nameLabel")} placeholder={t("newProject.namePlaceholder")} error={!!errors.title} helperText={errors.title?.message} disabled={loading} required />} />
+    <Controller name="description" control={control} render={({ field }) => <TextField {...field} label={t("newProject.descLabel")} placeholder={t("newProject.descPlaceholder")} error={!!errors.description} helperText={errors.description?.message} disabled={loading} multiline minRows={4} required />} />
+    <Controller name="visibility" control={control} render={({ field }) => <TextField {...field} select label={t("newProject.visibilityLabel")} error={!!errors.visibility} helperText={errors.visibility?.message} disabled={loading} required><MenuItem value="public">{t("newProject.public")}</MenuItem><MenuItem value="private">{t("newProject.private")}</MenuItem></TextField>} />
+  </Stack></DialogContent><DialogActions><Button onClick={() => setOpen(false)}>{t("newProject.cancel")}</Button><Button type="submit" form="new-project-form" variant="contained" disabled={loading}>{t("newProject.create")}</Button></DialogActions></Dialog></>;
+}

@@ -3,7 +3,6 @@
 import moment from "moment";
 import { useRouter } from "next/navigation";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
-import { Check, EyeIcon, Pencil, PlusCircle, PlusIcon } from "lucide-react";
 
 import {
   DndContext,
@@ -27,43 +26,9 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import {
-  ChatBubbleIcon,
-  DotsHorizontalIcon,
-  ExclamationTriangleIcon,
-  TrashIcon,
-} from "@radix-ui/react-icons";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Drawer, IconButton, Menu, MenuItem, Paper, Skeleton, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { MoreHorizontal, Plus, Trash2, AlertTriangle, Check } from "lucide-react";
 import { toast } from "sonner";
-import AlertModal from "@/components/modals/alert-modal";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DialogHeader } from "@/components/ui/dialog-document-view";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 
 import NewSectionForm from "../forms/NewSection";
 import UpdateTaskDialog from "../../../dialogs/UpdateTask";
@@ -87,127 +52,17 @@ interface Task {
   taskStatus?: string;
 }
 
-// Draggable Task Item Component
 function TaskItem({ task, onDelete, onDone, onEdit, router }: any) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id });
-
-  const [currentTime] = React.useState(() => Date.now());
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className="flex flex-col overflow-hidden items-start justify-center text-xs p-3 mb-2  rounded-md border  shadow-md cursor-grab active:cursor-grabbing"
-    >
-      <div className="flex flex-row justify-between mx-auto w-full py-1">
-        <h2 className="grow font-bold text-sm ">
-          {task.title === "" ? "Untitled" : task.title}
-        </h2>
-        <div className="ml-1">
-          {task?.dueDateAt &&
-            task.taskStatus != "COMPLETE" &&
-            task.dueDateAt < currentTime && (
-              <HoverCard>
-                <HoverCardTrigger>
-                  <ExclamationTriangleIcon className="w-4 h-4 text-red-500" />
-                </HoverCardTrigger>
-                <HoverCardContent>
-                  Attention! This task is overdue!
-                </HoverCardContent>
-              </HoverCard>
-            )}
-          {task.taskStatus === "COMPLETE" && (
-            <HoverCard>
-              <HoverCardTrigger>
-                <Check className="w-4 h-4 text-green-500" />
-              </HoverCardTrigger>
-              <HoverCardContent>This task is done!</HoverCardContent>
-            </HoverCard>
-          )}
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild className="w-[25px] ml-1 ">
-            <DotsHorizontalIcon className="w-4 h-4 text-slate-600 pl-2" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-[200px]">
-            <DropdownMenuItem
-              className="gap-2"
-              onClick={() => router.push(`/projects/tasks/viewtask/${task.id}`)}
-            >
-              <EyeIcon className="w-4 h-4 opacity-50" />
-              View
-            </DropdownMenuItem>
-            {task.taskStatus !== "COMPLETE" && (
-              <DropdownMenuItem className="gap-2" onClick={() => onEdit(task)}>
-                <Pencil className="w-4 h-4 opacity-50" />
-                Edit
-              </DropdownMenuItem>
-            )}
-            {task.taskStatus !== "COMPLETE" && (
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() => onDone(task.id)}
-              >
-                <Check className="w-4 h-4 opacity-50" />
-                Mark as done
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem className="gap-2" onClick={() => onDelete(task)}>
-              <TrashIcon className="w-4 h-4 opacity-50" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="py-1">
-        Due date: {moment(task.dueDateAt).format("YYYY-MM-DD")}
-      </div>
-      <div className="my-2">
-        <p
-          className={
-            task.priority === "normal"
-              ? `text-yellow-500`
-              : task.priority === "high"
-              ? `text-red-500`
-              : task.priority === "low"
-              ? `text-green-500`
-              : `text-slate-600`
-          }
-        >
-          Priorita: {task.priority}
-        </p>
-      </div>
-      <HoverCard>
-        <HoverCardTrigger className="line-clamp-2 mb-2">
-          {task.content}
-        </HoverCardTrigger>
-        <HoverCardContent>{task.content}</HoverCardContent>
-      </HoverCard>
-    </div>
-  );
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  return <Paper ref={setNodeRef} style={style} {...attributes} {...listeners} variant="outlined" sx={{ p: 1.5, mb: 1, cursor: "grab", bgcolor: "background.paper" }}><Stack spacing={1}><Stack direction="row" sx={{ alignItems: "flex-start" }}><Typography variant="subtitle2" sx={{ flexGrow: 1 }}>{task.title || "Untitled"}</Typography>{task.dueDateAt && task.taskStatus !== "COMPLETE" && new Date(task.dueDateAt) < new Date() && <Tooltip title="Attention! This task is overdue!"><AlertTriangle size={16} color="red" /></Tooltip>}{task.taskStatus === "COMPLETE" && <Tooltip title="This task is done!"><Check size={16} color="green" /></Tooltip>}<IconButton size="small" aria-label="Task actions" onClick={(event) => setAnchor(event.currentTarget)}><MoreHorizontal size={18} /></IconButton><Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}><MenuItem onClick={() => { setAnchor(null); router.push(`/projects/tasks/viewtask/${task.id}`); }}>View</MenuItem>{task.taskStatus !== "COMPLETE" && <MenuItem onClick={() => { setAnchor(null); onEdit(task); }}>Edit</MenuItem>}{task.taskStatus !== "COMPLETE" && <MenuItem onClick={() => { setAnchor(null); onDone(task.id); }}>Mark as done</MenuItem>}<MenuItem onClick={() => { setAnchor(null); onDelete(task); }} sx={{ color: "error.main" }}>Delete</MenuItem></Menu></Stack><Typography variant="caption" color="text.secondary">Due date: {moment(task.dueDateAt).format("YYYY-MM-DD")}</Typography><Chip size="small" variant="outlined" color={task.priority === "high" || task.priority === "critical" ? "error" : "default"} label={`Priority: ${task.priority ?? "None"}`} sx={{ alignSelf: "flex-start" }} /><Tooltip title={task.content ?? ""}><Typography variant="body2" color="text.secondary" noWrap>{task.content}</Typography></Tooltip></Stack></Paper>;
 }
 
 function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef } = useDroppable({ id });
   return (
-    <div ref={setNodeRef} className="min-h-[50px]">
-      {children}
-    </div>
+    <Box ref={setNodeRef} sx={{ minHeight: 50 }}>{children}</Box>
   );
 }
 
@@ -481,172 +336,9 @@ const Kanban = (props: any) => {
     }
   };
 
-  if (isLoading) return (
-    <div className="flex flex-col gap-2 py-4">
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-3/4" />
-    </div>
-  );
+  if (isLoading) return <Stack spacing={1} sx={{ py: 2 }}><Skeleton /><Skeleton /><Skeleton width="75%" /></Stack>;
 
-  return (
-    <>
-      <AlertModal
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        onConfirm={onDelete}
-        loading={isLoading}
-      />
-      <AlertModal
-        isOpen={openSectionAlert}
-        onClose={() => setOpenSectionAlert(false)}
-        onConfirm={onDeleteSection}
-        loading={isLoadingSection}
-      />
-      <div className="overflow-scroll flex flex-col space-y-2  ">
-        <Dialog
-          open={sectionOpenDialog}
-          onOpenChange={() => setSectionOpenDialog(false)}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="p-2">Create new section</DialogTitle>
-              <DialogDescription className="p-2">
-                Fill out the form below to create a new section to this project.
-              </DialogDescription>
-            </DialogHeader>
-            <NewSectionForm
-              boardId={boardId}
-              onClose={() => setSectionOpenDialog(false)}
-            />
-          </DialogContent>
-        </Dialog>
-
-        <Sheet
-          open={updateOpenSheet}
-          onOpenChange={() => setUpdateOpenSheet(false)}
-        >
-          <SheetContent className="max-w-3xl overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Update Task</SheetTitle>
-              <SheetDescription>
-                Edit task details including title, description, due date, priority, and assignments
-              </SheetDescription>
-            </SheetHeader>
-            <div className="mt-6 space-y-4">
-              <UpdateTaskDialog
-                boards={boards}
-                boardId={boardId}
-                initialData={selectedTask}
-                onDone={() => setUpdateOpenSheet(false)}
-              />
-            </div>
-          </SheetContent>
-        </Sheet>
-
-        <div className="p-2 text-xs">
-          <p>{data?.length} Sections</p>
-        </div>
-
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="flex flex-row items-start  ">
-            {data?.map((section: any) => (
-              <div
-                className="flex flex-col items-center justify-center  h-full w-80 "
-                key={section.id}
-              >
-                <div className="flex flex-col  w-full h-full px-2 ">
-                  <div className="flex flex-col items-center justify-center py-2   ">
-                    <div className="flex flex-row items-center justify-between w-full border ">
-                      <input
-                        type="text"
-                        className="  pl-2  px-1 py-1 rounded-md m-2  "
-                        placeholder={section?.title}
-                        onChange={(e) =>
-                          updateSectionTitleHandler(e, section.id)
-                        }
-                      />
-                      <div className="flex items-center justify-end pr-2">
-                        <span className="border rounded-full px-2 m-2">
-                          {section?.tasks?.length}
-                        </span>
-
-                        <TrashIcon
-                          className="w-4 h-4"
-                          onClick={() => {
-                            setSectionId(section.id);
-                            setOpenSectionAlert(true);
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="w-full">
-                      <div className="flex flex-row items-center justify-center space-x-5 py-2  w-full">
-                        <button
-                          className="w-80 border justify-center items-center flex flex-row "
-                          onClick={() => createTask(section.id)}
-                        >
-                          <PlusIcon className="w-6 h-6" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <SortableContext
-                    items={section.tasks.map((t: Task) => t.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <DroppableColumn id={section.id}>
-                      {section.tasks?.map((task: any) => (
-                        <TaskItem
-                          key={task.id}
-                          task={task}
-                          onDelete={() => {
-                            setSelectedTask(task);
-                            setOpen(true);
-                          }}
-                          onDone={onDone}
-                          onEdit={() => {
-                            setUpdateOpenSheet(true);
-                            setSelectedTask(task);
-                          }}
-                          router={router}
-                        />
-                      ))}
-                    </DroppableColumn>
-                  </SortableContext>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-center items-center pl-3 h-16">
-            <PlusCircle
-              className="w-8 h-8 text-slate-600 cursor-pointer"
-              onClick={() => {
-                setSectionOpenDialog(true);
-              }}
-            />
-          </div>
-
-          <DragOverlay>
-            {activeTask ? (
-              <div className="flex flex-col overflow-hidden items-start justify-center text-xs p-3 mb-2  rounded-md border  shadow-md opacity-80 bg-white">
-                <h2 className="font-bold text-sm">
-                  {activeTask.title === "" ? "Untitled" : activeTask.title}
-                </h2>
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-      </div>
-    </>
-  );
+  return <><Dialog open={open} onClose={() => setOpen(false)}><DialogTitle>Delete task?</DialogTitle><DialogContent><DialogContentText>This task will be deleted.</DialogContentText></DialogContent><DialogActions><Button onClick={() => setOpen(false)}>Cancel</Button><Button color="error" variant="contained" onClick={onDelete} disabled={isLoading}>Delete</Button></DialogActions></Dialog><Dialog open={openSectionAlert} onClose={() => setOpenSectionAlert(false)}><DialogTitle>Delete section?</DialogTitle><DialogContent><DialogContentText>This section will be deleted.</DialogContentText></DialogContent><DialogActions><Button onClick={() => setOpenSectionAlert(false)}>Cancel</Button><Button color="error" variant="contained" onClick={onDeleteSection} disabled={isLoadingSection}>Delete</Button></DialogActions></Dialog><Dialog open={sectionOpenDialog} onClose={() => setSectionOpenDialog(false)} fullWidth maxWidth="xs"><DialogTitle>Create new section</DialogTitle><DialogContent><Typography color="text.secondary" sx={{ mb: 2 }}>Fill out the form below to create a new section to this project.</Typography><NewSectionForm boardId={boardId} onClose={() => setSectionOpenDialog(false)} /></DialogContent></Dialog><Drawer anchor="right" open={updateOpenSheet} onClose={() => setUpdateOpenSheet(false)}><Box sx={{ width: { xs: "100vw", sm: 600 }, maxWidth: "100vw", p: 3, overflowY: "auto" }}><Typography variant="h6">Update Task</Typography><Typography color="text.secondary" sx={{ mb: 2 }}>Edit task details including title, description, due date, priority, and assignments</Typography><UpdateTaskDialog boards={boards} boardId={boardId} initialData={selectedTask} onDone={() => setUpdateOpenSheet(false)} /></Box></Drawer><Stack spacing={2}><Typography variant="body2" color="text.secondary">{data?.length} Sections</Typography><DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}><Stack direction="row" spacing={2} sx={{ overflowX: "auto", alignItems: "flex-start", pb: 2 }}>{data?.map((section: any) => <Paper key={section.id} variant="outlined" sx={{ width: 320, minWidth: 320, p: 1.5, bgcolor: "background.default" }}><Stack spacing={1}><Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><TextField size="small" defaultValue={section.title} onChange={(event) => updateSectionTitleHandler(event as ChangeEvent<HTMLInputElement>, section.id)} aria-label="Section title" sx={{ flexGrow: 1 }} /><Chip size="small" label={section.tasks?.length ?? 0} /><IconButton size="small" aria-label="Delete section" onClick={() => { setSectionId(section.id); setOpenSectionAlert(true); }}><Trash2 size={16} /></IconButton></Stack><Button size="small" variant="outlined" fullWidth startIcon={<Plus size={16} />} onClick={() => createTask(section.id)}>Add task</Button><SortableContext items={section.tasks.map((task: Task) => task.id)} strategy={verticalListSortingStrategy}><DroppableColumn id={section.id}>{section.tasks?.map((task: any) => <TaskItem key={task.id} task={task} onDelete={() => { setSelectedTask(task); setOpen(true); }} onDone={onDone} onEdit={() => { setSelectedTask(task); setUpdateOpenSheet(true); }} router={router} />)}</DroppableColumn></SortableContext></Stack></Paper>)}<Button variant="outlined" startIcon={<Plus size={18} />} onClick={() => setSectionOpenDialog(true)} sx={{ minWidth: 160 }}>Add section</Button></Stack><DragOverlay>{activeTask ? <Paper elevation={4} sx={{ p: 2, width: 280 }}><Typography variant="subtitle2">{activeTask.title || "Untitled"}</Typography></Paper> : null}</DragOverlay></DndContext></Stack></>;
 };
 
 export default Kanban;
