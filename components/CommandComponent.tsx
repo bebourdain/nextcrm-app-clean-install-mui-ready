@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { Box, Dialog, DialogContent, DialogTitle, Divider, List, ListItemButton, ListItemIcon, ListItemText, TextField, Typography } from "@mui/material";
-import { FileText, LogOut, Settings, User } from "lucide-react";
+import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import LogoutIcon from "@mui/icons-material/Logout";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { searchDocuments, type DocumentSearchResult } from "@/actions/documents/search-documents";
@@ -94,7 +97,7 @@ export function CommandComponent() {
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", px: 2, pt: 1 }}>Documents</Typography>
                 {docResults.map((doc) => (
                   <ListItemButton key={doc.id} onClick={() => navigate(`/documents?highlight=${doc.id}`)}>
-                    <ListItemIcon sx={{ minWidth: 34 }}><FileText size={17} /></ListItemIcon>
+                    <ListItemIcon sx={{ minWidth: 34 }}><DescriptionOutlinedIcon sx={{ fontSize: 19 }} /></ListItemIcon>
                     <ListItemText primary={doc.name} secondary={doc.summary} slotProps={{ secondary: { noWrap: true } }} />
                   </ListItemButton>
                 ))}
@@ -103,17 +106,17 @@ export function CommandComponent() {
             )}
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", px: 2, pt: 1 }}>{t("settings")}</Typography>
             <ListItemButton onClick={() => navigate("/")}>
-              <ListItemIcon sx={{ minWidth: 34 }}><User size={17} /></ListItemIcon>
+              <ListItemIcon sx={{ minWidth: 34 }}><AccountCircleOutlinedIcon sx={{ fontSize: 19 }} /></ListItemIcon>
               <ListItemText primary={t("dashboard")} />
               <Typography variant="caption" color="text.secondary">Shift + ⌘ + D</Typography>
             </ListItemButton>
             <ListItemButton onClick={() => navigate("/profile")}>
-              <ListItemIcon sx={{ minWidth: 34 }}><Settings size={17} /></ListItemIcon>
+              <ListItemIcon sx={{ minWidth: 34 }}><SettingsOutlinedIcon sx={{ fontSize: 19 }} /></ListItemIcon>
               <ListItemText primary={t("profileSettings")} />
               <Typography variant="caption" color="text.secondary">Shift + ⌘ + P</Typography>
             </ListItemButton>
             <ListItemButton onClick={async () => { await signOut(); window.location.href = "/sign-in"; }}>
-              <ListItemIcon sx={{ minWidth: 34 }}><LogOut size={17} /></ListItemIcon>
+              <ListItemIcon sx={{ minWidth: 34 }}><LogoutIcon sx={{ fontSize: 19 }} /></ListItemIcon>
               <ListItemText primary={t("logout")} />
               <Typography variant="caption" color="text.secondary">⌘ K</Typography>
             </ListItemButton>

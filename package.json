@@ -48,6 +48,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@mendable/firecrawl-js": "^1.29.3",
     "@modelcontextprotocol/sdk": "^1.26.0",
+    "@mui/icons-material": "9.4.0",
     "@mui/material": "9.4.0",
     "@mui/material-nextjs": "9.4.0",
     "@neon/config": "^1.8.3",

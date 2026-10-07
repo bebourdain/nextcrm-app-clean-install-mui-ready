@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, type MouseEvent } from "react";
-import { Button, ListItemIcon, Menu, MenuItem } from "@mui/material";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { toast } from "sonner";
+import { useEffect, useState, type MouseEvent } from "react";
+import { Button, CircularProgress, Dialog, DialogContent, DialogTitle, ListItemIcon, Menu, MenuItem } from "@mui/material";
+import CheckIcon from "@mui/icons-material/Check";
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { setLanguage } from "@/actions/user/set-language";
-import LoadingModal from "./modals/loading-modal";
+import { MuiHeaderNotice, type HeaderNotice } from "./mui/MuiHeaderNotice";
+
+const LANGUAGE_NOTICE_KEY = "nextcrm-language-notice";
 
 export function SetLanguage({ userId }: { userId: string }) {
   const router = useRouter();
@@ -16,6 +18,17 @@ export function SetLanguage({ userId }: { userId: string }) {
   const t = useTranslations("LanguageSelector");
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [notice, setNotice] = useState<HeaderNotice | null>(null);
+
+  useEffect(() => {
+    const message = window.sessionStorage.getItem(LANGUAGE_NOTICE_KEY);
+    if (!message) return;
+    const timeout = window.setTimeout(() => {
+      window.sessionStorage.removeItem(LANGUAGE_NOTICE_KEY);
+      setNotice({ message, severity: "success" });
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   const languages = [
     { label: t("english"), value: "en" },
@@ -33,14 +46,17 @@ export function SetLanguage({ userId }: { userId: string }) {
     try {
       const result = await setLanguage({ userId, language: language.value });
       if (result.error) {
-        toast.error(result.error);
+        setNotice({ message: result.error, severity: "error" });
         setIsLoading(false);
         return;
       }
-      toast.success(t("changedTo", { language: language.value }));
+      const message = t("changedTo", { language: language.value });
+      window.sessionStorage.setItem(LANGUAGE_NOTICE_KEY, message);
+      setNotice({ message, severity: "success" });
+      setIsLoading(false);
       router.replace(pathname, { locale: language.value });
     } catch {
-      toast.error(t("error"));
+      setNotice({ message: t("error"), severity: "error" });
       setIsLoading(false);
     }
   }
@@ -53,7 +69,7 @@ export function SetLanguage({ userId }: { userId: string }) {
         aria-label="Language"
         aria-haspopup="menu"
         aria-expanded={Boolean(anchor)}
-        endIcon={<ChevronsUpDown size={16} />}
+        endIcon={<UnfoldMoreIcon sx={{ fontSize: 18 }} />}
         sx={{ display: { xs: "none", lg: "inline-flex" }, justifyContent: "space-between", width: 200, height: 40, color: "text.primary", borderColor: "divider" }}
       >
         {languages.find((language) => language.value === locale)?.label ?? "Select language"}
@@ -61,12 +77,21 @@ export function SetLanguage({ userId }: { userId: string }) {
       <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
         {languages.map((language) => (
           <MenuItem key={language.value} selected={language.value === locale} onClick={() => selectLanguage(language)} sx={{ minWidth: 200 }}>
-            <ListItemIcon><Check size={16} style={{ opacity: language.value === locale ? 1 : 0 }} /></ListItemIcon>
+            <ListItemIcon><CheckIcon sx={{ fontSize: 18, opacity: language.value === locale ? 1 : 0 }} /></ListItemIcon>
             {language.label}
           </MenuItem>
         ))}
       </Menu>
-      {isLoading && <LoadingModal isOpen={isLoading} description={t("loadingModal")} />}
+      <Dialog open={isLoading} aria-labelledby="language-loading-title" maxWidth="xs" fullWidth>
+        <DialogTitle id="language-loading-title">{t("loadingModal")}</DialogTitle>
+        <DialogContent sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+          <CircularProgress aria-label={t("loadingModal")} />
+        </DialogContent>
+      </Dialog>
+      <MuiHeaderNotice notice={notice} onClose={() => {
+        window.sessionStorage.removeItem(LANGUAGE_NOTICE_KEY);
+        setNotice(null);
+      }} />
     </>
   );
 }

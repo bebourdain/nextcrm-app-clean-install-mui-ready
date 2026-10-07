@@ -3,8 +3,9 @@
 import { useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { Box, IconButton, Popover, Tooltip, Typography } from "@mui/material";
-import { HelpCircle } from "lucide-react";
-import { DiscordLogoIcon, GitHubLogoIcon } from "@radix-ui/react-icons";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import HelpOutlinedIcon from "@mui/icons-material/HelpOutlined";
+import { DiscordIcon } from "./mui/DiscordIcon";
 
 export default function SupportComponent() {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -21,7 +22,7 @@ export default function SupportComponent() {
           onClick={open}
           sx={{ width: 40, height: 40, border: 1, borderColor: "divider", borderRadius: 1, color: "text.primary" }}
         >
-          <HelpCircle size={18} />
+          <HelpOutlinedIcon sx={{ fontSize: 20 }} />
         </IconButton>
       </Tooltip>
       <Popover
@@ -35,13 +36,13 @@ export default function SupportComponent() {
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
             <Typography variant="body2">Need help? Join us on</Typography>
             <IconButton component={Link} href={process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "#"} target="_blank" rel="noopener noreferrer" aria-label="Discord" size="small" sx={{ border: 1, borderColor: "divider" }}>
-              <DiscordLogoIcon />
+              <DiscordIcon sx={{ fontSize: 20 }} />
             </IconButton>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
             <Typography variant="body2">Find a bug? Create an issue on</Typography>
             <IconButton component={Link} href={process.env.NEXT_PUBLIC_GITHUB_ISSUES_URL || "#"} target="_blank" rel="noopener noreferrer" aria-label="GitHub issues" size="small" sx={{ border: 1, borderColor: "divider" }}>
-              <GitHubLogoIcon />
+              <GitHubIcon sx={{ fontSize: 20 }} />
             </IconButton>
           </Box>
         </Box>

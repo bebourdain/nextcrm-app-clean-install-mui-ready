@@ -1,7 +1,7 @@
 "use client";
 
 import { IconButton } from "@mui/material";
-import { PanelLeft } from "lucide-react";
+import ViewSidebarOutlinedIcon from "@mui/icons-material/ViewSidebarOutlined";
 import { useMuiSidebar } from "./mui-sidebar-context";
 
 export function MuiSidebarTrigger() {
@@ -14,7 +14,7 @@ export function MuiSidebarTrigger() {
       size="small"
       sx={{ width: 28, height: 28, color: "text.primary" }}
     >
-      <PanelLeft size={16} />
+      <ViewSidebarOutlinedIcon sx={{ fontSize: 18 }} />
     </IconButton>
   );
 }

@@ -2,11 +2,14 @@
 
 import { useState, type MouseEvent } from "react";
 import { IconButton, Menu, MenuItem, Tooltip } from "@mui/material";
-import { Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useTheme as useMuiTheme } from "@mui/material/styles";
+import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
+import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
+import { useTheme as useAppTheme } from "next-themes";
 
 export function ThemeToggle() {
-  const { setTheme, theme } = useTheme();
+  const { setTheme, theme } = useAppTheme();
+  const muiTheme = useMuiTheme();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 
   const openMenu = (event: MouseEvent<HTMLElement>) => setAnchor(event.currentTarget);
@@ -21,10 +24,9 @@ export function ThemeToggle() {
           onClick={openMenu}
           sx={{ width: 40, height: 40, border: 1, borderColor: "divider", borderRadius: 1, color: "text.primary" }}
         >
-          <span className="relative flex h-[18px] w-[18px] items-center justify-center">
-            <Sun size={18} className="rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon size={18} className="absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          </span>
+          {muiTheme.palette.mode === "dark"
+            ? <DarkModeOutlinedIcon sx={{ fontSize: 20 }} />
+            : <LightModeOutlinedIcon sx={{ fontSize: 20 }} />}
         </IconButton>
       </Tooltip>
       <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>

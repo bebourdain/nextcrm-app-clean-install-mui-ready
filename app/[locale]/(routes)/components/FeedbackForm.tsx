@@ -2,10 +2,10 @@
 
 import { useState, type FormEvent } from "react";
 import { Box, Button, CircularProgress, TextField } from "@mui/material";
-import { toast } from "sonner";
 import { sendFeedback } from "@/actions/feedback/send-feedback";
+import type { HeaderNotice } from "@/components/mui/MuiHeaderNotice";
 
-export default function FeedbackForm({ setOpen }: { setOpen: (open: boolean) => void }) {
+export default function FeedbackForm({ setOpen, notify }: { setOpen: (open: boolean) => void; notify: (notice: HeaderNotice) => void }) {
   const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -21,15 +21,15 @@ export default function FeedbackForm({ setOpen }: { setOpen: (open: boolean) => 
     try {
       const result = await sendFeedback({ feedback });
       if (result?.error) {
-        toast.error(result.error);
+        notify({ message: result.error, severity: "error" });
       } else {
-        toast.success("Thank you for your feedback.");
+        notify({ message: "Thank you for your feedback.", severity: "success" });
         setFeedback("");
         setOpen(false);
       }
     } catch (error) {
       console.error(error);
-      toast.error("Something went wrong. Please try again later.");
+      notify({ message: "Something went wrong. Please try again later.", severity: "error" });
     } finally {
       setLoading(false);
     }
