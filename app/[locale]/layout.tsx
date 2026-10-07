@@ -10,8 +10,10 @@ import { getTranslations, getMessages } from "next-intl/server";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/app/providers/ThemeProvider";
+import { MuiProvider } from "@/app/providers/MuiProvider";
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 type Props = {
   children: ReactNode;
@@ -60,12 +62,14 @@ export default async function RootLayout(props: Props) {
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={inter.className + " min-h-screen"}>
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            {children}
-          </ThemeProvider>
-        </NextIntlClientProvider>
+      <body className={inter.className + " " + inter.variable + " min-h-screen"}>
+        <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <MuiProvider>{children}</MuiProvider>
+            </ThemeProvider>
+          </NextIntlClientProvider>
+        </AppRouterCacheProvider>
         <Toaster />
         <SonnerToaster />
       </body>

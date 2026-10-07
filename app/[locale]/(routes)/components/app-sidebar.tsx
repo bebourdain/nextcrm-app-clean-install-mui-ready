@@ -21,6 +21,7 @@ import getDocumentsMenuItem from "./menu-items/Documents";
 import getInvoicesMenuItem from "./menu-items/Invoices";
 import getAdministrationMenuItem from "./menu-items/Administration";
 import getCampaignsMenuItem from "./menu-items/Campaigns";
+import { Palette } from "lucide-react";
 
 /**
  * AppSidebar Component - Task Groups 1.2, 2.2-2.7, 3.1, 5.3, 5.4
@@ -114,6 +115,8 @@ export function AppSidebar({
       getAdministrationMenuItem({ title: dict?.settings || "Administration" }),
     );
   }
+
+  navItems.push({ title: "MUI Foundation", url: "/mui-foundation", icon: Palette });
 
   // Prepare user data for NavUser component
   const userData = {
