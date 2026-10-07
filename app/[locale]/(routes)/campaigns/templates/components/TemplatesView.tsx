@@ -1,65 +1,10 @@
 "use client";
 
-import * as React from "react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import moment from "moment";
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Cross2Icon, DotsHorizontalIcon } from "@radix-ui/react-icons";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  DoubleArrowLeftIcon,
-  DoubleArrowRightIcon,
-} from "@radix-ui/react-icons";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import AlertModal from "@/components/modals/alert-modal";
+import { useRouter } from "next/navigation";
+import { MoreHoriz } from "@mui/icons-material";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Menu, MenuItem, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TableSortLabel, TextField, Typography } from "@mui/material";
 import { toast } from "sonner";
 import { deleteTemplate } from "@/actions/campaigns/templates/delete-template";
 
@@ -76,330 +21,85 @@ type Template = {
   created_by_user: { name: string | null } | null;
 };
 
-function TemplateRowActions({ row }: { row: { original: Template } }) {
+type SortKey = "name" | "subject_default" | "created_on";
+
+function TemplateRowActions({ template }: { template: Template }) {
   const router = useRouter();
-  const template = row.original;
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const onDelete = async () => {
-    setLoading(true);
-    await deleteTemplate(template.id);
-    setLoading(false);
-    setOpen(false);
-    toast.success("Template has been deleted");
-    router.refresh();
+    setDeleting(true);
+    try {
+      const result = await deleteTemplate(template.id);
+      if ("error" in result) { toast.error(result.error); return; }
+      toast.success("Template has been deleted");
+      setConfirmOpen(false);
+      router.refresh();
+    } catch {
+      toast.error("Could not delete template. Please try again.");
+    } finally { setDeleting(false); }
   };
 
-  return (
-    <>
-      <AlertModal
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        onConfirm={onDelete}
-        loading={loading}
-      />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
-          >
-            <DotsHorizontalIcon className="h-4 w-4" />
-            <span className="sr-only">Open menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[160px]">
-          <DropdownMenuItem
-            onClick={() =>
-              router.push(`/campaigns/templates/${template.id}`)
-            }
-          >
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setOpen(true)}>
-            Delete
-            <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
-  );
+  return <>
+    <IconButton size="small" aria-label={`Actions for ${template.name}`} onClick={(event) => setAnchor(event.currentTarget)}><MoreHoriz fontSize="small" /></IconButton>
+    <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
+      <MenuItem onClick={() => { setAnchor(null); router.push(`/campaigns/templates/${template.id}`); }}>Edit</MenuItem>
+      <MenuItem sx={{ color: "error.main" }} onClick={() => { setAnchor(null); setConfirmOpen(true); }}>Delete</MenuItem>
+    </Menu>
+    <Dialog open={confirmOpen} onClose={() => { if (!deleting) setConfirmOpen(false); }}>
+      <DialogTitle>Delete template?</DialogTitle>
+      <DialogContent><DialogContentText>This will delete {template.name}. This action cannot be undone.</DialogContentText></DialogContent>
+      <DialogActions><Button onClick={() => setConfirmOpen(false)} disabled={deleting}>Cancel</Button><Button color="error" variant="contained" onClick={onDelete} disabled={deleting}>{deleting ? "Deleting…" : "Delete"}</Button></DialogActions>
+    </Dialog>
+  </>;
 }
 
-const columns: ColumnDef<Template>[] = [
-  {
-    accessorKey: "name",
-    header: "Name",
-    cell: ({ row }) => (
-      <Link
-        href={`/campaigns/templates/${row.original.id}`}
-        className="font-medium hover:underline"
-      >
-        {row.getValue("name")}
-      </Link>
-    ),
-    enableSorting: true,
-    enableHiding: true,
-  },
-  {
-    accessorKey: "subject_default",
-    header: "Subject Default",
-    cell: ({ row }) => (
-      <div className="">{row.getValue("subject_default") ?? "—"}</div>
-    ),
-    enableSorting: true,
-    enableHiding: true,
-  },
-  {
-    id: "created_by_name",
-    header: "Created By",
-    cell: ({ row }) => (
-      <div className="">{row.original.created_by_user?.name ?? "—"}</div>
-    ),
-    enableSorting: false,
-    enableHiding: true,
-  },
-  {
-    accessorKey: "created_on",
-    header: "Created On",
-    cell: ({ row }) => (
-      <div className="w-[90px]">
-        {row.getValue("created_on")
-          ? moment(row.getValue("created_on")).format("YY-MM-DD")
-          : "—"}
-      </div>
-    ),
-    enableSorting: true,
-    enableHiding: true,
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => <TemplateRowActions row={row} />,
-  },
-];
+export default function TemplatesView({ data }: { data: Template[] }) {
+  const [query, setQuery] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("created_on");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
-const TemplatesView = ({ data }: { data: Template[] }) => {
-  const router = useRouter();
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const rows = useMemo(() => data.filter((template) => template.name.toLowerCase().includes(query.trim().toLowerCase())).sort((a, b) => {
+    const left = sortKey === "created_on" ? new Date(a.created_on ?? 0).getTime() : a[sortKey] ?? "";
+    const right = sortKey === "created_on" ? new Date(b.created_on ?? 0).getTime() : b[sortKey] ?? "";
+    const comparison = left < right ? -1 : left > right ? 1 : 0;
+    return sortDirection === "asc" ? comparison : -comparison;
+  }), [data, query, sortKey, sortDirection]);
 
-  const table = useReactTable({
-    data,
-    columns,
-    state: {
-      sorting,
-      columnVisibility,
-      rowSelection,
-      columnFilters,
-    },
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-  });
+  const sort = (key: SortKey) => {
+    if (sortKey === key) setSortDirection((current) => current === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDirection("asc"); }
+    setPage(0);
+  };
+  const headers: { label: string; key?: SortKey }[] = [
+    { label: "Name", key: "name" }, { label: "Subject Default", key: "subject_default" },
+    { label: "Created By" }, { label: "Created On", key: "created_on" },
+  ];
 
-  const isFiltered = table.getState().columnFilters.length > 0;
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between">
-          <div>
-            <CardTitle
-              onClick={() => router.push("/campaigns/templates")}
-              className="cursor-pointer"
-            >
-              Templates
-            </CardTitle>
-            <CardDescription></CardDescription>
-          </div>
-          <div className="flex space-x-2">
-            <Button
-              size="sm"
-              onClick={() => router.push("/campaigns/templates/new")}
-            >
-              + New Template
-            </Button>
-          </div>
-        </div>
-        <Separator />
-      </CardHeader>
-
-      <CardContent>
-        {!data || data.length === 0 ? (
-          "No templates found"
-        ) : (
-          <div className="space-y-4">
-            {/* Toolbar */}
-            <div className="flex items-center justify-between">
-              <div className="flex flex-1 items-center space-x-2">
-                <Input
-                  placeholder="Filter by name ..."
-                  value={
-                    (table.getColumn("name")?.getFilterValue() as string) ?? ""
-                  }
-                  onChange={(event) =>
-                    table.getColumn("name")?.setFilterValue(event.target.value)
-                  }
-                  className="h-8 w-[150px] lg:w-[250px]"
-                />
-                {isFiltered && (
-                  <Button
-                    variant="ghost"
-                    onClick={() => table.resetColumnFilters()}
-                    className="h-8 px-2 lg:px-3"
-                  >
-                    Reset
-                    <Cross2Icon className="ml-2 h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Table */}
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow
-                        key={row.id}
-                        data-state={row.getIsSelected() && "selected"}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={columns.length}
-                        className="h-24 text-center"
-                      >
-                        No results.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Pagination */}
-            <div className="flex items-center justify-between px-2">
-              <div className="flex-1 text-sm text-muted-foreground">
-                {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                {table.getFilteredRowModel().rows.length} row(s) selected.
-              </div>
-              <div className="flex items-center space-x-6 lg:space-x-8">
-                <div className="flex items-center space-x-2">
-                  <p className="text-sm font-medium">Rows per page</p>
-                  <Select
-                    value={`${table.getState().pagination.pageSize}`}
-                    onValueChange={(value) => {
-                      table.setPageSize(Number(value));
-                    }}
-                  >
-                    <SelectTrigger className="h-8 w-[70px]">
-                      <SelectValue
-                        placeholder={table.getState().pagination.pageSize}
-                      />
-                    </SelectTrigger>
-                    <SelectContent side="top">
-                      {[10, 20, 30, 40, 50].map((pageSize) => (
-                        <SelectItem key={pageSize} value={`${pageSize}`}>
-                          {pageSize}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                  Page {table.getState().pagination.pageIndex + 1} of{" "}
-                  {table.getPageCount()}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    className="hidden h-8 w-8 p-0 lg:flex"
-                    onClick={() => table.setPageIndex(0)}
-                    disabled={!table.getCanPreviousPage()}
-                  >
-                    <span className="sr-only">Go to first page</span>
-                    <DoubleArrowLeftIcon className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-8 w-8 p-0"
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                  >
-                    <span className="sr-only">Go to previous page</span>
-                    <ChevronLeftIcon className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-8 w-8 p-0"
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                  >
-                    <span className="sr-only">Go to next page</span>
-                    <ChevronRightIcon className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="hidden h-8 w-8 p-0 lg:flex"
-                    onClick={() =>
-                      table.setPageIndex(table.getPageCount() - 1)
-                    }
-                    disabled={!table.getCanNextPage()}
-                  >
-                    <span className="sr-only">Go to last page</span>
-                    <DoubleArrowRightIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-export default TemplatesView;
+  return <Paper variant="outlined" sx={{ p: 3, borderRadius: "var(--radius)", boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)" }}>
+    <Typography variant="h5" component="h2" sx={{ fontWeight: 600, mb: 3 }}>Templates</Typography>
+    <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+      <TextField size="small" label="Filter by name" value={query} onChange={(event) => { setQuery(event.target.value); setPage(0); }} sx={{ width: { xs: "100%", sm: 250 } }} />
+      {query && <Button color="inherit" onClick={() => { setQuery(""); setPage(0); }}>Reset</Button>}
+    </Stack>
+    <TableContainer sx={{ border: 1, borderColor: "divider", borderRadius: "var(--radius)" }}>
+      <Table size="small" data-testid="templates-table">
+        <TableHead><TableRow>{headers.map((header) => <TableCell key={header.label} sortDirection={header.key === sortKey ? sortDirection : false}>
+          {header.key ? <TableSortLabel active={header.key === sortKey} direction={header.key === sortKey ? sortDirection : "asc"} onClick={() => sort(header.key!)}>{header.label}</TableSortLabel> : header.label}
+        </TableCell>)}<TableCell align="right">Actions</TableCell></TableRow></TableHead>
+        <TableBody>{rows.length ? rows.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((template) => <TableRow key={template.id} hover>
+          <TableCell><Typography component={Link} href={`/campaigns/templates/${template.id}`} sx={{ color: "primary.main", fontWeight: 600, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}>{template.name}</Typography></TableCell>
+          <TableCell>{template.subject_default || "—"}</TableCell>
+          <TableCell>{template.created_by_user?.name || "—"}</TableCell>
+          <TableCell sx={{ whiteSpace: "nowrap" }}>{template.created_on ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(template.created_on)) : "—"}</TableCell>
+          <TableCell align="right"><TemplateRowActions template={template} /></TableCell>
+        </TableRow>) : <TableRow><TableCell colSpan={5} align="center" sx={{ py: 5 }}><Typography color="text.secondary">{data.length ? "No results." : "No templates found"}</Typography></TableCell></TableRow>}</TableBody>
+      </Table>
+      <TablePagination component="div" count={rows.length} page={Math.min(page, Math.max(0, Math.ceil(rows.length / rowsPerPage) - 1))} rowsPerPage={rowsPerPage} onPageChange={(_, next) => setPage(next)} onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }} rowsPerPageOptions={[10, 20, 30, 40, 50]} />
+    </TableContainer>
+  </Paper>;
+}

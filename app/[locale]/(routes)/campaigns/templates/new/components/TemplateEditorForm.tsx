@@ -1,11 +1,9 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AutoAwesome } from "@mui/icons-material";
+import { Alert, Box, Button, CircularProgress, Divider, Paper, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
 import { TipTapEditor } from "@/components/campaigns/TipTapEditor";
 import { createTemplate } from "@/actions/campaigns/templates/create-template";
 import { updateTemplate } from "@/actions/campaigns/templates/update-template";
@@ -20,214 +18,102 @@ type InitialData = {
   content_json?: object | null;
 };
 
-type Props = {
-  initialData?: InitialData;
-  templateId?: string;
-};
+type Props = { initialData?: InitialData; templateId?: string };
 
 export default function TemplateEditorForm({ initialData, templateId }: Props) {
   const router = useRouter();
-  const isEditing = !!templateId;
-
+  const isEditing = Boolean(templateId);
   const [name, setName] = useState(initialData?.name ?? "");
-  const [description, setDescription] = useState(
-    initialData?.description ?? ""
-  );
+  const [description, setDescription] = useState(initialData?.description ?? "");
   const [subject, setSubject] = useState(initialData?.subject_default ?? "");
-  const [contentHtml, setContentHtml] = useState(
-    initialData?.content_html ?? ""
-  );
-  const [contentJson, setContentJson] = useState<object>(
-    initialData?.content_json ?? {}
-  );
-
+  const [contentHtml, setContentHtml] = useState(initialData?.content_html ?? "");
+  const [contentJson, setContentJson] = useState<object>(initialData?.content_json ?? {});
+  const [editorRevision, setEditorRevision] = useState(0);
+  const [bodyTab, setBodyTab] = useState(0);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleEditorChange = (html: string, json: object) => {
-    setContentHtml(html);
-    setContentJson(json);
-  };
-
   const handleGenerate = async () => {
     if (!aiPrompt.trim()) return;
-    setIsGenerating(true);
-    setError(null);
+    setIsGenerating(true); setError(null);
     try {
       const result = await generateTemplate(aiPrompt);
       setContentHtml(result.html);
       setContentJson(result.json);
-      if (result.subject && !subject) {
-        setSubject(result.subject);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "AI generation failed");
-    } finally {
-      setIsGenerating(false);
-    }
+      setEditorRevision((revision) => revision + 1);
+      if (result.subject && !subject) setSubject(result.subject);
+      setBodyTab(0);
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "AI generation failed");
+    } finally { setIsGenerating(false); }
   };
 
-  const handleBodyTabChange = async (value: string) => {
-    if (value !== "preview") return;
+  const handleBodyTabChange = async (next: number) => {
+    setBodyTab(next);
+    if (next !== 1) return;
     setIsPreviewLoading(true);
     try {
-      const res = await previewTemplate({ contentHtml });
-      setPreviewHtml(res.html ?? null);
-    } catch {
+      const result = await previewTemplate({ contentHtml });
+      if (result.error) throw new Error(result.error);
+      setPreviewHtml(result.html ?? null);
+    } catch (failure) {
       setPreviewHtml(null);
-    } finally {
-      setIsPreviewLoading(false);
-    }
+      setError(failure instanceof Error ? failure.message : "Could not render preview");
+    } finally { setIsPreviewLoading(false); }
   };
 
   const handleSave = async () => {
-    if (!name.trim()) {
-      setError("Template name is required");
-      return;
-    }
-    if (!subject.trim()) {
-      setError("Subject line is required");
-      return;
-    }
-    setIsSaving(true);
-    setError(null);
+    if (!name.trim()) { setError("Template name is required"); return; }
+    if (!subject.trim()) { setError("Subject line is required"); return; }
+    setIsSaving(true); setError(null);
     try {
-      if (isEditing && templateId) {
-        await updateTemplate(templateId, {
-          name,
-          description: description || undefined,
-          subject_default: subject,
-          content_html: contentHtml,
-          content_json: contentJson,
-        });
-      } else {
-        await createTemplate({
-          name,
-          description: description || undefined,
-          subject_default: subject,
-          content_html: contentHtml,
-          content_json: contentJson,
-        });
-      }
+      const values = { name, description: description || undefined, subject_default: subject, content_html: contentHtml, content_json: contentJson };
+      const result = isEditing && templateId ? await updateTemplate(templateId, values) : await createTemplate(values);
+      if ("error" in result) throw new Error(result.error);
       router.push("/campaigns/templates");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save template");
-    } finally {
-      setIsSaving(false);
-    }
+      router.refresh();
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Failed to save template");
+    } finally { setIsSaving(false); }
   };
 
-  return (
-    <div className="flex flex-col gap-6 max-w-3xl">
-      {error && (
-        <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
-          {error}
-        </div>
-      )}
+  return <Stack spacing={3} sx={{ maxWidth: 900 }}>
+    {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
+    <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 } }}>
+      <Typography variant="h6" sx={{ mb: 2 }}>Template details</Typography>
+      <Stack spacing={2.5}>
+        <TextField id="name" label="Template Name" value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Welcome Email" required fullWidth />
+        <TextField id="description" label="Description" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Optional description" multiline minRows={2} fullWidth />
+        <TextField id="subject" label="Subject Line" value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="e.g. Hi {{first_name}}, a quick note from us" required fullWidth />
+      </Stack>
+    </Paper>
 
-      {/* Basic fields */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="name">Template Name *</Label>
-          <Input
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Welcome Email"
-            required
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Optional description"
-            rows={2}
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="subject">Subject Line *</Label>
-          <Input
-            id="subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            placeholder="e.g. Hi {{first_name}}, a quick note from us"
-            required
-          />
-        </div>
-      </div>
-
-      {/* AI Generation */}
-      <div className="flex flex-col gap-3 rounded-md border p-4 bg-muted/30">
-        <h3 className="font-semibold text-sm">Generate with AI</h3>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="ai-prompt">Describe the email you want</Label>
-          <Textarea
-            id="ai-prompt"
-            value={aiPrompt}
-            onChange={(e) => setAiPrompt(e.target.value)}
-            placeholder="e.g. A warm outreach email introducing our SaaS product to a B2B prospect, focusing on ROI benefits"
-            rows={3}
-          />
-        </div>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={handleGenerate}
-          disabled={isGenerating || !aiPrompt.trim()}
-        >
+    <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, bgcolor: "action.hover" }}>
+      <Stack spacing={2}>
+        <Typography variant="h6">Generate with AI</Typography>
+        <TextField id="ai-prompt" label="Describe the email you want" value={aiPrompt} onChange={(event) => setAiPrompt(event.target.value)} placeholder="e.g. A warm outreach email introducing our SaaS product to a B2B prospect, focusing on ROI benefits" multiline minRows={3} fullWidth />
+        <Button type="button" variant="outlined" startIcon={isGenerating ? <CircularProgress size={18} /> : <AutoAwesome />} onClick={handleGenerate} disabled={isGenerating || !aiPrompt.trim()} sx={{ alignSelf: "flex-start" }}>
           {isGenerating ? "Generating..." : "Generate"}
         </Button>
-      </div>
+      </Stack>
+    </Paper>
 
-      {/* TipTap Editor */}
-      <div className="flex flex-col gap-2">
-        <Label>Email Body</Label>
-        <Tabs defaultValue="edit" onValueChange={handleBodyTabChange}>
-          <TabsList>
-            <TabsTrigger value="edit">Edit</TabsTrigger>
-            <TabsTrigger value="preview">Preview</TabsTrigger>
-          </TabsList>
-          <TabsContent value="edit">
-            <TipTapEditor content={contentHtml} onChange={handleEditorChange} />
-          </TabsContent>
-          <TabsContent value="preview">
-            {isPreviewLoading ? (
-              <div className="rounded-md border p-4 text-sm text-muted-foreground">
-                Rendering preview...
-              </div>
-            ) : (
-              <iframe
-                srcDoc={previewHtml ?? ""}
-                sandbox=""
-                title="Email preview"
-                className="h-[600px] w-full rounded-md border bg-white"
-              />
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
+    <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 } }}>
+      <Typography variant="h6" sx={{ mb: 1 }}>Email Body</Typography>
+      <Tabs value={bodyTab} onChange={(_, value: number) => { void handleBodyTabChange(value); }} aria-label="Email body view">
+        <Tab label="Edit" /><Tab label="Preview" />
+      </Tabs>
+      <Divider sx={{ mb: 2 }} />
+      {bodyTab === 0 ? <TipTapEditor key={editorRevision} content={contentHtml} onChange={(html, json) => { setContentHtml(html); setContentJson(json); }} /> : isPreviewLoading ? <Box sx={{ p: 3, textAlign: "center" }}><CircularProgress size={24} /><Typography color="text.secondary" sx={{ mt: 1 }}>Rendering preview...</Typography></Box> : <Box component="iframe" srcDoc={previewHtml ?? ""} sandbox="" title="Email preview" sx={{ width: "100%", height: 600, border: 1, borderColor: "divider", borderRadius: 1, bgcolor: "white" }} />}
+    </Paper>
 
-      {/* Actions */}
-      <div className="flex gap-3">
-        <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving ? "Saving..." : isEditing ? "Update Template" : "Save Template"}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push("/campaigns/templates")}
-        >
-          Cancel
-        </Button>
-      </div>
-    </div>
-  );
+    <Stack direction="row" spacing={1.5}>
+      <Button variant="contained" onClick={handleSave} disabled={isSaving}>{isSaving ? "Saving..." : isEditing ? "Update Template" : "Save Template"}</Button>
+      <Button variant="outlined" onClick={() => router.push("/campaigns/templates")}>Cancel</Button>
+    </Stack>
+  </Stack>;
 }

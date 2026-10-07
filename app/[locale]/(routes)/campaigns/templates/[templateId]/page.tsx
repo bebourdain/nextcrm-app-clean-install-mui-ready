@@ -1,3 +1,5 @@
+import { Box, Divider, Typography } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { getTemplate } from "@/actions/campaigns/templates/get-template";
 import TemplateEditorForm from "../new/components/TemplateEditorForm";
 
@@ -10,21 +12,13 @@ export default async function EditTemplatePage({ params }: Props) {
   const template = await getTemplate(templateId);
 
   if (!template) {
-    return (
-      <div className="flex flex-col gap-6 p-6">
-        <p className="text-muted-foreground">Template not found.</p>
-      </div>
-    );
+    return <Box sx={{ py: 3 }}><Typography color="text.secondary">Template not found.</Typography></Box>;
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">Edit Template</h1>
-        <p className="text-muted-foreground">
-          Update your campaign email template
-        </p>
-      </div>
+    <Box sx={{ width: "100%", pb: 6 }}>
+      <MuiPageHeader title="Edit Template" description="Update your campaign email template" />
+      <Divider sx={{ my: 2 }} />
       <TemplateEditorForm
         templateId={template.id}
         initialData={{
@@ -35,6 +29,6 @@ export default async function EditTemplatePage({ params }: Props) {
           content_json: template.content_json as object | null,
         }}
       />
-    </div>
+    </Box>
   );
 }

@@ -1,15 +1,13 @@
+import { Box, Divider } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import TemplateEditorForm from "./components/TemplateEditorForm";
 
 export default function NewTemplatePage() {
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">New Template</h1>
-        <p className="text-muted-foreground">
-          Create a campaign email template
-        </p>
-      </div>
+    <Box sx={{ width: "100%", pb: 6 }}>
+      <MuiPageHeader title="New Template" description="Create a campaign email template" />
+      <Divider sx={{ my: 2 }} />
       <TemplateEditorForm />
-    </div>
+    </Box>
   );
 }
