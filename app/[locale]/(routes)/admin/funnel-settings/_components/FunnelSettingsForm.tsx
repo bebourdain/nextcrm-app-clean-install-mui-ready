@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Box, Button, Paper, Stack, TextField, Typography } from "@mui/material";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { FunnelTimingSettings } from "@/lib/crm/funnel-timers";
 import { updateFunnelSettings } from "../_actions/funnel-settings";
 
@@ -23,61 +21,15 @@ const FIELDS: Array<{ key: keyof FunnelTimingSettings; label: string; group: str
   { key: "renewalWindowDays", label: "Surface renewals N days ahead", group: "Care & renewals" },
 ];
 
-const FunnelSettingsForm = ({ initial }: { initial: FunnelTimingSettings }) => {
+export default function FunnelSettingsForm({ initial }: { initial: FunnelTimingSettings }) {
   const [values, setValues] = useState<FunnelTimingSettings>(initial);
   const [saving, setSaving] = useState(false);
-
-  const save = async () => {
+  async function save() {
     setSaving(true);
-    try {
-      const res = await updateFunnelSettings(values);
-      if (res.error) toast.error(res.error);
-      else toast.success("Funnel settings saved");
-    } catch {
-      toast.error("Failed to save funnel settings");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const groups = Array.from(new Set(FIELDS.map((f) => f.group)));
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Funnel timing — instance settings</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Changes apply to future stage entries and the next timer runs;
-          already-scheduled cadences keep the timings they started with.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {groups.map((group) => (
-          <div key={group} className="space-y-2">
-            <h3 className="text-sm font-semibold">{group}</h3>
-            <div className="grid gap-3 md:grid-cols-2">
-              {FIELDS.filter((f) => f.group === group).map((f) => (
-                <label key={f.key} className="space-y-1 text-sm">
-                  <span>{f.label}</span>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={values[f.key]}
-                    onChange={(e) =>
-                      setValues((prev) => ({ ...prev, [f.key]: Number(e.target.value) }))
-                    }
-                  />
-                </label>
-              ))}
-            </div>
-          </div>
-        ))}
-        <Button onClick={save} disabled={saving}>
-          {saving ? "Saving…" : "Save settings"}
-        </Button>
-      </CardContent>
-    </Card>
-  );
-};
-
-export default FunnelSettingsForm;
+    try { const result = await updateFunnelSettings(values); if (result.error) toast.error(result.error); else toast.success("Funnel settings saved"); }
+    catch { toast.error("Failed to save funnel settings"); }
+    finally { setSaving(false); }
+  }
+  const groups = Array.from(new Set(FIELDS.map((field) => field.group)));
+  return <Paper variant="outlined" sx={{ p: 3 }}><Typography variant="h6">Funnel timing — instance settings</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 3 }}>Changes apply to future stage entries and the next timer runs; already-scheduled cadences keep the timings they started with.</Typography><Stack spacing={3}>{groups.map((group) => <Box key={group}><Typography variant="subtitle2" sx={{ mb: 1 }}>{group}</Typography><Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>{FIELDS.filter((field) => field.group === group).map((field) => <TextField key={field.key} type="number" label={field.label} value={values[field.key]} onChange={(event) => setValues((previous) => ({ ...previous, [field.key]: Number(event.target.value) }))} slotProps={{ htmlInput: { min: 0 } }} size="small" fullWidth />)}</Box></Box>)}<Button variant="contained" onClick={save} disabled={saving} sx={{ alignSelf: "flex-start" }}>{saving ? "Saving…" : "Save settings"}</Button></Stack></Paper>;
+}

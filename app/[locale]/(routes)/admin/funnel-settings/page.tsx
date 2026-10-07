@@ -1,9 +1,8 @@
+import { Box } from "@mui/material";
 import { getFunnelSettings } from "@/lib/crm/funnel-settings";
 import FunnelSettingsForm from "./_components/FunnelSettingsForm";
 
-const FunnelSettingsPage = async () => {
+export default async function FunnelSettingsPage() {
   const settings = await getFunnelSettings();
-  return <FunnelSettingsForm initial={settings} />;
-};
-
-export default FunnelSettingsPage;
+  return <Box sx={{ p: 3 }}><FunnelSettingsForm initial={settings} /></Box>;
+}

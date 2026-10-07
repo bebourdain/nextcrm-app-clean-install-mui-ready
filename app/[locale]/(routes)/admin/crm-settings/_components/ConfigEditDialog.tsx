@@ -1,81 +1,23 @@
 "use client";
+
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, TextField } from "@mui/material";
 import { updateConfigValue, type CrmConfigType } from "../_actions/crm-settings";
 import { STAGE_KINDS, type StageKind } from "@/lib/crm/stage-kinds";
 import { toast } from "sonner";
 
 const KIND_NONE = "__none__";
-
-interface Props {
-  configType: CrmConfigType;
-  id: string;
-  currentName: string;
-  currentStageKind?: string | null;
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-}
-
+type Props = { configType: CrmConfigType; id: string; currentName: string; currentStageKind?: string | null; open: boolean; onOpenChange: (value: boolean) => void };
 export function ConfigEditDialog({ configType, id, currentName, currentStageKind, open, onOpenChange }: Props) {
   const [name, setName] = useState(currentName);
-  const [stageKind, setStageKind] = useState<string>(currentStageKind ?? KIND_NONE);
+  const [stageKind, setStageKind] = useState(currentStageKind ?? KIND_NONE);
   const [loading, setLoading] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
     setLoading(true);
-    try {
-      await updateConfigValue(
-        configType,
-        id,
-        name,
-        configType === "salesStage"
-          ? (stageKind === KIND_NONE ? null : (stageKind as StageKind))
-          : undefined
-      );
-      toast.success("Updated");
-      onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err.message ?? "Failed to update");
-    } finally {
-      setLoading(false);
-    }
+    try { await updateConfigValue(configType, id, name, configType === "salesStage" ? (stageKind === KIND_NONE ? null : stageKind as StageKind) : undefined); toast.success("Updated"); onOpenChange(false); }
+    catch (error: any) { toast.error(error.message ?? "Failed to update"); }
+    finally { setLoading(false); }
   }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Edit Value</DialogTitle></DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-          <div className="space-y-1">
-            <Label htmlFor="edit-name">Name</Label>
-            <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required />
-          </div>
-          {configType === "salesStage" && (
-            <div className="space-y-1">
-              <Label>Automation trigger</Label>
-              <Select value={stageKind} onValueChange={setStageKind}>
-                <SelectTrigger>
-                  <SelectValue placeholder="None" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={KIND_NONE}>None</SelectItem>
-                  {STAGE_KINDS.map((k) => (
-                    <SelectItem key={k} value={k}>{k}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Saving…" : "Save"}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
+  return <Dialog open={open} onClose={() => onOpenChange(false)} fullWidth maxWidth="xs"><DialogTitle>Edit Value</DialogTitle><DialogContent><Stack component="form" id="config-edit-form" onSubmit={submit} spacing={2} sx={{ pt: 1 }}><TextField label="Name" value={name} onChange={(event) => setName(event.target.value)} slotProps={{ htmlInput: { maxLength: 100 } }} required fullWidth />{configType === "salesStage" && <TextField select label="Automation trigger" value={stageKind} onChange={(event) => setStageKind(event.target.value)}><MenuItem value={KIND_NONE}>None</MenuItem>{STAGE_KINDS.map((kind) => <MenuItem key={kind} value={kind}>{kind}</MenuItem>)}</TextField>}</Stack></DialogContent><DialogActions><Button onClick={() => onOpenChange(false)}>Cancel</Button><Button type="submit" form="config-edit-form" variant="contained" disabled={loading}>{loading ? "Saving…" : "Save"}</Button></DialogActions></Dialog>;
 }

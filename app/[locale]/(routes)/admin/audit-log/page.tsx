@@ -1,8 +1,10 @@
 import { getSession } from "@/lib/auth-server";
 import { redirect } from "next/navigation";
 import { getAuditLogAdmin } from "@/actions/crm/audit-log/get-audit-log-admin";
-import { AdminFilters } from "@/components/crm/audit-log/AdminFilters";
-import { AdminAuditLogClient } from "@/components/crm/audit-log/AdminPageClient";
+import { Box, Typography } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
+import { AuditFilters } from "./AuditFilters";
+import { AuditLogClient } from "./AuditLogClient";
 
 const AuditLogPage = async (props: {
   searchParams?: Promise<{
@@ -27,31 +29,9 @@ const AuditLogPage = async (props: {
   };
 
   const result = await getAuditLogAdmin(filters);
-  if ("error" in result) return <div>Access denied</div>;
+  if ("error" in result) return <Typography>Access denied</Typography>;
 
-  return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Audit Log</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Complete history of all CRM changes.
-        </p>
-      </div>
-      <AdminFilters
-        entityType={sp?.entityType}
-        action={sp?.action}
-        dateFrom={sp?.dateFrom}
-        dateTo={sp?.dateTo}
-      />
-      <AdminAuditLogClient
-        entries={result.data}
-        total={result.total}
-        page={result.page}
-        totalPages={result.totalPages}
-        role={session?.user?.role ?? "user"}
-      />
-    </div>
-  );
+  return <Box sx={{ p: 3 }}><MuiPageHeader title="Audit Log" description="Complete history of all CRM changes." /><Box sx={{ my: 3 }}><AuditFilters entityType={sp?.entityType} action={sp?.action} dateFrom={sp?.dateFrom} dateTo={sp?.dateTo} /></Box><AuditLogClient entries={result.data} total={result.total} page={result.page} totalPages={result.totalPages} role={session?.user?.role ?? "user"} /></Box>;
 };
 
 export default AuditLogPage;

@@ -1,36 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Box, Paper, Stack, Typography } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { getCurrencies, getExchangeRatesAdmin, getEcbAutoUpdate } from "./_actions/currencies";
 import { CurrencyTable } from "./_components/CurrencyTable";
 import { ExchangeRatesTable } from "./_components/ExchangeRatesTable";
 import { ECBToggle } from "./_components/ECBToggle";
 
 export default async function CurrenciesPage() {
-  const [currencies, rates, ecbEnabled] = await Promise.all([
-    getCurrencies(),
-    getExchangeRatesAdmin(),
-    getEcbAutoUpdate(),
-  ]);
-
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Currencies</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CurrencyTable currencies={currencies} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Exchange Rates</CardTitle>
-          <ECBToggle initialEnabled={ecbEnabled} />
-        </CardHeader>
-        <CardContent>
-          <ExchangeRatesTable rates={rates} ecbEnabled={ecbEnabled} />
-        </CardContent>
-      </Card>
-    </div>
-  );
+  const [currencies, rates, ecbEnabled] = await Promise.all([getCurrencies(), getExchangeRatesAdmin(), getEcbAutoUpdate()]);
+  return <Box sx={{ p: 3 }}><MuiPageHeader title="Currencies" description="Manage available currencies and exchange rates." /><Stack spacing={3} sx={{ mt: 3 }}><Paper variant="outlined" sx={{ p: 2 }}><Typography variant="h6" sx={{ mb: 2 }}>Currencies</Typography><CurrencyTable currencies={currencies} /></Paper><Paper variant="outlined" sx={{ p: 2 }}><Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ justifyContent: "space-between", alignItems: { sm: "center" }, mb: 2 }}><Typography variant="h6">Exchange Rates</Typography><ECBToggle initialEnabled={ecbEnabled} /></Stack><ExchangeRatesTable rates={rates} ecbEnabled={ecbEnabled} /></Paper></Stack></Box>;
 }

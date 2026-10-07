@@ -1,31 +1,13 @@
 "use client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { useState } from "react";
+import { Box, Tab, Tabs } from "@mui/material";
 import { ConfigList } from "./ConfigList";
 import type { CrmConfigType, ConfigValue } from "../_actions/crm-settings";
 
-type TabConfig = {
-  key: CrmConfigType;
-  label: string;
-  values: ConfigValue[];
-};
-
-interface Props {
-  tabs: TabConfig[];
-}
-
-export function CrmSettingsTabs({ tabs }: Props) {
-  return (
-    <Tabs defaultValue={tabs[0]?.key}>
-      <TabsList className="flex-wrap h-auto gap-1">
-        {tabs.map((t) => (
-          <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>
-        ))}
-      </TabsList>
-      {tabs.map((t) => (
-        <TabsContent key={t.key} value={t.key} className="mt-6">
-          <ConfigList configType={t.key} label={t.label} values={t.values} />
-        </TabsContent>
-      ))}
-    </Tabs>
-  );
+type TabConfig = { key: CrmConfigType; label: string; values: ConfigValue[] };
+export function CrmSettingsTabs({ tabs }: { tabs: TabConfig[] }) {
+  const [current, setCurrent] = useState<CrmConfigType | undefined>(tabs[0]?.key);
+  const selected = tabs.find((tab) => tab.key === current);
+  return <Box><Tabs value={current ?? false} onChange={(_, value: CrmConfigType) => setCurrent(value)} variant="scrollable" scrollButtons="auto" sx={{ borderBottom: 1, borderColor: "divider" }}>{tabs.map((tab) => <Tab key={tab.key} value={tab.key} label={tab.label} />)}</Tabs>{selected && <Box sx={{ mt: 3 }}><ConfigList configType={selected.key} label={selected.label} values={selected.values} /></Box>}</Box>;
 }

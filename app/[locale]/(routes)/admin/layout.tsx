@@ -1,22 +1,15 @@
 import { redirect } from "next/navigation";
+import { Box } from "@mui/material";
 import { requireRole, AuthorizationError, AuthenticationError } from "@/lib/authz";
 import { AdminSidebarNav } from "./_components/AdminSidebarNav";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   try {
     await requireRole(["admin"]);
-  } catch (e) {
-    if (e instanceof AuthenticationError) redirect("/sign-in");
-    if (e instanceof AuthorizationError) redirect("/");
-    throw e;
+  } catch (error) {
+    if (error instanceof AuthenticationError) redirect("/sign-in");
+    if (error instanceof AuthorizationError) redirect("/");
+    throw error;
   }
-
-  return (
-    <div className="flex h-full w-full min-h-0">
-      <aside className="w-56 shrink-0 border-r bg-card flex flex-col py-4 px-2">
-        <AdminSidebarNav />
-      </aside>
-      <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
-    </div>
-  );
+  return <Box sx={{ display: "flex", width: "100%", minHeight: 0, height: "100%", flexDirection: { xs: "column", md: "row" } }}><Box component="aside" sx={{ width: { xs: "100%", md: 224 }, flexShrink: 0, borderRight: { md: 1 }, borderBottom: { xs: 1, md: 0 }, borderColor: "divider", bgcolor: "background.paper", p: 1 }}><AdminSidebarNav /></Box><Box component="main" sx={{ flex: 1, minWidth: 0, overflowY: "auto" }}>{children}</Box></Box>;
 }

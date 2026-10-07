@@ -1,3 +1,5 @@
+import { Box } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { getConfigValues } from "./_actions/crm-settings";
 import { CrmSettingsTabs } from "./_components/CrmSettingsTabs";
 
@@ -30,15 +32,5 @@ export default async function CrmSettingsPage() {
     { key: "salesStage" as const,      label: "Sales Stages",      values: salesStages },
   ];
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">CRM Settings</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Manage default values used across CRM modules.
-        </p>
-      </div>
-      <CrmSettingsTabs tabs={tabs} />
-    </div>
-  );
+  return <Box sx={{ p: 3 }}><MuiPageHeader title="CRM Settings" description="Manage default values used across CRM modules." /><Box sx={{ mt: 3 }}><CrmSettingsTabs tabs={tabs} /></Box></Box>;
 }
