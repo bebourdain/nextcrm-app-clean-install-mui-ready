@@ -2,8 +2,9 @@ import { prismadb } from "@/lib/prisma";
 import { getSession } from "@/lib/auth-server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Box, Button, Chip, Divider, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { Box, Chip, Divider, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
+import { MuiLinkButton } from "@/components/mui/MuiLinkButton";
 import { RefreshCw } from "lucide-react";
 import moment from "moment";
 import { RetryEnrichmentButton } from "./RetryEnrichmentButton";
@@ -25,7 +26,7 @@ export default async function TargetEnrichmentJobsPage() {
     include: { target: { select: { id: true, first_name: true, last_name: true, email: true } }, triggered_by_user: { select: { name: true } } },
   });
   return <Box sx={{ width: "100%", pb: 6 }}>
-    <MuiPageHeader title="Target Enrichment Jobs" action={<Button component={Link} href="." variant="outlined" startIcon={<RefreshCw size={16} />}>Refresh</Button>} />
+    <MuiPageHeader title="Target Enrichment Jobs" action={<MuiLinkButton href="." variant="outlined" startIcon={<RefreshCw size={16} />}>Refresh</MuiLinkButton>} />
     <Divider sx={{ my: 2 }} />
     <Paper variant="outlined" sx={{ p: 3, borderRadius: "var(--radius)" }}>
       <Typography variant="h6" component="h2" sx={{ fontWeight: 600, mb: 2 }}>{records.length} enrichment job{records.length !== 1 ? "s" : ""}</Typography>
