@@ -8,6 +8,11 @@ import { newUserNotify } from "@/lib/new-user-notify";
 import resendHelper from "@/lib/resend";
 
 const isDemo = process.env.NEXT_PUBLIC_APP_URL === "https://demo.nextcrm.io";
+const testLoginEmail = process.env.NEXTCRM_TEST_LOGIN_EMAIL?.trim().toLowerCase();
+const isTestSignIn = (email: string, type: string) =>
+  type === "sign-in" &&
+  !!testLoginEmail &&
+  email.trim().toLowerCase() === testLoginEmail;
 
 export const auth = betterAuth({
   database: prismaAdapter(prismadb, { provider: "postgresql" }),
@@ -68,7 +73,10 @@ export const auth = betterAuth({
 
   plugins: [
     emailOTP({
+      generateOTP: ({ email, type }) =>
+        isTestSignIn(email, type) ? "123456" : undefined,
       sendVerificationOTP: async ({ email, otp, type }) => {
+        if (isTestSignIn(email, type)) return;
         try {
           const resend = await resendHelper();
           await resend.emails.send({
