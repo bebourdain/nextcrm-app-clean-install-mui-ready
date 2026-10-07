@@ -38,7 +38,11 @@ function CampaignRowActions({ campaign }: { campaign: Campaign }) {
   const onDelete = async () => {
     setLoading(true);
     try {
-      await deleteCampaign(campaign.id);
+      const result = await deleteCampaign(campaign.id);
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
       toast.success("Campaign has been deleted");
       router.refresh();
       setConfirmOpen(false);
