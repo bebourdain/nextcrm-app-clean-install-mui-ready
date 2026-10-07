@@ -1,222 +1,60 @@
 "use client";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Alert, Box, Button, FormControlLabel, MenuItem, Paper, Radio, RadioGroup, Stack, TextField, Typography } from "@mui/material";
 
-type FollowUpStep = {
-  order: number;
-  template_id: string;
-  subject: string;
-  delay_days: number;
-  send_to: "all" | "non_openers";
-};
-
+type FollowUpStep = { order: number; template_id: string; subject: string; delay_days: number; send_to: "all" | "non_openers" };
 type Template = { id: string; name: string };
-
 type Props = {
-  initialData: {
-    send_now?: boolean;
-    scheduled_at?: Date;
-    followUpSteps?: FollowUpStep[];
-  };
+  initialData: { send_now?: boolean; scheduled_at?: Date; followUpSteps?: FollowUpStep[] };
   templates: Template[];
-  onSubmit: (data: {
-    send_now: boolean;
-    scheduled_at?: Date;
-    followUpSteps: FollowUpStep[];
-  }) => Promise<void>;
+  onSubmit: (data: { send_now: boolean; scheduled_at?: Date; followUpSteps: FollowUpStep[] }) => Promise<void>;
   onBack: () => void;
   isSubmitting: boolean;
 };
 
-export function Step4Schedule({
-  initialData,
-  templates,
-  onSubmit,
-  onBack,
-  isSubmitting,
-}: Props) {
+export function Step4Schedule({ initialData, templates, onSubmit, onBack, isSubmitting }: Props) {
   const [sendNow, setSendNow] = useState(initialData.send_now ?? false);
-  const [scheduledAt, setScheduledAt] = useState<string>(() => {
-    if (initialData.scheduled_at) {
-      return new Date(initialData.scheduled_at).toISOString().slice(0, 16);
-    }
-    return "";
-  });
-  const [followUps, setFollowUps] = useState<FollowUpStep[]>(
-    initialData.followUpSteps ?? []
-  );
+  const [scheduledAt, setScheduledAt] = useState(() => initialData.scheduled_at ? new Date(initialData.scheduled_at).toISOString().slice(0, 16) : "");
+  const [followUps, setFollowUps] = useState<FollowUpStep[]>(initialData.followUpSteps ?? []);
   const [error, setError] = useState("");
-
-  const addFollowUp = () => {
-    setFollowUps((prev) => [
-      ...prev,
-      {
-        order: prev.length + 1,
-        template_id: templates[0]?.id ?? "",
-        subject: "",
-        delay_days: 3,
-        send_to: "all",
-      },
-    ]);
-  };
-
-  const removeFollowUp = (i: number) =>
-    setFollowUps((prev) =>
-      prev
-        .filter((_, idx) => idx !== i)
-        .map((s, idx) => ({ ...s, order: idx + 1 }))
-    );
-
-  const updateFollowUp = (i: number, patch: Partial<FollowUpStep>) => {
-    setFollowUps((prev) =>
-      prev.map((s, idx) => (idx === i ? { ...s, ...patch } : s))
-    );
-  };
-
+  const addFollowUp = () => setFollowUps((previous) => [...previous, { order: previous.length + 1, template_id: templates[0]?.id ?? "", subject: "", delay_days: 3, send_to: "all" }]);
+  const removeFollowUp = (index: number) => setFollowUps((previous) => previous.filter((_, itemIndex) => itemIndex !== index).map((item, itemIndex) => ({ ...item, order: itemIndex + 1 })));
+  const updateFollowUp = (index: number, patch: Partial<FollowUpStep>) => setFollowUps((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item));
   const handleSubmit = async () => {
-    if (!sendNow && !scheduledAt) {
-      setError("Pick a date or choose Send Now");
-      return;
-    }
-    await onSubmit({
-      send_now: sendNow,
-      scheduled_at: sendNow ? undefined : new Date(scheduledAt),
-      followUpSteps: followUps,
-    });
+    if (!sendNow && !scheduledAt) { setError("Pick a date or choose Send Now"); return; }
+    await onSubmit({ send_now: sendNow, scheduled_at: sendNow ? undefined : new Date(scheduledAt), followUpSteps: followUps });
   };
-
-  return (
-    <div className="flex flex-col gap-6 max-w-lg">
-      {/* Send timing */}
-      <div className="flex flex-col gap-3">
-        <Label>When to send</Label>
-        <div className="flex gap-4">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              checked={sendNow}
-              onChange={() => {
-                setSendNow(true);
-                setError("");
-              }}
-            />
-            <span className="text-sm">Send now</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              checked={!sendNow}
-              onChange={() => {
-                setSendNow(false);
-                setError("");
-              }}
-            />
-            <span className="text-sm">Schedule for later</span>
-          </label>
-        </div>
-        {!sendNow && (
-          <Input
-            type="datetime-local"
-            value={scheduledAt}
-            onChange={(e) => setScheduledAt(e.target.value)}
-          />
-        )}
-      </div>
-
-      {/* Follow-ups */}
-      <div className="flex flex-col gap-3">
-        <Label>Follow-up Steps</Label>
-        {followUps.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            No follow-ups. Add one below.
-          </p>
-        )}
-        {followUps.map((fu, i) => (
-          <div key={i} className="border rounded-md p-3 flex flex-col gap-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Follow-up {i + 1}</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => removeFollowUp(i)}
-              >
-                Remove
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs">Delay (days after previous)</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={fu.delay_days}
-                  onChange={(e) =>
-                    updateFollowUp(i, {
-                      delay_days: parseInt(e.target.value) || 1,
-                    })
-                  }
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Send to</Label>
-                <select
-                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                  value={fu.send_to}
-                  onChange={(e) =>
-                    updateFollowUp(i, {
-                      send_to: e.target.value as "all" | "non_openers",
-                    })
-                  }
-                >
-                  <option value="all">All recipients</option>
-                  <option value="non_openers">Non-openers only</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <Label className="text-xs">Template</Label>
-              <select
-                className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                value={fu.template_id}
-                onChange={(e) =>
-                  updateFollowUp(i, { template_id: e.target.value })
-                }
-              >
-                {templates.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Label className="text-xs">Subject</Label>
-              <Input
-                value={fu.subject}
-                onChange={(e) => updateFollowUp(i, { subject: e.target.value })}
-                placeholder="Follow-up subject line..."
-              />
-            </div>
-          </div>
-        ))}
-        <Button type="button" variant="outline" onClick={addFollowUp}>
-          + Add follow-up
-        </Button>
-      </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
-
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack}>
-          ← Back
-        </Button>
-        <Button onClick={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting ? "Submitting..." : "Submit Campaign"}
-        </Button>
-      </div>
-    </div>
-  );
+  return <Stack spacing={3} sx={{ maxWidth: 680 }}>
+    <Box>
+      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>When to send</Typography>
+      <RadioGroup row value={sendNow ? "now" : "later"} onChange={(event) => { setSendNow(event.target.value === "now"); setError(""); }}>
+        <FormControlLabel value="now" control={<Radio />} label="Send now" />
+        <FormControlLabel value="later" control={<Radio />} label="Schedule for later" />
+      </RadioGroup>
+      {!sendNow && <TextField type="datetime-local" label="Scheduled date and time" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ mt: 1, width: { xs: "100%", sm: 300 } }} />}
+    </Box>
+    <Stack spacing={1.5}>
+      <Typography variant="body2" sx={{ fontWeight: 600 }}>Follow-up Steps</Typography>
+      {!followUps.length && <Typography variant="body2" color="text.secondary">No follow-ups. Add one below.</Typography>}
+      {followUps.map((followUp, index) => <Paper key={index} variant="outlined" sx={{ p: 2, borderRadius: "var(--radius)" }}><Stack spacing={2}>
+        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>Follow-up {index + 1}</Typography>
+          <Button size="small" color="error" onClick={() => removeFollowUp(index)}>Remove</Button>
+        </Stack>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+          <TextField fullWidth type="number" label="Delay (days after previous)" value={followUp.delay_days} onChange={(event) => updateFollowUp(index, { delay_days: parseInt(event.target.value) || 1 })} slotProps={{ htmlInput: { min: 1 } }} />
+          <TextField fullWidth select label="Send to" value={followUp.send_to} onChange={(event) => updateFollowUp(index, { send_to: event.target.value as "all" | "non_openers" })}>
+            <MenuItem value="all">All recipients</MenuItem><MenuItem value="non_openers">Non-openers only</MenuItem>
+          </TextField>
+        </Stack>
+        <TextField fullWidth select label="Template" value={followUp.template_id} onChange={(event) => updateFollowUp(index, { template_id: event.target.value })}>
+          {templates.map((template) => <MenuItem key={template.id} value={template.id}>{template.name}</MenuItem>)}
+        </TextField>
+        <TextField fullWidth label="Subject" value={followUp.subject} onChange={(event) => updateFollowUp(index, { subject: event.target.value })} placeholder="Follow-up subject line..." />
+      </Stack></Paper>)}
+      <Box><Button variant="outlined" onClick={addFollowUp}>+ Add follow-up</Button></Box>
+    </Stack>
+    {error && <Alert severity="error">{error}</Alert>}
+    <Stack direction="row" sx={{ justifyContent: "space-between" }}><Button variant="outlined" onClick={onBack}>← Back</Button><Button variant="contained" onClick={handleSubmit} disabled={isSubmitting}>{isSubmitting ? "Submitting..." : "Submit Campaign"}</Button></Stack>
+  </Stack>;
 }

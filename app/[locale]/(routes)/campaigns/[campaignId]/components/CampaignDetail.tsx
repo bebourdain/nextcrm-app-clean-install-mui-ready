@@ -1,3 +1,5 @@
+import { Box, Button, Chip, Divider, Grid, Paper, Stack, Typography } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { pauseCampaign } from "@/actions/campaigns/pause-campaign";
 import StepsTimeline from "./StepsTimeline";
 import RecipientsTable from "./RecipientsTable";
@@ -14,71 +16,26 @@ export default function CampaignDetail({ campaign }: { campaign: CampaignWithDat
   const bounced = sends.filter((s) => s.status === "bounced").length;
   const openRate = totalSent > 0 ? Math.round((opened / totalSent) * 100) : 0;
   const clickRate = totalSent > 0 ? Math.round((clicked / totalSent) * 100) : 0;
-
-  const statusColors: Record<string, string> = {
-    draft: "bg-slate-100 text-slate-700",
-    scheduled: "bg-blue-100 text-blue-700",
-    sending: "bg-amber-100 text-amber-700",
-    sent: "bg-green-100 text-green-700",
-    paused: "bg-orange-100 text-orange-700",
-  };
-  const statusColor = statusColors[campaign.status ?? "draft"] ?? "bg-gray-100 text-gray-700";
-
   const canPause = campaign.status === "scheduled" || campaign.status === "sending";
-
-  return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl font-bold">{campaign.name}</h1>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
-              {campaign.status?.toUpperCase()}
-            </span>
-          </div>
-          {campaign.description && (
-            <p className="text-muted-foreground">{campaign.description}</p>
-          )}
-        </div>
-        {canPause && (
-          <form
-            action={async () => {
-              "use server";
-              await pauseCampaign(campaign.id);
-            }}
-          >
-            <button
-              type="submit"
-              className="px-3 py-1.5 text-sm border rounded-md hover:bg-muted"
-            >
-              Pause
-            </button>
-          </form>
-        )}
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-5 gap-4">
-        {[
-          { label: "Sent", value: totalSent },
-          { label: "Delivered", value: delivered },
-          { label: "Open Rate", value: `${openRate}%` },
-          { label: "Click Rate", value: `${clickRate}%` },
-          { label: "Bounced", value: bounced },
-        ].map(({ label, value }) => (
-          <div key={label} className="bg-muted/30 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold">{value}</div>
-            <div className="text-xs text-muted-foreground mt-1">{label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Steps Timeline */}
-      <StepsTimeline steps={campaign.steps} />
-
-      {/* Recipients Table */}
-      <RecipientsTable sends={campaign.sends} />
-    </div>
-  );
+  const color = campaign.status === "sent" ? "success" : campaign.status === "scheduled" ? "info" : campaign.status === "sending" || campaign.status === "paused" ? "warning" : "default";
+  const metrics = [
+    { label: "Sent", value: totalSent }, { label: "Delivered", value: delivered },
+    { label: "Open Rate", value: `${openRate}%` }, { label: "Click Rate", value: `${clickRate}%` },
+    { label: "Bounced", value: bounced },
+  ];
+  return <Stack spacing={2.5}>
+    <MuiPageHeader title={campaign.name} description={campaign.description ?? undefined} action={<Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+      <Chip className="rounded-full" label={campaign.status?.toUpperCase() ?? "DRAFT"} color={color} size="small" />
+      {canPause && <form action={async () => { "use server"; await pauseCampaign(campaign.id); }}><Button type="submit" variant="outlined">Pause</Button></form>}
+    </Stack>} />
+    <Divider />
+    <Grid className="grid" container spacing={2} columns={{ xs: 2, sm: 4, lg: 5 }}>{metrics.map(({ label, value }) => <Grid key={label} size={1}>
+      <Paper variant="outlined" sx={{ p: 2, textAlign: "center", borderRadius: "var(--radius)", height: "100%" }}>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>{value}</Typography>
+        <Typography variant="caption" color="text.secondary">{label}</Typography>
+      </Paper>
+    </Grid>)}</Grid>
+    <Box><StepsTimeline steps={campaign.steps} /></Box>
+    <Box><RecipientsTable sends={campaign.sends} /></Box>
+  </Stack>;
 }

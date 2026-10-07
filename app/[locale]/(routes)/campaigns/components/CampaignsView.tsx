@@ -1,67 +1,12 @@
 "use client";
 
-import * as React from "react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import moment from "moment";
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Cross2Icon, DotsHorizontalIcon } from "@radix-ui/react-icons";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  DoubleArrowLeftIcon,
-  DoubleArrowRightIcon,
-} from "@radix-ui/react-icons";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import AlertModal from "@/components/modals/alert-modal";
 import { toast } from "sonner";
+import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Menu, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, TextField, Typography } from "@mui/material";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreHorizontal, X } from "lucide-react";
 import { deleteCampaign } from "@/actions/campaigns/delete-campaign";
 
 type Campaign = {
@@ -75,373 +20,112 @@ type Campaign = {
   template?: { name: string } | null;
   created_by_user?: { name: string | null } | null;
 };
-
+type SortKey = "name" | "status" | "scheduled_at";
 const STATUS_OPTIONS = ["All", "draft", "scheduled", "sending", "sent", "paused"];
-
-const statusBadgeClass = (status: string | null): string => {
-  switch (status) {
-    case "draft":
-      return "bg-gray-100 text-gray-800 hover:bg-gray-100";
-    case "scheduled":
-      return "bg-blue-100 text-blue-800 hover:bg-blue-100";
-    case "sending":
-      return "bg-amber-100 text-amber-800 hover:bg-amber-100";
-    case "sent":
-      return "bg-green-100 text-green-800 hover:bg-green-100";
-    case "paused":
-      return "bg-orange-100 text-orange-800 hover:bg-orange-100";
-    default:
-      return "bg-gray-100 text-gray-700 hover:bg-gray-100";
-  }
+const columns = ["Name", "Status", "Scheduled At", "Recipients", "Template"] as const;
+const statusColor = (status: string | null): "default" | "info" | "warning" | "success" => {
+  if (status === "scheduled") return "info";
+  if (status === "sending" || status === "paused") return "warning";
+  if (status === "sent") return "success";
+  return "default";
 };
 
-function CampaignRowActions({ row }: { row: { original: Campaign } }) {
+function CampaignRowActions({ campaign }: { campaign: Campaign }) {
   const router = useRouter();
-  const campaign = row.original;
-  const [open, setOpen] = useState(false);
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const onDelete = async () => {
     setLoading(true);
-    await deleteCampaign(campaign.id);
-    setLoading(false);
-    setOpen(false);
-    toast.success("Campaign has been deleted");
-    router.refresh();
+    try {
+      await deleteCampaign(campaign.id);
+      toast.success("Campaign has been deleted");
+      router.refresh();
+      setConfirmOpen(false);
+    } catch {
+      toast.error("Could not delete campaign. Please try again.");
+    } finally { setLoading(false); }
   };
-
-  return (
-    <>
-      <AlertModal
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        onConfirm={onDelete}
-        loading={loading}
-      />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
-          >
-            <DotsHorizontalIcon className="h-4 w-4" />
-            <span className="sr-only">Open menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[160px]">
-          <DropdownMenuItem
-            onClick={() => router.push(`/campaigns/${campaign.id}`)}
-          >
-            View
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setOpen(true)}>
-            Delete
-            <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
-  );
+  return <>
+    <IconButton size="small" aria-label={`Actions for ${campaign.name}`} onClick={(event) => setAnchor(event.currentTarget)}><MoreHorizontal size={18} /><span className="sr-only">Open menu</span></IconButton>
+    <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
+      <MenuItem onClick={() => { setAnchor(null); router.push(`/campaigns/${campaign.id}`); }}>View</MenuItem>
+      <MenuItem onClick={() => { setAnchor(null); setConfirmOpen(true); }}>Delete</MenuItem>
+    </Menu>
+    <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+      <DialogTitle>Delete campaign?</DialogTitle>
+      <DialogContent><DialogContentText>This action cannot be undone.</DialogContentText></DialogContent>
+      <DialogActions><Button onClick={() => setConfirmOpen(false)} disabled={loading}>Cancel</Button><Button color="error" onClick={onDelete} disabled={loading}>{loading ? "Deleting..." : "Delete"}</Button></DialogActions>
+    </Dialog>
+  </>;
 }
 
-const columns: ColumnDef<Campaign>[] = [
-  {
-    accessorKey: "name",
-    header: "Name",
-    cell: ({ row }) => (
-      <Link
-        href={`/campaigns/${row.original.id}`}
-        className="font-medium hover:underline"
-      >
-        {row.getValue("name")}
-      </Link>
-    ),
-    enableSorting: true,
-    enableHiding: true,
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const status = row.getValue("status") as string | null;
-      return status ? (
-        <Badge className={statusBadgeClass(status)} variant="secondary">
-          {status}
-        </Badge>
-      ) : (
-        <span className="text-muted-foreground">—</span>
-      );
-    },
-    enableSorting: true,
-    enableHiding: true,
-  },
-  {
-    accessorKey: "scheduled_at",
-    header: "Scheduled At",
-    cell: ({ row }) => (
-      <div className="w-[100px]">
-        {row.getValue("scheduled_at")
-          ? moment(row.getValue("scheduled_at")).format("YY-MM-DD HH:mm")
-          : "—"}
-      </div>
-    ),
-    enableSorting: true,
-    enableHiding: true,
-  },
-  {
-    id: "recipients",
-    header: "Recipients",
-    cell: ({ row }) => (
-      <div className="text-right tabular-nums">
-        {row.original._count?.sends ?? 0}
-      </div>
-    ),
-    enableSorting: false,
-    enableHiding: true,
-  },
-  {
-    id: "template_name",
-    header: "Template",
-    cell: ({ row }) => (
-      <div>{row.original.template?.name ?? "—"}</div>
-    ),
-    enableSorting: false,
-    enableHiding: true,
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => <CampaignRowActions row={row} />,
-  },
-];
-
-const CampaignsView = ({ data }: { data: Campaign[] }) => {
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [selectedStatus, setSelectedStatus] = React.useState<string>("All");
-
-  const filteredData = React.useMemo(() => {
-    if (selectedStatus === "All") return data;
-    return data.filter((c) => c.status === selectedStatus);
-  }, [data, selectedStatus]);
-
-  const table = useReactTable({
-    data: filteredData,
-    columns,
-    state: {
-      sorting,
-      columnVisibility,
-      rowSelection,
-      columnFilters,
-    },
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-  });
-
-  const isFiltered =
-    table.getState().columnFilters.length > 0 || selectedStatus !== "All";
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between">
-          <div>
-            <CardTitle>All Campaigns</CardTitle>
-            <CardDescription></CardDescription>
-          </div>
-        </div>
-        <Separator />
-      </CardHeader>
-
-      <CardContent>
-        <div className="space-y-4">
-          {/* Toolbar */}
-          <div className="flex items-center justify-between">
-            <div className="flex flex-1 items-center space-x-2">
-              <Input
-                placeholder="Filter by name ..."
-                value={
-                  (table.getColumn("name")?.getFilterValue() as string) ?? ""
-                }
-                onChange={(event) =>
-                  table.getColumn("name")?.setFilterValue(event.target.value)
-                }
-                className="h-8 w-[150px] lg:w-[250px]"
-              />
-              <Select
-                value={selectedStatus}
-                onValueChange={(value) => setSelectedStatus(value)}
-              >
-                <SelectTrigger className="h-8 w-[130px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s === "All" ? "All Statuses" : s.charAt(0).toUpperCase() + s.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {isFiltered && (
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    table.resetColumnFilters();
-                    setSelectedStatus("All");
-                  }}
-                  className="h-8 px-2 lg:px-3"
-                >
-                  Reset
-                  <Cross2Icon className="ml-2 h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Table */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      No campaigns found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Pagination */}
-          <div className="flex items-center justify-between px-2">
-            <div className="flex-1 text-sm text-muted-foreground">
-              {table.getFilteredSelectedRowModel().rows.length} of{" "}
-              {table.getFilteredRowModel().rows.length} row(s) selected.
-            </div>
-            <div className="flex items-center space-x-6 lg:space-x-8">
-              <div className="flex items-center space-x-2">
-                <p className="text-sm font-medium">Rows per page</p>
-                <Select
-                  value={`${table.getState().pagination.pageSize}`}
-                  onValueChange={(value) => {
-                    table.setPageSize(Number(value));
-                  }}
-                >
-                  <SelectTrigger className="h-8 w-[70px]">
-                    <SelectValue
-                      placeholder={table.getState().pagination.pageSize}
-                    />
-                  </SelectTrigger>
-                  <SelectContent side="top">
-                    {[10, 20, 30, 40, 50].map((pageSize) => (
-                      <SelectItem key={pageSize} value={`${pageSize}`}>
-                        {pageSize}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                Page {table.getState().pagination.pageIndex + 1} of{" "}
-                {table.getPageCount()}
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  className="hidden h-8 w-8 p-0 lg:flex"
-                  onClick={() => table.setPageIndex(0)}
-                  disabled={!table.getCanPreviousPage()}
-                >
-                  <span className="sr-only">Go to first page</span>
-                  <DoubleArrowLeftIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-8 w-8 p-0"
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
-                >
-                  <span className="sr-only">Go to previous page</span>
-                  <ChevronLeftIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-8 w-8 p-0"
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                >
-                  <span className="sr-only">Go to next page</span>
-                  <ChevronRightIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="hidden h-8 w-8 p-0 lg:flex"
-                  onClick={() =>
-                    table.setPageIndex(table.getPageCount() - 1)
-                  }
-                  disabled={!table.getCanNextPage()}
-                >
-                  <span className="sr-only">Go to last page</span>
-                  <DoubleArrowRightIcon className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-export default CampaignsView;
+export default function CampaignsView({ data }: { data: Campaign[] }) {
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("All");
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const filtered = useMemo(() => {
+    const result = data.filter((campaign) => campaign.name.toLowerCase().includes(search.trim().toLowerCase()) && (status === "All" || campaign.status === status));
+    if (!sortKey) return result;
+    return result.sort((a, b) => {
+      const left = sortKey === "scheduled_at" ? new Date(a.scheduled_at ?? 0).getTime() : (a[sortKey] ?? "").toLowerCase();
+      const right = sortKey === "scheduled_at" ? new Date(b.scheduled_at ?? 0).getTime() : (b[sortKey] ?? "").toLowerCase();
+      const comparison = left < right ? -1 : left > right ? 1 : 0;
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  }, [data, search, status, sortKey, sortDirection]);
+  const pages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
+  const currentPage = Math.min(page, pages - 1);
+  const sort = (key: SortKey) => {
+    if (sortKey === key) setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDirection("asc"); }
+  };
+  const reset = () => { setSearch(""); setStatus("All"); setPage(0); };
+  const sortable: Record<string, SortKey> = { Name: "name", Status: "status", "Scheduled At": "scheduled_at" };
+  return <Paper variant="outlined" sx={{ p: 3, borderRadius: "var(--radius)", boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)" }}>
+    <Typography variant="h5" component="h2" sx={{ fontWeight: 600, mb: 3 }}>All Campaigns</Typography>
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mb: 2 }}>
+      <TextField size="small" placeholder="Filter by name ..." value={search} onChange={(event) => { setSearch(event.target.value); setPage(0); }} sx={{ width: { xs: "100%", sm: 250 } }} />
+      <TextField select size="small" aria-label="Status" value={status} onChange={(event) => { setStatus(event.target.value); setPage(0); }} sx={{ minWidth: 150 }}>
+        {STATUS_OPTIONS.map((item) => <MenuItem key={item} value={item}>{item === "All" ? "All Statuses" : item.charAt(0).toUpperCase() + item.slice(1)}</MenuItem>)}
+      </TextField>
+      {(search || status !== "All") && <Button color="inherit" size="small" endIcon={<X size={16} />} onClick={reset}>Reset</Button>}
+    </Stack>
+    <TableContainer sx={{ border: 1, borderColor: "divider", borderRadius: "var(--radius)" }}>
+      <Table size="small" data-testid="campaigns-table">
+        <TableHead><TableRow>{columns.map((label) => <TableCell key={label} sx={{ color: "text.secondary", whiteSpace: "nowrap" }}>
+          {sortable[label] ? <TableSortLabel active={sortKey === sortable[label]} direction={sortKey === sortable[label] ? sortDirection : "asc"} onClick={() => sort(sortable[label])}>{label}</TableSortLabel> : label}
+        </TableCell>)}<TableCell aria-label="Actions" /></TableRow></TableHead>
+        <TableBody>{filtered.length ? filtered.slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage).map((campaign) =>
+          <TableRow key={campaign.id} hover>
+            <TableCell><Link className="font-medium" href={`/campaigns/${campaign.id}`} style={{ color: "inherit", fontWeight: 500 }}>{campaign.name}</Link></TableCell>
+            <TableCell>{campaign.status ? <Chip size="small" color={statusColor(campaign.status)} label={campaign.status} /> : "—"}</TableCell>
+            <TableCell sx={{ whiteSpace: "nowrap" }}>{campaign.scheduled_at ? moment(campaign.scheduled_at).format("YY-MM-DD HH:mm") : "—"}</TableCell>
+            <TableCell align="right">{campaign._count?.sends ?? 0}</TableCell>
+            <TableCell>{campaign.template?.name ?? "—"}</TableCell>
+            <TableCell><CampaignRowActions campaign={campaign} /></TableCell>
+          </TableRow>
+        ) : <TableRow><TableCell colSpan={6} align="center" sx={{ py: 5 }}>No campaigns found.</TableCell></TableRow>}</TableBody>
+      </Table>
+    </TableContainer>
+    <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ mt: 2, alignItems: "center", justifyContent: "space-between" }}>
+      <Typography variant="body2" color="text.secondary">{filtered.length} campaign(s)</Typography>
+      <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+        <Typography variant="body2">Rows per page</Typography>
+        <Select size="small" value={rowsPerPage} onChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }}>
+          {[10, 20, 30, 40, 50].map((count) => <MenuItem key={count} value={count}>{count}</MenuItem>)}
+        </Select>
+        <Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>Page {currentPage + 1} of {pages}</Typography>
+        <Box sx={{ display: "flex" }}>
+          <IconButton size="small" aria-label="First page" onClick={() => setPage(0)} disabled={currentPage === 0}><ChevronsLeft size={18} /></IconButton>
+          <IconButton size="small" aria-label="Previous page" onClick={() => setPage(currentPage - 1)} disabled={currentPage === 0}><ChevronLeft size={18} /></IconButton>
+          <IconButton size="small" aria-label="Next page" onClick={() => setPage(currentPage + 1)} disabled={currentPage >= pages - 1}><ChevronRight size={18} /></IconButton>
+          <IconButton size="small" aria-label="Last page" onClick={() => setPage(pages - 1)} disabled={currentPage >= pages - 1}><ChevronsRight size={18} /></IconButton>
+        </Box>
+      </Stack>
+    </Stack>
+  </Paper>;
+}

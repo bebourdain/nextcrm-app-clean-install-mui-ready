@@ -1,68 +1,30 @@
+import { Avatar, Box, Chip, Paper, Stack, Typography } from "@mui/material";
+
 type Step = {
-  id: string;
-  order: number;
-  subject: string;
-  send_to: string;
-  scheduled_at: Date | null;
-  sent_at: Date | null;
-  delay_days: number;
-  template: { name: string } | null;
-  sends: Array<{ status: string; opened_at: Date | null }>;
+  id: string; order: number; subject: string; send_to: string; scheduled_at: Date | null; sent_at: Date | null;
+  delay_days: number; template: { name: string } | null; sends: Array<{ status: string; opened_at: Date | null }>;
 };
 
 export default function StepsTimeline({ steps }: { steps: Step[] }) {
-  return (
-    <div className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold">Campaign Steps</h2>
-      {steps.map((step, i) => {
-        const sent = step.sends.filter((s) =>
-          ["sent", "delivered"].includes(s.status)
-        ).length;
-        const opened = step.sends.filter((s) => s.opened_at != null).length;
-        const openRate = sent > 0 ? Math.round((opened / sent) * 100) : 0;
-
-        return (
-          <div
-            key={step.id}
-            className="flex items-center gap-4 p-4 border rounded-lg bg-background"
-          >
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-medium flex-shrink-0">
-              {i + 1}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm">
-                {i === 0 ? "Initial Send" : `Follow-up ${i}`} — {step.subject}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Template: {step.template?.name ?? "—"} &middot;{" "}
-                {step.delay_days > 0 ? `+${step.delay_days} days` : "initial"} &middot;{" "}
-                {step.send_to === "non_openers" ? "Non-openers only" : "All recipients"}
-              </div>
-            </div>
-            <div className="text-right text-xs text-muted-foreground flex-shrink-0">
-              {step.sent_at ? (
-                <div className="text-green-600">
-                  Sent {new Date(step.sent_at).toLocaleDateString()}
-                </div>
-              ) : step.scheduled_at ? (
-                <div className="text-blue-600">
-                  Scheduled {new Date(step.scheduled_at).toLocaleDateString()}
-                </div>
-              ) : (
-                <div>Pending</div>
-              )}
-              {sent > 0 && (
-                <div>
-                  {sent} sent &middot; {openRate}% opens
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
-      {steps.length === 0 && (
-        <p className="text-sm text-muted-foreground">No steps configured.</p>
-      )}
-    </div>
-  );
+  return <Stack spacing={1.5}>
+    <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>Campaign Steps</Typography>
+    {steps.map((step, i) => {
+      const sent = step.sends.filter((send) => ["sent", "delivered"].includes(send.status)).length;
+      const opened = step.sends.filter((send) => send.opened_at != null).length;
+      const openRate = sent > 0 ? Math.round((opened / sent) * 100) : 0;
+      const label = step.sent_at ? `Sent ${new Date(step.sent_at).toLocaleDateString()}` : step.scheduled_at ? `Scheduled ${new Date(step.scheduled_at).toLocaleDateString()}` : "Pending";
+      const color = step.sent_at ? "success" : step.scheduled_at ? "info" : "default";
+      return <Paper key={step.id} variant="outlined" sx={{ p: 2, borderRadius: "var(--radius)" }}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { sm: "center" } }}>
+          <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main", fontSize: 14 }}>{i + 1}</Avatar>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>{i === 0 ? "Initial Send" : `Follow-up ${i}`} — {step.subject}</Typography>
+            <Typography variant="caption" color="text.secondary">Template: {step.template?.name ?? "—"} · {step.delay_days > 0 ? `+${step.delay_days} days` : "initial"} · {step.send_to === "non_openers" ? "Non-openers only" : "All recipients"}</Typography>
+          </Box>
+          <Stack spacing={0.5} sx={{ alignItems: { sm: "flex-end" } }}><Chip size="small" color={color} label={label} />{sent > 0 && <Typography variant="caption" color="text.secondary">{sent} sent · {openRate}% opens</Typography>}</Stack>
+        </Stack>
+      </Paper>;
+    })}
+    {!steps.length && <Typography variant="body2" color="text.secondary">No steps configured.</Typography>}
+  </Stack>;
 }

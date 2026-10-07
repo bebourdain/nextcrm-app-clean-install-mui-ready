@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Box, Paper, Step, StepLabel, Stepper } from "@mui/material";
 import { createCampaign } from "@/actions/campaigns/create-campaign";
 import { scheduleCampaign } from "@/actions/campaigns/schedule-campaign";
 import { sendCampaignNow } from "@/actions/campaigns/send-campaign-now";
@@ -111,37 +112,11 @@ export function WizardShell({
   const steps = ["Details", "Template", "Audience", "Schedule"];
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Step indicator */}
-      <div className="flex gap-2 items-center">
-        {steps.map((label, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <div
-              className={`flex items-center justify-center w-7 h-7 rounded-full text-sm font-medium ${
-                step === i + 1
-                  ? "bg-primary text-primary-foreground"
-                  : step > i + 1
-                  ? "bg-primary/20 text-primary"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {i + 1}
-            </div>
-            <span
-              className={`text-sm ${
-                step === i + 1 ? "font-medium" : "text-muted-foreground"
-              }`}
-            >
-              {label}
-            </span>
-            {i < steps.length - 1 && (
-              <span className="text-muted-foreground mx-1">—</span>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Step content */}
+    <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, borderRadius: "var(--radius)" }}>
+      <Stepper activeStep={step - 1} alternativeLabel sx={{ mb: 4 }}>
+        {steps.map((label) => <Step key={label}><StepLabel>{label}</StepLabel></Step>)}
+      </Stepper>
+      <Box>
       {step === 1 && (
         <Step1Details initialData={formData} onNext={handleNext} />
       )}
@@ -170,6 +145,7 @@ export function WizardShell({
           isSubmitting={isSubmitting}
         />
       )}
-    </div>
+      </Box>
+    </Paper>
   );
 }

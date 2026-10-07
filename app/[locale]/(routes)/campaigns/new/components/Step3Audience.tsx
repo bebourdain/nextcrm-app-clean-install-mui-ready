@@ -1,100 +1,35 @@
 "use client";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Alert, Box, Button, Checkbox, List, ListItemButton, ListItemText, Paper, Stack, TextField, Typography } from "@mui/material";
 
-type TargetList = {
-  id: string;
-  name: string;
-  _count: { targets: number };
-};
+type TargetList = { id: string; name: string; _count: { targets: number } };
+type Props = { initialData: { target_list_ids?: string[] }; targetLists: TargetList[]; onNext: (data: { target_list_ids: string[] }) => void; onBack: () => void };
 
-type Props = {
-  initialData: { target_list_ids?: string[] };
-  targetLists: TargetList[];
-  onNext: (data: { target_list_ids: string[] }) => void;
-  onBack: () => void;
-};
-
-export function Step3Audience({
-  initialData,
-  targetLists,
-  onNext,
-  onBack,
-}: Props) {
-  const [selected, setSelected] = useState<Set<string>>(
-    new Set(initialData.target_list_ids ?? [])
-  );
+export function Step3Audience({ initialData, targetLists, onNext, onBack }: Props) {
+  const [selected, setSelected] = useState<Set<string>>(new Set(initialData.target_list_ids ?? []));
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
-
-  const filtered = targetLists.filter((l) =>
-    l.name.toLowerCase().includes(search.toLowerCase())
-  );
-  const totalRecipients = targetLists
-    .filter((l) => selected.has(l.id))
-    .reduce((sum, l) => sum + l._count.targets, 0);
-
+  const filtered = targetLists.filter((item) => item.name.toLowerCase().includes(search.toLowerCase()));
+  const totalRecipients = targetLists.filter((item) => selected.has(item.id)).reduce((sum, item) => sum + item._count.targets, 0);
   const toggle = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setSelected((previous) => { const next = new Set(previous); if (next.has(id)) next.delete(id); else next.add(id); return next; });
     setError("");
   };
-
   const handleNext = () => {
-    if (selected.size === 0) {
-      setError("Select at least one target list");
-      return;
-    }
+    if (!selected.size) { setError("Select at least one target list"); return; }
     onNext({ target_list_ids: Array.from(selected) });
   };
-
-  return (
-    <div className="flex flex-col gap-4 max-w-lg">
-      <Input
-        placeholder="Search target lists..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-      <div className="flex flex-col gap-1 max-h-64 overflow-y-auto border rounded-md p-2">
-        {filtered.map((l) => (
-          <label
-            key={l.id}
-            className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer"
-          >
-            <input
-              type="checkbox"
-              checked={selected.has(l.id)}
-              onChange={() => toggle(l.id)}
-            />
-            <span className="text-sm">{l.name}</span>
-            <span className="text-xs text-muted-foreground ml-auto">
-              {l._count.targets} targets
-            </span>
-          </label>
-        ))}
-        {filtered.length === 0 && (
-          <p className="text-sm text-muted-foreground p-2">
-            No target lists found.
-          </p>
-        )}
-      </div>
-      {selected.size > 0 && (
-        <p className="text-sm text-muted-foreground">
-          ~{totalRecipients} recipients selected across {selected.size} list(s)
-        </p>
-      )}
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack}>
-          ← Back
-        </Button>
-        <Button onClick={handleNext}>Next →</Button>
-      </div>
-    </div>
-  );
+  return <Stack spacing={2.5} sx={{ maxWidth: 600 }}>
+    <TextField size="small" label="Search target lists" value={search} onChange={(event) => setSearch(event.target.value)} />
+    <Paper variant="outlined" sx={{ maxHeight: 300, overflow: "auto" }}><List dense disablePadding>
+      {filtered.map((item) => <ListItemButton key={item.id} onClick={() => toggle(item.id)}>
+        <Checkbox size="small" checked={selected.has(item.id)} tabIndex={-1} />
+        <ListItemText primary={item.name} secondary={`${item._count.targets} targets`} />
+      </ListItemButton>)}
+      {!filtered.length && <Box sx={{ p: 2 }}><Typography variant="body2" color="text.secondary">No target lists found.</Typography></Box>}
+    </List></Paper>
+    {selected.size > 0 && <Typography variant="body2" color="text.secondary">~{totalRecipients} recipients selected across {selected.size} list(s)</Typography>}
+    {error && <Alert severity="error">{error}</Alert>}
+    <Stack direction="row" sx={{ justifyContent: "space-between" }}><Button variant="outlined" onClick={onBack}>← Back</Button><Button variant="contained" onClick={handleNext}>Next →</Button></Stack>
+  </Stack>;
 }

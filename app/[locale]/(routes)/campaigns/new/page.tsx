@@ -1,3 +1,5 @@
+import { Box, Divider } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { WizardShell } from "./components/WizardShell";
 import { getTemplates } from "@/actions/campaigns/templates/get-templates";
 import { prismadb } from "@/lib/prisma";
@@ -11,14 +13,9 @@ export default async function NewCampaignPage() {
       include: { _count: { select: { targets: true } } },
     }),
   ]);
-
-  return (
-    <div className="flex flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">New Campaign</h1>
-        <p className="text-muted-foreground">Create an email campaign</p>
-      </div>
-      <WizardShell templates={templates} targetLists={targetLists} />
-    </div>
-  );
+  return <Box sx={{ width: "100%", pb: 6 }}>
+    <MuiPageHeader title="New Campaign" description="Create an email campaign" />
+    <Divider sx={{ my: 2 }} />
+    <WizardShell templates={templates} targetLists={targetLists} />
+  </Box>;
 }
