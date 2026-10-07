@@ -1,24 +1,15 @@
-import Container from "@/app/[locale]/(routes)/components/ui/Container";
+import { Box, Divider } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { BasicView } from "./components/BasicView";
 import { getTarget } from "@/actions/crm/get-target";
 
-const TargetViewPage = async (props: any) => {
-  const params = await props.params;
-  const { targetId } = params;
-  const target: any = await getTarget(targetId);
-
-  if (!target) return <div>Target not found</div>;
-
-  return (
-    <Container
-      title={`Target detail view: ${target?.first_name || ""} ${target?.last_name}`}
-      description="Everything you need to know about this target"
-    >
-      <div className="space-y-5">
-        <BasicView data={target} />
-      </div>
-    </Container>
-  );
-};
-
-export default TargetViewPage;
+export default async function TargetViewPage({ params }: { params: Promise<{ targetId: string }> }) {
+  const { targetId } = await params;
+  const target = await getTarget(targetId);
+  if (!target) return <Box>Target not found</Box>;
+  return <Box sx={{ width: "100%", pb: 6 }}>
+    <MuiPageHeader title={`Target detail view: ${target.first_name || ""} ${target.last_name || ""}`} description="Everything you need to know about this target" />
+    <Divider sx={{ my: 2 }} />
+    <BasicView data={target} />
+  </Box>;
+}

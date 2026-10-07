@@ -16,15 +16,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
+import { Box, IconButton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar } from "./data-table-toolbar";
 import { PanelTopClose, PanelTopOpen } from "lucide-react";
@@ -70,85 +62,27 @@ export function TargetListsDataTable<TData, TValue>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-start gap-3">
-        <div></div>
-        <div className="flex justify-end space-x-2">
-          {hide ? (
-            <PanelTopOpen
-              onClick={() => setHide(!hide)}
-              className="text-muted-foreground"
-            />
-          ) : (
-            <PanelTopClose
-              onClick={() => setHide(!hide)}
-              className="text-muted-foreground"
-            />
-          )}
-        </div>
-      </div>
-
-      {hide ? (
-        <div className="flex gap-2">
-          This content is hidden now. Click on <PanelTopOpen /> to show content
-        </div>
-      ) : (
-        <>
-          <DataTableToolbar table={table} />
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      No results.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          <DataTablePagination table={table} />
-        </>
-      )}
-    </div>
-  );
+  return <Stack spacing={2} sx={{ width: "100%" }}>
+    <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+      <IconButton size="small" aria-label={hide ? "Show table content" : "Hide table content"} onClick={() => setHide(!hide)}>
+        {hide ? <PanelTopOpen size={18} /> : <PanelTopClose size={18} />}
+      </IconButton>
+    </Box>
+    {hide ? <Typography variant="body2">This content is hidden now. Use the icon above to show content.</Typography> : <>
+      <DataTableToolbar table={table} />
+      <TableContainer sx={{ border: 1, borderColor: "divider", borderRadius: "var(--radius)" }}>
+        <Table data-testid="target-lists-table" size="small">
+          <TableHead>{table.getHeaderGroups().map((group) => <TableRow key={group.id}>{group.headers.map((header) =>
+            <TableCell key={header.id} sx={{ whiteSpace: "nowrap", color: "text.secondary" }}>{header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}</TableCell>
+          )}</TableRow>)}</TableHead>
+          <TableBody>{table.getRowModel().rows.length ? table.getRowModel().rows.map((row) =>
+            <TableRow key={row.id} selected={row.getIsSelected()} hover>{row.getVisibleCells().map((cell) =>
+              <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+            )}</TableRow>
+          ) : <TableRow><TableCell colSpan={table.getVisibleLeafColumns().length} align="center" sx={{ py: 5 }}>No results.</TableCell></TableRow>}</TableBody>
+        </Table>
+      </TableContainer>
+      <DataTablePagination table={table} />
+    </>}
+  </Stack>;
 }

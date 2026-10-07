@@ -1,24 +1,15 @@
-import Container from "@/app/[locale]/(routes)/components/ui/Container";
+import { Box, Divider } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { BasicView } from "./components/BasicView";
 import { getTargetList } from "@/actions/crm/get-target-list";
 
-const TargetListViewPage = async (props: any) => {
-  const params = await props.params;
-  const { targetListId } = params;
-  const targetList: any = await getTargetList(targetListId);
-
-  if (!targetList) return <div>Target list not found</div>;
-
-  return (
-    <Container
-      title={`Target List: ${targetList?.name}`}
-      description="View and manage targets in this list"
-    >
-      <div className="space-y-5">
-        <BasicView data={targetList} />
-      </div>
-    </Container>
-  );
-};
-
-export default TargetListViewPage;
+export default async function TargetListViewPage({ params }: { params: Promise<{ targetListId: string }> }) {
+  const { targetListId } = await params;
+  const targetList = await getTargetList(targetListId);
+  if (!targetList) return <Box>Target list not found</Box>;
+  return <Box sx={{ width: "100%", pb: 6 }}>
+    <MuiPageHeader title={`Target List: ${targetList.name}`} description="View and manage targets in this list" />
+    <Divider sx={{ my: 2 }} />
+    <BasicView data={targetList} />
+  </Box>;
+}

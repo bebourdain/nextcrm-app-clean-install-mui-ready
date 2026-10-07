@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { Box, Chip, Typography } from "@mui/material";
 
 import { TargetList } from "../table-data/schema";
 import { DataTableColumnHeader } from "./data-table-column-header";
@@ -14,9 +15,7 @@ export const columns: ColumnDef<TargetList>[] = [
       <DataTableColumnHeader column={column} title="Date created" />
     ),
     cell: ({ row }) => (
-      <div className="w-[80px]">
-        {moment(row.getValue("created_on")).format("YY-MM-DD")}
-      </div>
+      <Box sx={{ whiteSpace: "nowrap" }}>{moment(row.getValue("created_on")).format("YY-MM-DD")}</Box>
     ),
     enableSorting: false,
     enableHiding: false,
@@ -26,7 +25,7 @@ export const columns: ColumnDef<TargetList>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
     ),
-    cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
+    cell: ({ row }) => <Typography variant="body2" sx={{ fontWeight: 600 }}>{row.getValue("name")}</Typography>,
     enableSorting: true,
     enableHiding: true,
   },
@@ -36,7 +35,7 @@ export const columns: ColumnDef<TargetList>[] = [
       <DataTableColumnHeader column={column} title="Description" />
     ),
     cell: ({ row }) => (
-      <div className="max-w-[300px] truncate">{row.getValue("description")}</div>
+      <Typography variant="body2" noWrap sx={{ maxWidth: 300 }}>{row.getValue("description")}</Typography>
     ),
     enableSorting: true,
     enableHiding: true,
@@ -47,9 +46,7 @@ export const columns: ColumnDef<TargetList>[] = [
       <DataTableColumnHeader column={column} title="Targets" />
     ),
     cell: ({ row }) => (
-      <div className="">
-        {(row.getValue("_count") as any)?.targets ?? 0}
-      </div>
+      <Typography variant="body2">{(row.getValue("_count") as any)?.targets ?? 0}</Typography>
     ),
     enableSorting: false,
     enableHiding: true,
@@ -60,7 +57,7 @@ export const columns: ColumnDef<TargetList>[] = [
       <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => (
-      <div className="">{row.original.status ? "Active" : "Inactive"}</div>
+      <Chip size="small" color={row.original.status ? "success" : "default"} label={row.original.status ? "Active" : "Inactive"} />
     ),
     enableSorting: true,
     enableHiding: true,

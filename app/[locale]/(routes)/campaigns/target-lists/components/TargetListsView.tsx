@@ -1,51 +1,16 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-
+import { Box, Divider, Paper, Stack, Typography } from "@mui/material";
 import { columns } from "../table-components/columns";
 import { TargetListsDataTable } from "../table-components/data-table";
-import { useRouter } from "next/navigation";
 import CreateTargetListModal from "@/components/modals/CreateTargetListModal";
 
-const TargetListsView = ({ data }: any) => {
-  const router = useRouter();
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between">
-          <div>
-            <CardTitle
-              onClick={() => router.push("/crm/target-lists")}
-              className="cursor-pointer"
-            >
-              Target Lists
-            </CardTitle>
-            <CardDescription></CardDescription>
-          </div>
-          <div className="flex space-x-2">
-            <CreateTargetListModal />
-          </div>
-        </div>
-        <Separator />
-      </CardHeader>
-
-      <CardContent>
-        {!data || data.length === 0 ? (
-          "No target lists found"
-        ) : (
-          <TargetListsDataTable data={data} columns={columns} />
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-export default TargetListsView;
+export default function TargetListsView({ data }: { data: any[] }) {
+  return <Paper variant="outlined" sx={{ borderRadius: "var(--radius)", overflow: "hidden", boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)" }}>
+    <Box sx={{ p: 3, pb: 1.5 }}><Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+      <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>Target Lists</Typography>
+      <CreateTargetListModal />
+    </Stack><Divider sx={{ mt: 2.5 }} /></Box>
+    <Box sx={{ px: 3, pb: 3 }}>{!data?.length ? <Typography variant="body2">No target lists found</Typography> : <TargetListsDataTable data={data} columns={columns} />}</Box>
+  </Paper>;
+}

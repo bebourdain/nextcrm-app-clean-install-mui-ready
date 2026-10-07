@@ -1,14 +1,10 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, CheckCircle, XCircle, ExternalLink, User, Building2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Alert, Box, Button, Checkbox, Chip, Drawer, Link, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { Sparkles, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { EnrichFieldSelector } from "@/app/[locale]/(routes)/crm/contacts/components/EnrichFieldSelector";
+import { EnrichFieldSelector } from "../../components/EnrichFieldSelector";
 import type { EnrichmentField } from "@/lib/enrichment/types";
 import type { StoredEnrichmentResult } from "@/lib/enrichment/types/stored-result";
 import {
@@ -183,156 +179,42 @@ export function EnrichTargetDrawer({
   const presetFields = scenario === "company" ? COMPANY_PRESET_FIELDS : PERSONAL_PRESET_FIELDS;
   const defaultSelected = scenario === "company" ? COMPANY_DEFAULTS : PERSONAL_DEFAULTS;
 
-  return (
-    <>
+  return <>
     <NoApiKeyDialog open={showNoApiKeyDialog} onClose={() => setShowNoApiKeyDialog(false)} />
-    <Sheet open={open} onOpenChange={handleClose}>
-      <SheetContent className="w-[420px] sm:w-[540px]">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-orange-500" />
-            Enrich with AI
-          </SheetTitle>
-          <SheetDescription>
-            Firecrawl searches the web to fill in missing target details.
-          </SheetDescription>
-        </SheetHeader>
-
-        {scenario === "none" && (
-          <div className="mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-            Add an email or company name to this target to enable enrichment.
-          </div>
-        )}
-
-        {scenario !== "none" && step === "select" && (
-          <div className="mt-4 space-y-3">
-            <div className="flex items-center gap-2">
-              {scenario === "personal" ? (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <User className="h-3 w-3" /> Personal search
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <Building2 className="h-3 w-3" /> Company search
-                </Badge>
-              )}
-              <span className="text-xs text-muted-foreground">
-                {scenario === "personal"
-                  ? "Using email to find contact & company info"
-                  : "Using company name to find company details"}
-              </span>
-            </div>
-            <EnrichFieldSelector
-              onStart={handleStart}
-              presetFields={presetFields}
-              defaultSelected={defaultSelected}
-            />
-          </div>
-        )}
-
-        {step === "progress" && (
-          <div className="mt-4 space-y-3">
-            <ScrollArea className="h-[400px] pr-4">
-              {messages.map((m, i) => (
-                <div key={i} className="flex gap-2 text-sm py-1">
-                  <span className="text-muted-foreground shrink-0">
-                    {m.type === "success" ? "✓" : m.type === "agent" ? "🤖" : "›"}
-                  </span>
-                  <span className={m.type === "agent" ? "font-medium" : ""}>
-                    {m.message}
-                    {m.sourceUrl && (
-                      <a href={m.sourceUrl} target="_blank" rel="noopener noreferrer"
-                        className="ml-1 text-blue-500 inline-flex items-center gap-0.5">
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    )}
-                  </span>
-                </div>
-              ))}
-              <div ref={scrollRef} />
-            </ScrollArea>
-            <Button variant="outline" size="sm" onClick={handleCancel}>
-              Cancel
-            </Button>
-          </div>
-        )}
-
-        {step === "diff" && result && (
-          <div className="mt-4 space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Review enriched data. Uncheck any fields you don&apos;t want to apply.
-            </p>
-            <ScrollArea className="h-[380px]">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-muted-foreground text-xs">
-                    <th className="text-left pb-2 w-6"></th>
-                    <th className="text-left pb-2">Field</th>
-                    <th className="text-left pb-2">Current</th>
-                    <th className="text-left pb-2">Enriched</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(result.enrichments).map(([fieldName, enrichment]) => {
-                    const currentValue = (targetCurrentData as Record<string, string | null | undefined>)[fieldName];
-                    return (
-                      <tr key={fieldName} className="border-t">
-                        <td className="py-2">
-                          <Checkbox
-                            checked={selectedApply.has(fieldName)}
-                            onCheckedChange={(checked) => {
-                              setSelectedApply((prev) => {
-                                const next = new Set(prev);
-                                checked ? next.add(fieldName) : next.delete(fieldName);
-                                return next;
-                              });
-                            }}
-                          />
-                        </td>
-                        <td className="py-2 pr-2 font-medium capitalize whitespace-nowrap">
-                          {fieldName.replace(/_/g, " ")}
-                          <div className="text-xs text-muted-foreground font-normal">
-                            {Math.round(enrichment.confidence * 100)}% confident
-                          </div>
-                        </td>
-                        <td className="py-2 pr-2 text-muted-foreground max-w-[100px] truncate">
-                          {currentValue ?? <span className="italic text-xs">empty</span>}
-                        </td>
-                        <td className="py-2">
-                          <div className="font-medium">{String(enrichment.value)}</div>
-                          {enrichment.source && (
-                            <a href={enrichment.source} target="_blank" rel="noopener noreferrer"
-                              className="text-xs text-blue-500 inline-flex items-center gap-0.5 mt-0.5">
-                              <ExternalLink className="h-3 w-3" />
-                              Source
-                            </a>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </ScrollArea>
-
-            <div className="flex gap-2">
-              <Button
-                className="flex-1"
-                disabled={selectedApply.size === 0 || applying}
-                onClick={handleApply}
-              >
-                <CheckCircle className="h-4 w-4 mr-1" />
-                {applying ? "Applying…" : `Apply ${selectedApply.size} fields`}
-              </Button>
-              <Button variant="outline" onClick={() => handleClose(false)}>
-                <XCircle className="h-4 w-4 mr-1" />
-                Discard
-              </Button>
-            </div>
-          </div>
-        )}
-      </SheetContent>
-    </Sheet>
-    </>
-  );
+    <Drawer anchor="right" open={open} onClose={() => handleClose(false)} slotProps={{ paper: { sx: { width: { xs: "100%", sm: 540 }, p: 3, overflowY: "auto" } } }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><Sparkles size={18} color="#f97316" /><Typography variant="h6" sx={{ fontWeight: 600 }}>Enrich with AI</Typography></Stack>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Firecrawl searches the web to fill in missing target details.</Typography>
+      {scenario === "none" && <Alert severity="warning">Add an email or company name to this target to enable enrichment.</Alert>}
+      {scenario !== "none" && step === "select" && <Stack spacing={2}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <Chip size="small" label={scenario === "personal" ? "Personal search" : "Company search"} />
+          <Typography variant="caption" color="text.secondary">{scenario === "personal" ? "Using email to find contact & company info" : "Using company name to find company details"}</Typography>
+        </Stack>
+        <EnrichFieldSelector onStart={handleStart} presetFields={presetFields} defaultSelected={defaultSelected} />
+      </Stack>}
+      {step === "progress" && <Stack spacing={2}>
+        <Box sx={{ height: 400, overflowY: "auto" }}>{messages.map((message, index) => <Stack key={index} direction="row" spacing={1} sx={{ py: 0.5 }}>
+          <Typography variant="body2" color="text.secondary">{message.type === "success" ? "✓" : message.type === "agent" ? "🤖" : "›"}</Typography>
+          <Typography variant="body2">{message.message} {message.sourceUrl && <Link href={message.sourceUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={13} /></Link>}</Typography>
+        </Stack>)}<div ref={scrollRef} /></Box>
+        <Box><Button variant="outlined" size="small" onClick={handleCancel}>Cancel</Button></Box>
+      </Stack>}
+      {step === "diff" && result && <Stack spacing={2}>
+        <Typography variant="body2" color="text.secondary">Review enriched data. Uncheck any fields you don&apos;t want to apply.</Typography>
+        <TableContainer sx={{ maxHeight: 380, border: 1, borderColor: "divider" }}><Table size="small" stickyHeader>
+          <TableHead><TableRow><TableCell padding="checkbox" /><TableCell>Field</TableCell><TableCell>Current</TableCell><TableCell>Enriched</TableCell></TableRow></TableHead>
+          <TableBody>{Object.entries(result.enrichments).map(([fieldName, enrichment]) => {
+            const currentValue = (targetCurrentData as Record<string, string | null | undefined>)[fieldName];
+            return <TableRow key={fieldName}>
+              <TableCell padding="checkbox"><Checkbox checked={selectedApply.has(fieldName)} onChange={(_, checked) => setSelectedApply((previous) => { const next = new Set(previous); if (checked) next.add(fieldName); else next.delete(fieldName); return next; })} /></TableCell>
+              <TableCell sx={{ textTransform: "capitalize", whiteSpace: "nowrap" }}>{fieldName.replace(/_/g, " ")}<Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>{Math.round(enrichment.confidence * 100)}% confident</Typography></TableCell>
+              <TableCell>{currentValue ?? <Typography variant="caption" color="text.secondary">empty</Typography>}</TableCell>
+              <TableCell>{String(enrichment.value)}{enrichment.source && <Link href={enrichment.source} target="_blank" rel="noopener noreferrer" sx={{ display: "block", fontSize: 12 }}>Source</Link>}</TableCell>
+            </TableRow>;
+          })}</TableBody>
+        </Table></TableContainer>
+        <Stack direction="row" spacing={1}><Button variant="contained" disabled={!selectedApply.size || applying} onClick={handleApply}>{applying ? "Applying…" : `Apply ${selectedApply.size} fields`}</Button><Button variant="outlined" onClick={() => handleClose(false)}>Discard</Button></Stack>
+      </Stack>}
+    </Drawer>
+  </>;
 }

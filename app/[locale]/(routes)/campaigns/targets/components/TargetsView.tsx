@@ -1,80 +1,26 @@
 "use client";
 
 import { useState } from "react";
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-
+import { useRouter } from "next/navigation";
+import { Box, Button, Divider, Drawer, Paper, Stack, Typography } from "@mui/material";
 import { columns } from "../table-components/columns";
 import { NewTargetForm } from "./NewTargetForm";
 import { TargetsDataTable } from "../table-components/data-table";
-import { useRouter } from "next/navigation";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import ImportTargetsModal from "@/components/modals/ImportTargetsModal";
 
-const TargetsView = ({ data }: any) => {
+export default function TargetsView({ data }: { data: any[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between">
-          <div>
-            <CardTitle
-              onClick={() => router.push("/crm/targets")}
-              className="cursor-pointer"
-            >
-              Targets
-            </CardTitle>
-            <CardDescription></CardDescription>
-          </div>
-          <div className="flex space-x-2">
-            <ImportTargetsModal />
-            <Sheet open={open} onOpenChange={setOpen}>
-              <SheetTrigger asChild>
-                <Button size="sm">+ New Target</Button>
-              </SheetTrigger>
-              <SheetContent className="max-w-2xl overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle>Create new Target</SheetTitle>
-                  <SheetDescription>
-                    Add a new target to your CRM system.
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="mt-6 space-y-4">
-                  <NewTargetForm onFinish={() => setOpen(false)} />
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
-        <Separator />
-      </CardHeader>
-
-      <CardContent>
-        {!data || data.length === 0 ? (
-          "No targets found"
-        ) : (
-          <TargetsDataTable data={data} columns={columns} />
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-export default TargetsView;
+  return <Paper variant="outlined" sx={{ borderRadius: "var(--radius)", overflow: "hidden", boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)" }}>
+    <Box sx={{ p: 3, pb: 1.5 }}><Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+      <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>Targets</Typography>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><ImportTargetsModal /><Button variant="contained" onClick={() => setOpen(true)}>+ New Target</Button></Stack>
+    </Stack><Divider sx={{ mt: 2.5 }} /></Box>
+    <Box sx={{ px: 3, pb: 3 }}>{!data?.length ? <Typography variant="body2">No targets found</Typography> : <TargetsDataTable data={data} columns={columns} />}</Box>
+    <Drawer anchor="right" open={open} onClose={() => setOpen(false)} slotProps={{ paper: { sx: { width: { xs: "100%", sm: 640 }, p: 3, overflowY: "auto" } } }}>
+      <Typography variant="h6" sx={{ fontWeight: 600 }}>Create new Target</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>Add a new target to your CRM system.</Typography>
+      <NewTargetForm onFinish={() => { setOpen(false); router.refresh(); }} />
+    </Drawer>
+  </Paper>;
+}

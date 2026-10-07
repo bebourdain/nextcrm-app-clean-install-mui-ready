@@ -1,22 +1,13 @@
-import { Suspense } from "react";
-
-import CrmTableSkeleton from "@/components/skeletons/crm-table-skeleton";
-import Container from "../../components/ui/Container";
+import { Box, Divider } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import TargetListsView from "./components/TargetListsView";
 import { getTargetLists } from "@/actions/crm/get-target-lists";
 
-const TargetListsPage = async () => {
+export default async function TargetListsPage() {
   const targetLists = await getTargetLists();
-  return (
-    <Container
-      title="Target Lists"
-      description="Manage your target lists for campaigns and outreach"
-    >
-      <Suspense fallback={<CrmTableSkeleton />}>
-        <TargetListsView data={targetLists} />
-      </Suspense>
-    </Container>
-  );
-};
-
-export default TargetListsPage;
+  return <Box sx={{ width: "100%", pb: 6 }}>
+    <MuiPageHeader title="Target Lists" description="Manage your target lists for campaigns and outreach" />
+    <Divider sx={{ my: 2 }} />
+    <TargetListsView data={targetLists} />
+  </Box>;
+}

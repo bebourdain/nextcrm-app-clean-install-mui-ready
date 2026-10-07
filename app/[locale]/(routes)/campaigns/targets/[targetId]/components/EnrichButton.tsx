@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@mui/material";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,13 +31,13 @@ export function EnrichButton({ targetId }: EnrichButtonProps) {
 
   return (
     <Button
-      variant="outline"
-      size="sm"
+      variant="outlined"
+      size="small"
       onClick={handleEnrich}
       disabled={loading}
       title="Enrich with AI"
     >
-      <Sparkles className="h-4 w-4 mr-1 text-orange-500" />
+      <Sparkles size={16} style={{ marginRight: 6, color: "#f97316" }} />
       {loading ? "Starting…" : "Enrich with AI"}
     </Button>
   );

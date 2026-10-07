@@ -2,200 +2,67 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Box, Button, Chip, Dialog, DialogContent, DialogTitle, Link, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
 
 interface TargetContact {
-  id: string;
-  name: string | null;
-  email: string | null;
-  title: string | null;
-  phone: string | null;
-  linkedinUrl: string | null;
-  source: string;
-  enrichStatus: string;
+  id: string; name: string | null; email: string | null; title: string | null; phone: string | null;
+  linkedinUrl: string | null; source: string; enrichStatus: string;
 }
-
-interface Props {
-  targetId: string;
-  contacts: TargetContact[];
-}
-
-const STATUS_BADGE: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  COMPLETED: { label: "Enriched", variant: "default" },
-  RUNNING:   { label: "Running", variant: "secondary" },
-  PENDING:   { label: "Pending", variant: "outline" },
-  FAILED:    { label: "Failed", variant: "destructive" },
-  SKIPPED:   { label: "Skipped", variant: "outline" },
+const statusColor = (status: string): "default" | "info" | "success" | "error" => {
+  if (status === "COMPLETED") return "success";
+  if (status === "RUNNING") return "info";
+  if (status === "FAILED") return "error";
+  return "default";
 };
+const statusLabel: Record<string, string> = { COMPLETED: "Enriched", RUNNING: "Running", PENDING: "Pending", FAILED: "Failed", SKIPPED: "Skipped" };
 
-export function TargetContactsTable({ targetId, contacts: initialContacts }: Props) {
+export function TargetContactsTable({ targetId, contacts: initialContacts }: { targetId: string; contacts: TargetContact[] }) {
   const [contacts, setContacts] = useState(initialContacts);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", linkedinUrl: "" });
   const [saving, setSaving] = useState(false);
-
-  async function handleAddContact(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
+  async function handleAddContact(event: React.FormEvent) {
+    event.preventDefault(); setSaving(true);
     try {
-      const res = await fetch(`/api/crm/targets/${targetId}/contacts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch(`/api/crm/targets/${targetId}/contacts`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
       if (!res.ok) throw new Error(await res.text());
       const created: TargetContact = await res.json();
-      setContacts((prev) => [...prev, created]);
-      setOpen(false);
-      setForm({ name: "", email: "", phone: "", linkedinUrl: "" });
+      setContacts((previous) => [...previous, created]); setOpen(false); setForm({ name: "", email: "", phone: "", linkedinUrl: "" });
       toast.success("Contact added");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to add contact");
-    } finally {
-      setSaving(false);
-    }
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Failed to add contact"); }
+    finally { setSaving(false); }
   }
-
   async function handleEnrichContact(contactId: string) {
     try {
-      const res = await fetch(`/api/crm/targets/${targetId}/contacts/${contactId}/enrich`, {
-        method: "POST",
-      });
+      const res = await fetch(`/api/crm/targets/${targetId}/contacts/${contactId}/enrich`, { method: "POST" });
       if (!res.ok) throw new Error(await res.text());
-      setContacts((prev) =>
-        prev.map((c) => c.id === contactId ? { ...c, enrichStatus: "RUNNING" } : c)
-      );
+      setContacts((previous) => previous.map((contact) => contact.id === contactId ? { ...contact, enrichStatus: "RUNNING" } : contact));
       toast.success("Enrichment started — you'll be notified when done");
-    } catch {
-      toast.error("Failed to start enrichment");
-    }
+    } catch { toast.error("Failed to start enrichment"); }
   }
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">Contacts</h3>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm">Add Contact</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Contact</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleAddContact} className="space-y-4">
-              <div className="space-y-1">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="Jane Smith"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  placeholder="jane@acme.com"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                  placeholder="+1 415 000 0000"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="linkedinUrl">LinkedIn URL</Label>
-                <Input
-                  id="linkedinUrl"
-                  value={form.linkedinUrl}
-                  onChange={(e) => setForm((f) => ({ ...f, linkedinUrl: e.target.value }))}
-                  placeholder="https://linkedin.com/in/..."
-                />
-              </div>
-              <Button type="submit" disabled={saving} className="w-full">
-                {saving ? "Adding…" : "Add Contact"}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {contacts.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No contacts yet. Run enrichment to discover C-level contacts, or add one manually.
-        </p>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>LinkedIn</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {contacts.map((contact) => {
-              const badge = STATUS_BADGE[contact.enrichStatus] ?? STATUS_BADGE.PENDING;
-              return (
-                <TableRow key={contact.id}>
-                  <TableCell className="font-medium">{contact.name ?? "—"}</TableCell>
-                  <TableCell>{contact.title ?? "—"}</TableCell>
-                  <TableCell>{contact.email ?? "—"}</TableCell>
-                  <TableCell>{contact.phone ?? "—"}</TableCell>
-                  <TableCell>
-                    {contact.linkedinUrl ? (
-                      <a
-                        href={contact.linkedinUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        View
-                      </a>
-                    ) : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={badge.variant}>{badge.label}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {(contact.enrichStatus === "PENDING" || contact.enrichStatus === "FAILED") && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEnrichContact(contact.id)}
-                      >
-                        Enrich
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      )}
-    </div>
-  );
+  return <Stack spacing={2}>
+    <Box sx={{ display: "flex", justifyContent: "flex-end" }}><Button variant="outlined" size="small" onClick={() => setOpen(true)}>Add Contact</Button></Box>
+    {!contacts.length ? <Typography variant="body2" color="text.secondary">No contacts yet. Run enrichment to discover C-level contacts, or add one manually.</Typography> :
+      <TableContainer sx={{ border: 1, borderColor: "divider", borderRadius: "var(--radius)" }}><Table size="small">
+        <TableHead><TableRow>{["Name", "Title", "Email", "Phone", "LinkedIn", "Status", ""].map((label, index) => <TableCell key={`${label}-${index}`} sx={{ color: "text.secondary" }}>{label}</TableCell>)}</TableRow></TableHead>
+        <TableBody>{contacts.map((contact) => <TableRow key={contact.id} hover>
+          <TableCell sx={{ fontWeight: 600 }}>{contact.name ?? "—"}</TableCell><TableCell>{contact.title ?? "—"}</TableCell>
+          <TableCell>{contact.email ?? "—"}</TableCell><TableCell>{contact.phone ?? "—"}</TableCell>
+          <TableCell>{contact.linkedinUrl ? <Link href={contact.linkedinUrl} target="_blank" rel="noopener noreferrer">View</Link> : "—"}</TableCell>
+          <TableCell><Chip size="small" color={statusColor(contact.enrichStatus)} label={statusLabel[contact.enrichStatus] ?? "Pending"} /></TableCell>
+          <TableCell>{(contact.enrichStatus === "PENDING" || contact.enrichStatus === "FAILED") && <Button size="small" onClick={() => handleEnrichContact(contact.id)}>Enrich</Button>}</TableCell>
+        </TableRow>)}</TableBody>
+      </Table></TableContainer>}
+    <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
+      <DialogTitle>Add Contact</DialogTitle><DialogContent dividers>
+        <Stack component="form" onSubmit={handleAddContact} spacing={2} sx={{ pt: 1 }}>
+          <TextField label="Name" value={form.name} onChange={(event) => setForm((previous) => ({ ...previous, name: event.target.value }))} placeholder="Jane Smith" />
+          <TextField label="Email" type="email" value={form.email} onChange={(event) => setForm((previous) => ({ ...previous, email: event.target.value }))} placeholder="jane@acme.com" />
+          <TextField label="Phone" value={form.phone} onChange={(event) => setForm((previous) => ({ ...previous, phone: event.target.value }))} placeholder="+1 415 000 0000" />
+          <TextField label="LinkedIn URL" value={form.linkedinUrl} onChange={(event) => setForm((previous) => ({ ...previous, linkedinUrl: event.target.value }))} placeholder="https://linkedin.com/in/..." />
+          <Button variant="contained" type="submit" disabled={saving}>{saving ? "Adding…" : "Add Contact"}</Button>
+        </Stack>
+      </DialogContent>
+    </Dialog>
+  </Stack>;
 }
