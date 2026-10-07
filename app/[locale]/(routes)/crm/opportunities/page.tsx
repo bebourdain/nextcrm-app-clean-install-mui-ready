@@ -1,29 +1,12 @@
-import { Suspense } from "react";
-
-import CrmTableSkeleton from "@/components/skeletons/crm-table-skeleton";
-
-import Container from "../../components/ui/Container";
-import OpportunitiesView from "../components/OpportunitiesView";
 import { getAllCrmData } from "@/actions/crm/get-crm-data";
 import { getOpportunitiesFull } from "@/actions/crm/get-opportunities-with-includes";
-import { getTranslations } from "next-intl/server";
-import { serializeDecimalsList } from "@/lib/serialize-decimals";
+import { MuiOpportunitiesPage } from "./components/MuiOpportunitiesPage";
 
-const AccountsPage = async () => {
-  const t = await getTranslations("CrmPage");
+const OpportunitiesPage = async () => {
   const crmData = await getAllCrmData();
-  const opportunities = serializeDecimalsList(await getOpportunitiesFull());
+  const opportunities = await getOpportunitiesFull();
 
-  return (
-    <Container
-      title={t("opportunities.pageTitle")}
-      description={t("opportunities.pageDescription")}
-    >
-      <Suspense fallback={<CrmTableSkeleton />}>
-        <OpportunitiesView crmData={crmData} data={opportunities} />
-      </Suspense>
-    </Container>
-  );
+  return <MuiOpportunitiesPage crmData={crmData} data={opportunities} />;
 };
 
-export default AccountsPage;
+export default OpportunitiesPage;
