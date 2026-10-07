@@ -1,9 +1,8 @@
-import Container from "@/app/[locale]/(routes)/components/ui/Container";
 import { getContract } from "@/actions/crm/get-contract";
 import { getAllCrmData } from "@/actions/crm/get-crm-data";
 import { getProductsFull } from "@/actions/crm/products/get-products";
 import { serializeDecimalsList } from "@/lib/serialize-decimals";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MuiContractDetailLayout } from "./components/MuiContractDetailLayout";
 import { HistoryTab } from "./components/HistoryTab";
 import { BasicView } from "./components/BasicView";
 import { ActivitiesSection } from "./components/ActivitiesSection";
@@ -46,17 +45,11 @@ const ContractPage = async (props: ContractDetailPageProps) => {
     : [];
 
   return (
-    <Container
+    <MuiContractDetailLayout
       title={`Contract: ${contract.title}`}
       description={`Status: ${contract.status}`}
-    >
-      <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview">
-          <div className="space-y-5">
+      overview={
+        <>
             <BasicView data={contract} />
             <LineItemsSection
               contractId={contractId}
@@ -66,13 +59,10 @@ const ContractPage = async (props: ContractDetailPageProps) => {
               opportunities={opportunities}
             />
             <ActivitiesSection contractId={contractId} />
-          </div>
-        </TabsContent>
-        <TabsContent value="history">
-          <HistoryTab contractId={contractId} />
-        </TabsContent>
-      </Tabs>
-    </Container>
+        </>
+      }
+      history={<HistoryTab contractId={contractId} />}
+    />
   );
 };
 

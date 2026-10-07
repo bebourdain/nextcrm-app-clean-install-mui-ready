@@ -1,229 +1,65 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Box, CircularProgress, Divider, Drawer, IconButton, Typography } from "@mui/material";
+import { X } from "lucide-react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-
 import { useRouter } from "next/navigation";
-
 import { useAction } from "@/hooks/use-action";
-
 import { updateContract } from "@/actions/crm/contracts/update-contract";
-
-import FormSheetNoTrigger from "@/components/sheets/form-sheet-no-trigger";
-
-import { FormInput } from "@/components/form/form-input";
-
-import { FormSubmit } from "@/components/form/form-submit";
-import { FormDatePicker } from "@/components/form/form-datepicker";
-import { FormTextarea } from "@/components/form/form-textarea";
-import { FormSelect } from "@/components/form/from-select";
-import { UserSearchCombobox } from "@/components/ui/user-search-combobox";
 import { getAccounts } from "@/actions/crm/accounts/get-accounts";
 import { getCurrencies } from "@/actions/crm/get-currencies";
+import { ContractFormFields, type ContractFormData } from "./ContractFormFields";
 
-const UpdateContractForm = ({
-  onOpen,
-  setOpen,
-  data,
-}: {
-  onOpen: boolean;
-  setOpen: (open: boolean) => void;
-  data: any;
-}) => {
+type Contract = ContractFormData & { id: string; v: number };
+
+export default function UpdateContractForm({ onOpen, setOpen, data }: { onOpen: boolean; setOpen: (open: boolean) => void; data: Contract }) {
   const router = useRouter();
-  const [assignedTo, setAssignedTo] = useState<string>(data.assigned_to ?? "");
+  const [assignedTo, setAssignedTo] = useState(data.assigned_to ?? "");
   const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
   const [currencies, setCurrencies] = useState<{ code: string; name: string; symbol: string }[]>([]);
-  const [isLoadingData, setIsLoadingData] = useState(true);
-
+  const [loadingData, setLoadingData] = useState(true);
   useEffect(() => {
-    Promise.all([getAccounts(), getCurrencies()])
-      .then(([accountsResult, currenciesResult]) => {
-        if ("data" in accountsResult && accountsResult.data) {
-          setAccounts(accountsResult.data);
-        }
-        if ("data" in currenciesResult && currenciesResult.data) {
-          setCurrencies(currenciesResult.data);
-        }
-      })
-      .finally(() => setIsLoadingData(false));
-  }, []);
-
-  const contractStatuses = [
-    { id: "NOTSTARTED", name: "Not started" },
-    { id: "INPROGRESS", name: "In progress" },
-    { id: "SIGNED", name: "Signed" },
-  ];
-
-  const valueString = data && data.value ? data.value.toString() : "";
-
+    if (!onOpen) return;
+    let active = true;
+    void Promise.all([getAccounts(), getCurrencies()]).then(([accountsResult, currenciesResult]) => {
+      if (!active) return;
+      if ("data" in accountsResult && accountsResult.data) setAccounts(accountsResult.data);
+      if ("data" in currenciesResult && currenciesResult.data) setCurrencies(currenciesResult.data);
+    }).finally(() => { if (active) setLoadingData(false); });
+    return () => { active = false; };
+  }, [onOpen]);
   const { execute, fieldErrors, isLoading } = useAction(updateContract, {
-    onSuccess: () => {
-      toast.success("Contract updated successfully!");
-      setOpen(false);
-      router.refresh();
-    },
-    onError: (error) => {
-      toast.error(error);
-    },
+    onSuccess: () => { toast.success("Contract updated successfully"); setOpen(false); router.refresh(); },
+    onError: (message) => toast.error(message),
   });
-
   const onAction = async (formData: FormData) => {
-    const title = formData.get("title") as string;
-    const value = formData.get("value") as string;
-    const startDate = new Date(formData.get("startDate") as string);
-    const endDate = new Date(formData.get("endDate") as string);
-    const renewalReminderDate = new Date(
-      formData.get("renewalReminderDate") as string
-    );
-    const customerSignedDate = new Date(
-      formData.get("customerSignedDate") as string
-    );
-    const companySignedDate = new Date(
-      formData.get("companySignedDate") as string
-    );
-    const description = formData.get("description") as string;
-    const status = formData.get("status") as any;
-    const account = formData.get("account") as string;
-    const assigned_to = formData.get("assigned_to") as string;
-    const currency = formData.get("currency") as string;
-
     await execute({
       id: data.id,
       v: data.v,
-      title,
-      value,
-      startDate,
-      endDate,
-      renewalReminderDate,
-      customerSignedDate,
-      companySignedDate,
-      description,
-      status,
-      account,
-      assigned_to,
-      currency,
+      title: String(formData.get("title") ?? ""),
+      value: String(formData.get("value") ?? ""),
+      currency: String(formData.get("currency") ?? ""),
+      startDate: new Date(String(formData.get("startDate") ?? "")),
+      endDate: new Date(String(formData.get("endDate") ?? "")),
+      renewalReminderDate: new Date(String(formData.get("renewalReminderDate") ?? "")),
+      customerSignedDate: new Date(String(formData.get("customerSignedDate") ?? "")),
+      companySignedDate: new Date(String(formData.get("companySignedDate") ?? "")),
+      description: String(formData.get("description") ?? ""),
+      status: String(formData.get("status") ?? "NOTSTARTED") as Parameters<typeof updateContract>[0]["status"],
+      account: String(formData.get("account") ?? ""),
+      assigned_to: assignedTo,
     });
   };
-
-  return (
-    <FormSheetNoTrigger
-      title="Update contract"
-      description="Update contract details, dates, status, and assignments"
-      open={onOpen}
-      setOpen={setOpen}
-    >
-      {isLoadingData ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin" />
-        </div>
-      ) : (
-        <form action={onAction} className="space-y-4">
-          <FormInput
-            id="title"
-            label="Title"
-            type="text"
-            errors={fieldErrors}
-            defaultValue={data.title}
-          />
-          <FormInput
-            id="value"
-            label="Value"
-            type="text"
-            errors={fieldErrors}
-            defaultValue={valueString}
-          />
-          <FormSelect
-            id="currency"
-            label="Currency"
-            type="hidden"
-            data={currencies.map((c) => ({
-              id: c.code,
-              name: `${c.symbol} ${c.code} — ${c.name}`,
-            }))}
-            errors={fieldErrors}
-            defaultValue={data.currency ?? ""}
-          />
-          <FormDatePicker
-            id="startDate"
-            label="Start Date"
-            type="hidden"
-            errors={fieldErrors}
-            defaultValue={data.startDate}
-          />
-          <FormDatePicker
-            id="endDate"
-            label="End Date"
-            type="hidden"
-            errors={fieldErrors}
-            defaultValue={data.endDate}
-          />
-          <FormDatePicker
-            id="renewalReminderDate"
-            label="Renewal Reminder Date"
-            type="hidden"
-            errors={fieldErrors}
-            defaultValue={data.renewalReminderDate}
-          />
-          <FormDatePicker
-            id="customerSignedDate"
-            label="Customer Signed Date"
-            type="hidden"
-            errors={fieldErrors}
-            defaultValue={data.customerSignedDate}
-          />
-          <FormDatePicker
-            id="companySignedDate"
-            label="Company Signed Date"
-            type="hidden"
-            errors={fieldErrors}
-            defaultValue={data.companySignedDate}
-          />
-          <FormTextarea
-            id="description"
-            label="Description"
-            errors={fieldErrors}
-            defaultValue={data.description}
-          />
-          <FormSelect
-            id="status"
-            label="Status"
-            type="hidden"
-            data={contractStatuses}
-            errors={fieldErrors}
-            defaultValue={data.status}
-          />
-          <FormSelect
-            id="account"
-            label="Account"
-            type="hidden"
-            data={accounts}
-            errors={fieldErrors}
-            defaultValue={data.account}
-          />
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-neutral-700">
-              Assigned To
-            </label>
-            <UserSearchCombobox
-              value={assignedTo}
-              onChange={setAssignedTo}
-              placeholder="Select assigned user"
-              name="assigned_to"
-            />
-          </div>
-          <FormSubmit className="w-full">
-            {isLoading ? (
-              <Loader2 className="h-6 w-6 animate-spin" />
-            ) : (
-              "Update"
-            )}
-          </FormSubmit>
-        </form>
-      )}
-    </FormSheetNoTrigger>
-  );
-};
-
-export default UpdateContractForm;
+  return <Drawer anchor="right" open={onOpen} onClose={() => setOpen(false)} slotProps={{ paper: { sx: { width: { xs: "100%", md: 771 }, maxWidth: "100%" } } }}>
+    <Box sx={{ p: 3, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <Box><Typography variant="h5">Update contract — {data.title}</Typography><Typography variant="body2" color="text.secondary">Update contract details, dates, status, and assignments.</Typography></Box>
+      <IconButton aria-label="Close" onClick={() => setOpen(false)}><X size={18} /></IconButton>
+    </Box>
+    <Divider />
+    <Box sx={{ overflowY: "auto", pt: 3 }}>
+      {loadingData ? <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}><CircularProgress size={24} /></Box> :
+        <ContractFormFields mode="update" data={data} accounts={accounts} currencies={currencies} assignedTo={assignedTo} onAssignedToChange={setAssignedTo} fieldErrors={fieldErrors ?? {}} isLoading={isLoading} onAction={onAction} />}
+    </Box>
+  </Drawer>;
+}

@@ -1,6 +1,6 @@
 import { getAuditLogByEntity } from "@/actions/crm/audit-log/get-audit-log-by-entity";
 import { getSession } from "@/lib/auth-server";
-import { AuditTimeline } from "@/components/crm/audit-log/Timeline";
+import { MuiContractHistory } from "./MuiContractHistory";
 
 export async function HistoryTab({ contractId }: { contractId: string }) {
   const [initialData, session] = await Promise.all([
@@ -9,9 +9,8 @@ export async function HistoryTab({ contractId }: { contractId: string }) {
   ]);
 
   return (
-    <AuditTimeline
-      entityType="contract"
-      entityId={contractId}
+    <MuiContractHistory
+      contractId={contractId}
       initialData={initialData}
       role={session?.user?.role ?? "user"}
     />

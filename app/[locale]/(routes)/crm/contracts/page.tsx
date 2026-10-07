@@ -1,6 +1,5 @@
-import React, { Suspense } from "react";
-import Container from "../../components/ui/Container";
-import CrmTableSkeleton from "@/components/skeletons/crm-table-skeleton";
+import { Box, Divider } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { getAllCrmData } from "@/actions/crm/get-crm-data";
 import { getContractsWithIncludes } from "@/actions/crm/get-contracts";
 import ContractsView from "../components/ContractsView";
@@ -12,14 +11,11 @@ const ContractsPage = async () => {
   const crmData = await getAllCrmData();
   const contracts = serializeDecimalsList(await getContractsWithIncludes());
   return (
-    <Container
-      title={t("contracts.pageTitle")}
-      description={t("contracts.pageDescription")}
-    >
-      <Suspense fallback={<CrmTableSkeleton />}>
-        <ContractsView crmData={crmData} data={contracts} />
-      </Suspense>
-    </Container>
+    <Box sx={{ width: "100%", pb: 6 }}>
+      <MuiPageHeader title={t("contracts.pageTitle")} description={t("contracts.pageDescription")} />
+      <Divider sx={{ my: 2 }} />
+      <ContractsView crmData={crmData} data={contracts} />
+    </Box>
   );
 };
 

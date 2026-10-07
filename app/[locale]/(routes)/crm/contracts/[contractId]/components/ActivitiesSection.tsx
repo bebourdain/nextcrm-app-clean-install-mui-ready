@@ -1,5 +1,5 @@
 import { getActivitiesByEntity } from "@/actions/crm/activities/get-activities-by-entity";
-import { ActivitiesView } from "@/components/crm/activities/ActivitiesView";
+import { MuiContractActivities } from "./MuiContractActivities";
 
 interface Props {
   contractId: string;
@@ -8,6 +8,6 @@ interface Props {
 export async function ActivitiesSection({ contractId }: Props) {
   const initialData = await getActivitiesByEntity("contract", contractId);
   return (
-    <ActivitiesView entityType="contract" entityId={contractId} initialData={initialData} />
+    <MuiContractActivities contractId={contractId} initialData={initialData} />
   );
 }

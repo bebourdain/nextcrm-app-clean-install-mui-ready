@@ -1,231 +1,42 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  CalendarDays,
-  CoinsIcon,
-  FileText,
-  List,
-  User,
-  Building2,
-  Bell,
-  PenLine,
-} from "lucide-react";
-import moment from "moment";
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { prismadb } from "@/lib/prisma";
-import { formatCurrency as formatCurrencyUtil } from "@/lib/currency";
+import moment from "moment";
+import { Box, Card, CardContent, Chip, Divider, Stack, Typography } from "@mui/material";
+import { Bell, Building2, CalendarDays, Coins, FileText, List, PenLine, User } from "lucide-react";
 import { Decimal } from "@prisma/client/runtime/client";
+import { prismadb } from "@/lib/prisma";
+import { formatCurrency } from "@/lib/currency";
 
-interface BasicViewProps {
-  data: any;
+const statusLabel: Record<string, string> = { NOTSTARTED: "Not started", INPROGRESS: "In progress", SIGNED: "Signed" };
+function Field({ icon, label, value }: { icon: ReactNode; label: string; value: ReactNode }) {
+  return <Stack direction="row" spacing={1.5} sx={{ p: 1, alignItems: "flex-start", borderRadius: 1, "&:hover": { bgcolor: "action.hover" } }}>
+    <Box sx={{ mt: 0.25, color: "text.secondary" }}>{icon}</Box>
+    <Box><Typography variant="body2" sx={{ fontWeight: 600 }}>{label}</Typography><Typography variant="body2" color="text.secondary" component="div">{value}</Typography></Box>
+  </Stack>;
 }
-
-const statusVariant: Record<string, "default" | "secondary" | "destructive"> = {
-  NOTSTARTED: "secondary",
-  INPROGRESS: "default",
-  SIGNED: "destructive",
-};
-
-const statusLabel: Record<string, string> = {
-  NOTSTARTED: "Not Started",
-  INPROGRESS: "In Progress",
-  SIGNED: "Signed",
-};
-
-export async function BasicView({ data }: BasicViewProps) {
-  const users = await prismadb.users.findMany();
-
-  if (!data) return <div>Contract not found</div>;
-
-  const formatDate = (date: Date | null | undefined) =>
-    date ? moment(date).format("MMM DD, YYYY") : "N/A";
-
-  const formatValue = (value: number | string | null | undefined) =>
-    value != null
-      ? formatCurrencyUtil(new Decimal(value.toString()), data.currency || "EUR")
-      : "N/A";
-
-  return (
-    <div className="pb-3 space-y-5">
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex w-full justify-between items-start">
-            <div>
-              <CardTitle>{data.title}</CardTitle>
-              <CardDescription>ID: {data.id}</CardDescription>
-            </div>
-            <Badge variant={statusVariant[data.status] ?? "secondary"}>
-              {statusLabel[data.status] ?? data.status}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 w-full gap-5">
-            {/* Left column */}
-            <div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <CoinsIcon className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Value</p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatValue(data.value)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <List className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Type</p>
-                  <p className="text-sm text-muted-foreground">
-                    {data.type ?? "N/A"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <CalendarDays className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Start Date</p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(data.startDate)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <CalendarDays className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">End Date</p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(data.endDate)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <Bell className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    Renewal Reminder
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(data.renewalReminderDate)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <FileText className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Description</p>
-                  <p className="text-sm text-muted-foreground">
-                    {data.description ?? "N/A"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Right column */}
-            <div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <PenLine className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    Customer Signed Date
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(data.customerSignedDate)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <PenLine className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    Company Signed Date
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(data.companySignedDate)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <Building2 className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    Assigned Account
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {data.assigned_account ? (
-                      <Link
-                        href={`/crm/accounts/${data.assigned_account.id}`}
-                        className="underline hover:text-foreground"
-                      >
-                        {data.assigned_account.name}
-                      </Link>
-                    ) : (
-                      "N/A"
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <User className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Assigned To</p>
-                  <p className="text-sm text-muted-foreground">
-                    {data.assigned_to_user?.name ?? "N/A"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <CalendarDays className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Created</p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(data.createdAt)}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Created by</p>
-                  <p className="text-sm text-muted-foreground">
-                    {users.find((user) => user.id === data.createdBy)?.name ??
-                      "N/A"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <CalendarDays className="mt-px h-5 w-5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Last Update</p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(data.updatedAt)}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Updated by</p>
-                  <p className="text-sm text-muted-foreground">
-                    {users.find((user) => user.id === data.updatedBy)?.name ??
-                      "N/A"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+export async function BasicView({ data }: { data: any }) {
+  const users = await prismadb.users.findMany({ select: { id: true, name: true } });
+  if (!data) return <Typography>Contract not found</Typography>;
+  const date = (value: Date | null | undefined) => value ? moment(value).format("MMM DD, YYYY") : "N/A";
+  const userName = (id: string | null | undefined) => users.find((user) => user.id === id)?.name ?? "N/A";
+  return <Card variant="outlined">
+    <Box sx={{ p: 3, pb: 1.5 }}><Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
+      <Box><Typography variant="h5" component="h2">{data.title}</Typography><Typography variant="body2" color="text.secondary">ID: {data.id}</Typography></Box>
+      <Chip size="small" color={data.status === "SIGNED" ? "success" : data.status === "INPROGRESS" ? "primary" : "default"} label={statusLabel[data.status] ?? data.status} />
+    </Stack><Divider sx={{ mt: 2.5 }} /></Box>
+    <CardContent sx={{ pt: 1.5 }}><Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 0.5 }}>
+      <Field icon={<Coins size={18} />} label="Value" value={data.value != null ? formatCurrency(new Decimal(data.value.toString()), data.currency || "EUR") : "N/A"} />
+      <Field icon={<List size={18} />} label="Type" value={data.type ?? "N/A"} />
+      <Field icon={<CalendarDays size={18} />} label="Start Date" value={date(data.startDate)} />
+      <Field icon={<CalendarDays size={18} />} label="End Date" value={date(data.endDate)} />
+      <Field icon={<Bell size={18} />} label="Renewal Reminder" value={date(data.renewalReminderDate)} />
+      <Field icon={<PenLine size={18} />} label="Customer Signed Date" value={date(data.customerSignedDate)} />
+      <Field icon={<PenLine size={18} />} label="Company Signed Date" value={date(data.companySignedDate)} />
+      <Field icon={<Building2 size={18} />} label="Assigned Account" value={data.assigned_account ? <Link href={`/crm/accounts/${data.assigned_account.id}`}>{data.assigned_account.name}</Link> : "N/A"} />
+      <Field icon={<User size={18} />} label="Assigned To" value={data.assigned_to_user?.name ?? "N/A"} />
+      <Field icon={<CalendarDays size={18} />} label="Created" value={`${date(data.createdAt)} · ${userName(data.createdBy)}`} />
+      <Field icon={<CalendarDays size={18} />} label="Last Update" value={`${date(data.updatedAt)} · ${userName(data.updatedBy)}`} />
+      <Field icon={<FileText size={18} />} label="Description" value={data.description || "N/A"} />
+    </Box></CardContent>
+  </Card>;
 }

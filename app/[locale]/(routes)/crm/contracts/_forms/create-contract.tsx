@@ -1,177 +1,52 @@
 "use client";
 
+import { useState } from "react";
+import { Box, Button, Divider, Drawer, IconButton, Typography } from "@mui/material";
+import { X } from "lucide-react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import { ElementRef, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
-
-import { crm_Accounts } from "@prisma/client";
-import { UserSearchCombobox } from "@/components/ui/user-search-combobox";
-
-import { useAction } from "@/hooks/use-action";
-
-import { createNewContract } from "@/actions/crm/contracts/create-new-contract";
-
-import { FormInput } from "@/components/form/form-input";
-import FormSheet from "@/components/sheets/form-sheet";
-import { FormSubmit } from "@/components/form/form-submit";
-import { FormDatePicker } from "@/components/form/form-datepicker";
-import { FormTextarea } from "@/components/form/form-textarea";
-import { FormSelect } from "@/components/form/from-select";
 import { useSession } from "@/lib/auth-client";
+import { useAction } from "@/hooks/use-action";
+import { createNewContract } from "@/actions/crm/contracts/create-new-contract";
+import { ContractFormFields } from "./ContractFormFields";
 
-const CreateContractForm = ({
-  accounts,
-  accountId,
-  currencies = [],
-}: {
-  accounts: crm_Accounts[];
-  accountId: string;
-  currencies?: { code: string; name: string; symbol: string }[];
-}) => {
+type Account = { id: string; name: string };
+type Currency = { code: string; name: string; symbol: string };
+
+export default function CreateContractForm({ accounts, accountId, currencies = [] }: { accounts: Account[]; accountId: string; currencies?: Currency[] }) {
   const router = useRouter();
-  const closeRef = useRef<ElementRef<"button">>(null);
-  const [assignedTo, setAssignedTo] = useState<string>("");
   const { data: session } = useSession();
-  const t = useTranslations("CrmContractForm");
-  const c = useTranslations("Common");
-
-  useEffect(() => {
-    const uid = session?.user?.id;
-    if (uid) setAssignedTo((prev) => prev || uid);
-  }, [session]);
-
-  //console.log(accountId, "accountId");
-
+  const [open, setOpen] = useState(false);
+  const [assignedTo, setAssignedTo] = useState<string | null>(null);
+  const currentAssignedTo = assignedTo ?? session?.user?.id ?? "";
   const { execute, fieldErrors, isLoading } = useAction(createNewContract, {
-    onSuccess: (data) => {
-      toast.success(t("createSuccess"));
-      closeRef.current?.click();
-      router.refresh();
-    },
-    onError: (error) => {
-      toast.error(error);
-    },
+    onSuccess: () => { toast.success("Contract created successfully"); setOpen(false); router.refresh(); },
+    onError: (message) => toast.error(message),
   });
-
   const onAction = async (formData: FormData) => {
-    const title = formData.get("title") as string;
-    const value = formData.get("value") as string;
-    const startDate = new Date(formData.get("startDate") as string);
-    const endDate = new Date(formData.get("endDate") as string);
-    const renewalReminderDate = new Date(
-      formData.get("renewalReminderDate") as string
-    );
-    const customerSignedDate = new Date(
-      formData.get("customerSignedDate") as string
-    );
-    const companySignedDate = new Date(
-      formData.get("companySignedDate") as string
-    );
-    const description = formData.get("description") as string;
-    const account = formData.get("account") as string;
-    const assigned_to = formData.get("assigned_to") as string;
-    const currency = formData.get("currency") as string;
-
     await execute({
-      title,
-      value,
-      startDate,
-      endDate,
-      renewalReminderDate,
-      customerSignedDate,
-      companySignedDate,
-      description,
-      account,
-      assigned_to,
-      currency,
+      title: String(formData.get("title") ?? ""),
+      value: String(formData.get("value") ?? ""),
+      currency: String(formData.get("currency") ?? ""),
+      startDate: new Date(String(formData.get("startDate") ?? "")),
+      endDate: new Date(String(formData.get("endDate") ?? "")),
+      renewalReminderDate: new Date(String(formData.get("renewalReminderDate") ?? "")),
+      customerSignedDate: new Date(String(formData.get("customerSignedDate") ?? "")),
+      companySignedDate: new Date(String(formData.get("companySignedDate") ?? "")),
+      description: String(formData.get("description") ?? ""),
+      account: String(formData.get("account") ?? ""),
+      assigned_to: currentAssignedTo,
     });
   };
-
-  isLoading ? <Loader2 className="h-6 w-6  animate-spin" /> : null;
-
-  return (
-    <FormSheet
-      trigger={"+"}
-      title={t("createButton")}
-      description="Create a new contract with specified terms, dates, and assigned users"
-      onClose={closeRef}
-    >
-      <form action={onAction} className="space-y-4">
-        <FormInput id="title" label={t("title")} type="text" errors={fieldErrors} />
-        <FormInput id="value" label={t("value")} type="text" errors={fieldErrors} />
-        <FormSelect
-          id="currency"
-          label={t("currency")}
-          type="hidden"
-          data={currencies.map((c) => ({ id: c.code, name: `${c.symbol} ${c.code} — ${c.name}` }))}
-          errors={fieldErrors}
-        />
-        <FormDatePicker
-          id="startDate"
-          label={t("startDate")}
-          type="hidden"
-          errors={fieldErrors}
-        />
-        <FormDatePicker
-          id="endDate"
-          label={t("endDate")}
-          type="hidden"
-          errors={fieldErrors}
-        />
-        <FormDatePicker
-          id="renewalReminderDate"
-          label={t("renewalReminderDate")}
-          type="hidden"
-          errors={fieldErrors}
-        />
-        <FormDatePicker
-          id="customerSignedDate"
-          label={t("customerSignedDate")}
-          type="hidden"
-          errors={fieldErrors}
-        />
-        <FormDatePicker
-          id="companySignedDate"
-          label={t("companySignedDate")}
-          type="hidden"
-          errors={fieldErrors}
-        />
-        <FormTextarea
-          id="description"
-          label={c("description")}
-          errors={fieldErrors}
-        />
-        <FormSelect
-          id="account"
-          label={t("account")}
-          type="hidden"
-          data={accounts}
-          errors={fieldErrors}
-          defaultValue={accountId}
-          disabled={!!accountId}
-        />
-        <div className="space-y-1">
-          <label className="text-sm font-medium">{c("assignedTo")}</label>
-          <UserSearchCombobox
-            value={assignedTo}
-            onChange={setAssignedTo}
-            placeholder={c("selectUser")}
-            disabled={isLoading}
-            name="assigned_to"
-          />
-        </div>
-        <FormSubmit className="w-full">
-          {isLoading ? (
-            <Loader2 className="h-6 w-6  animate-spin" />
-          ) : (
-            c("create")
-          )}
-        </FormSubmit>
-      </form>
-    </FormSheet>
-  );
-};
-
-export default CreateContractForm;
+  return <>
+    <Button variant="contained" aria-label="Create contract" onClick={() => setOpen(true)} sx={{ minWidth: 36, my: 1 }}>+</Button>
+    <Drawer anchor="right" open={open} onClose={() => setOpen(false)} slotProps={{ paper: { sx: { width: { xs: "100%", md: 771 }, maxWidth: "100%" } } }}>
+      <Box sx={{ p: 3, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <Box><Typography variant="h5">Create contract</Typography><Typography variant="body2" color="text.secondary">Create a contract with terms, dates, and an assigned user.</Typography></Box>
+        <IconButton aria-label="Close" onClick={() => setOpen(false)}><X size={18} /></IconButton>
+      </Box>
+      <Divider />
+      <Box sx={{ overflowY: "auto", pt: 3 }}><ContractFormFields mode="create" accounts={accounts} currencies={currencies} fixedAccountId={accountId || undefined} assignedTo={currentAssignedTo} onAssignedToChange={setAssignedTo} fieldErrors={fieldErrors ?? {}} isLoading={isLoading} onAction={onAction} /></Box>
+    </Drawer>
+  </>;
+}
