@@ -1,168 +1,41 @@
 "use client";
 
 import Link from "next/link";
-import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
+import { toast } from "sonner";
+import { Button, Chip, Divider, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import AssignProductForm from "./AssignProductForm";
 import { removeAssignment } from "@/actions/crm/account-products/remove-assignment";
-
 import type { getAllCrmData } from "@/actions/crm/get-crm-data";
 
 type CrmData = Awaited<ReturnType<typeof getAllCrmData>>;
+type ProductAssignment = { id: string; productId: string; product?: { id?: string; name?: string; type?: string; unit_price?: unknown; currency?: string } | null; custom_price?: unknown; currency?: string | null; status: string; quantity?: number; start_date?: Date | string | null; end_date?: Date | string | null };
 
-interface AccountProductsViewProps {
-  data: any[];
-  accountId: string;
-  crmData: CrmData;
-  activeProducts: { id: string; name: string; currency: string }[];
-}
-
-const statusColors: Record<string, string> = {
-  ACTIVE: "bg-green-100 text-green-800",
-  PENDING: "bg-yellow-100 text-yellow-800",
-  CANCELLED: "bg-red-100 text-red-800",
-  EXPIRED: "bg-gray-100 text-gray-800",
-};
-
-const AccountProductsView = ({
-  data,
-  accountId,
-  crmData,
-  activeProducts,
-}: AccountProductsViewProps) => {
+export default function AccountProductsView({ data, accountId, crmData, activeProducts }: { data: ProductAssignment[]; accountId: string; crmData: CrmData; activeProducts: { id: string; name: string; currency: string }[] }) {
   const router = useRouter();
-  const { currencies } = crmData;
-
   const handleCancel = async (id: string) => {
     const result = await removeAssignment(id);
-    if (result?.error) {
-      toast.error(result.error);
-    } else {
-      toast.success("Assignment cancelled");
-      router.refresh();
-    }
+    if (result?.error) toast.error(result.error);
+    else { toast.success("Assignment cancelled"); router.refresh(); }
   };
-
-  const formatPrice = (item: any) => {
+  const formatPrice = (item: ProductAssignment) => {
     const price = item.custom_price ?? item.product?.unit_price;
-    if (price == null) return "-";
-    const num = typeof price === "number" ? price : Number(price);
-    const curr = item.currency || item.product?.currency || "EUR";
-    return `${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${curr}`;
+    if (price == null) return "—";
+    return `${Number(price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${item.currency || item.product?.currency || "EUR"}`;
   };
-
-  const formatDate = (date: string | Date | null | undefined) => {
-    if (!date) return "-";
-    return new Date(date).toLocaleDateString();
-  };
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between">
-          <CardTitle>
-            <Link href="/crm/products" className="hover:underline">
-              Products
-            </Link>
-          </CardTitle>
-          <div className="flex space-x-2">
-            <AssignProductForm
-              accountId={accountId}
-              products={activeProducts}
-              currencies={currencies.map(
-                (c: { code: string; name: string; symbol: string }) => ({
-                  code: c.code,
-                  name: c.name,
-                  symbol: c.symbol,
-                })
-              )}
-            />
-          </div>
-        </div>
-        <Separator />
-      </CardHeader>
-      <CardContent>
-        {!data || data.length === 0 ? (
-          "No products assigned to this account"
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Qty</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Start</TableHead>
-                <TableHead>End</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((item: any) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <Link
-                      href={`/crm/products/${item.product?.id || item.productId}`}
-                      className="hover:underline font-medium"
-                    >
-                      {item.product?.name || "Unknown"}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{item.product?.type || "-"}</TableCell>
-                  <TableCell>
-                    <Badge
-                      className={
-                        statusColors[item.status] || "bg-gray-100 text-gray-800"
-                      }
-                      variant="outline"
-                    >
-                      {item.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{item.quantity}</TableCell>
-                  <TableCell>{formatPrice(item)}</TableCell>
-                  <TableCell>{formatDate(item.start_date)}</TableCell>
-                  <TableCell>{formatDate(item.end_date)}</TableCell>
-                  <TableCell>
-                    {(item.status === "ACTIVE" ||
-                      item.status === "PENDING") && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleCancel(item.id)}
-                      >
-                        Cancel
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-export default AccountProductsView;
+  const formatDate = (date?: Date | string | null) => date ? new Date(date).toLocaleDateString() : "—";
+  return <Paper variant="outlined" sx={{ p: 3, borderRadius: "var(--radius)" }}>
+    <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+      <Typography variant="h6" sx={{ fontWeight: 600 }}><Link href="/crm/products">Products</Link></Typography>
+      <AssignProductForm accountId={accountId} products={activeProducts} currencies={crmData.currencies.map((currency) => ({ code: currency.code, name: currency.name, symbol: currency.symbol }))} />
+    </Stack>
+    <Divider sx={{ my: 2 }} />
+    {!data.length ? <Typography variant="body2">No products assigned to this account</Typography> : <TableContainer><Table size="small"><TableHead><TableRow>{["Product", "Type", "Status", "Qty", "Price", "Start", "End", ""].map((label, index) => <TableCell key={index}>{label}</TableCell>)}</TableRow></TableHead><TableBody>{data.map((item) => <TableRow key={item.id}>
+      <TableCell><Button component={Link} href={`/crm/products/${item.product?.id || item.productId}`} color="inherit" sx={{ textTransform: "none" }}>{item.product?.name || "Unknown"}</Button></TableCell>
+      <TableCell>{item.product?.type || "—"}</TableCell>
+      <TableCell><Chip size="small" variant="outlined" label={item.status} color={item.status === "ACTIVE" ? "success" : item.status === "PENDING" ? "warning" : item.status === "CANCELLED" ? "error" : "default"} /></TableCell>
+      <TableCell>{item.quantity}</TableCell><TableCell>{formatPrice(item)}</TableCell><TableCell>{formatDate(item.start_date)}</TableCell><TableCell>{formatDate(item.end_date)}</TableCell>
+      <TableCell>{(item.status === "ACTIVE" || item.status === "PENDING") && <Button size="small" color="error" onClick={() => handleCancel(item.id)}>Cancel</Button>}</TableCell>
+    </TableRow>)}</TableBody></Table></TableContainer>}
+  </Paper>;
+}

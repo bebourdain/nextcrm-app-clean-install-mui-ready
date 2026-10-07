@@ -1,6 +1,6 @@
-import Container from "@/app/[locale]/(routes)/components/ui/Container";
 import React from "react";
 import { BasicView } from "./components/BasicView";
+import { MuiAccountDetailLayout } from "./components/MuiAccountDetailLayout";
 import CaseStudyCard from "./components/CaseStudyCard";
 import { getSession } from "@/lib/auth-server";
 import { FindSimilarButton } from "@/components/crm/find-similar-button";
@@ -39,7 +39,6 @@ import AccountsTasksView from "./components/TasksView";
 import ContractsView from "../../components/ContractsView";
 import AccountProductsView from "./components/AccountProductsView";
 import { ActivitiesSection } from "./components/ActivitiesSection";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HistoryTab } from "./components/HistoryTab";
 
 interface AccountDetailPageProps {
@@ -100,17 +99,11 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
   if (!account) return <div>Account not found</div>;
 
   return (
-    <Container
-      title={`Account: ${account?.name}`}
-      description={"Everything you need to know about sales potential"}
-    >
-      <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview">
-          <div className="space-y-5">
+    <MuiAccountDetailLayout
+      title={`Account: ${account.name}`}
+      description="Everything you need to know about sales potential"
+      overview={
+        <>
             <BasicView data={account} />
             <CaseStudyCard
               accountId={account.id}
@@ -148,13 +141,10 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
               statusLabels={invoiceStatusLabels}
               tableLabels={invoiceTableLabels}
             />
-          </div>
-        </TabsContent>
-        <TabsContent value="history">
-          <HistoryTab accountId={accountId} />
-        </TabsContent>
-      </Tabs>
-    </Container>
+        </>
+      }
+      history={<HistoryTab accountId={accountId} />}
+    />
   );
 };
 

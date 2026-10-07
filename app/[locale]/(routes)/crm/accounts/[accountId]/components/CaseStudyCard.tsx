@@ -3,9 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Box, Button, Chip, Paper, Stack, Typography } from "@mui/material";
 import {
   setCaseStudyCandidate,
   setCaseStudyApproved,
@@ -34,21 +32,22 @@ const CaseStudyCard = ({ accountId, candidate, approved, canApprove }: Props) =>
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="flex items-center gap-2">
+    <Paper variant="outlined" sx={{ p: 3, borderRadius: "var(--radius)" }}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><Typography variant="h6" sx={{ fontWeight: 600 }}>
           Case study
+        </Typography>
           {approved ? (
-            <Badge>Approved</Badge>
+            <Chip label="Approved" size="small" color="success" />
           ) : candidate ? (
-            <Badge variant="secondary">Candidate</Badge>
+            <Chip label="Candidate" size="small" />
           ) : null}
-        </CardTitle>
-        <div className="flex gap-2">
+        </Stack>
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
           {candidate ? (
             <Button
-              size="sm"
-              variant="outline"
+              size="small"
+              variant="outlined"
               disabled={busy}
               onClick={() => run(() => setCaseStudyCandidate(accountId, false))}
             >
@@ -56,8 +55,8 @@ const CaseStudyCard = ({ accountId, candidate, approved, canApprove }: Props) =>
             </Button>
           ) : (
             <Button
-              size="sm"
-              variant="outline"
+              size="small"
+              variant="outlined"
               disabled={busy}
               onClick={() => run(() => setCaseStudyCandidate(accountId, true))}
             >
@@ -66,7 +65,8 @@ const CaseStudyCard = ({ accountId, candidate, approved, canApprove }: Props) =>
           )}
           {canApprove && candidate && !approved && (
             <Button
-              size="sm"
+              size="small"
+              variant="contained"
               disabled={busy}
               onClick={() => run(() => setCaseStudyApproved(accountId, true))}
             >
@@ -75,21 +75,21 @@ const CaseStudyCard = ({ accountId, candidate, approved, canApprove }: Props) =>
           )}
           {canApprove && approved && (
             <Button
-              size="sm"
-              variant="outline"
+              size="small"
+              variant="outlined"
               disabled={busy}
               onClick={() => run(() => setCaseStudyApproved(accountId, false))}
             >
               Revoke approval
             </Button>
           )}
-        </div>
-      </CardHeader>
-      <CardContent className="text-sm text-muted-foreground">
+        </Box>
+      </Stack>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
         Clients with strong measurable results are flagged here; a manager
         approves before marketing may reference them.
-      </CardContent>
-    </Card>
+      </Typography>
+    </Paper>
   );
 };
 
