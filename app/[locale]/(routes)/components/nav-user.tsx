@@ -1,147 +1,111 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { signOut } from "@/lib/auth-client"
-import {
-  ChevronsUpDown,
-  LogOut,
-  Settings,
-  User,
-  LayoutDashboard,
-  BadgeDollarSign,
-} from "lucide-react"
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar"
-import { useAvatarContext } from "@/context/avatar-context"
-
-/**
- * NavUser Component - Task Group 3.1
- *
- * User profile section component for sidebar footer.
- * Displays user avatar, name, email, and provides dropdown menu with user actions.
- *
- * Features:
- * - User avatar display with fallback to default image
- * - User name and email display (when sidebar expanded)
- * - Avatar only display (when sidebar collapsed)
- * - Dropdown menu with user actions:
- *   - Todo Dashboard (navigation to /projects/dashboard)
- *   - Sales Dashboard (navigation to /crm/dashboard/{userId})
- *   - Profile Settings (navigation to /profile)
- *   - Logout (signOut action)
- * - Integrates with Zustand store for avatar state management
- * - Reuses logic from existing AvatarDropdown component
- *
- * @param user - User object containing id, name, email, avatar
- */
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Avatar, Box, Divider, ListItemButton, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
+import { BadgeDollarSign, ChevronsUpDown, LayoutDashboard, LogOut, Settings } from "lucide-react";
+import { signOut } from "@/lib/auth-client";
+import { useAvatarContext } from "@/context/avatar-context";
+import { useSidebar } from "@/components/ui/sidebar";
 
 interface NavUserProps {
   user: {
-    id: string
-    name?: string | null
-    email?: string | null
-    avatar?: string | null
-  }
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    avatar?: string | null;
+  };
 }
 
 export function NavUser({ user }: NavUserProps) {
-  const router = useRouter()
-  const { isMobile } = useSidebar()
-  const { avatar } = useAvatarContext()
+  const router = useRouter();
+  const { avatar } = useAvatarContext();
+  const { state, isMobile, setOpenMobile } = useSidebar();
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const showLabels = isMobile || state === "expanded";
+  const avatarUrl = avatar || user.avatar || undefined;
+  const initials = user.name
+    ? user.name.split(" ").map((part) => part[0]).join("").toUpperCase().slice(0, 2)
+    : "U";
 
-  // Get avatar URL or fallback to default
-  const avatarUrl = avatar || user.avatar || undefined
+  const navigate = (url: string) => {
+    setAnchor(null);
+    if (isMobile) setOpenMobile(false);
+    router.push(url);
+  };
 
-  // Get user initials for avatar fallback
-  const userInitials = user.name
-    ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "U"
+  const logout = async () => {
+    setAnchor(null);
+    await signOut();
+    window.location.href = "/sign-in";
+  };
+
+  const userAvatar = (size: number) => (
+    <Avatar
+      src={avatarUrl}
+      alt={user.name || "User"}
+      variant="rounded"
+      sx={{ width: size, height: size, flexShrink: 0, borderRadius: "calc(var(--radius) - 2px)", bgcolor: "hsl(var(--sidebar-accent))", color: "hsl(var(--sidebar-accent-foreground))", fontSize: 13 }}
+    >
+      {initials}
+    </Avatar>
+  );
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={avatarUrl} alt={user.name || "User"} />
-                <AvatarFallback className="rounded-lg">
-                  {userInitials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
-              </div>
-              <ChevronsUpDown className="ml-auto size-4" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={avatarUrl} alt={user.name || "User"} />
-                  <AvatarFallback className="rounded-lg">
-                    {userInitials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
-                </div>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push("/projects/dashboard")}>
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              Todo Dashboard
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => router.push(`/crm/dashboard/${user.id}`)}
-            >
-              <BadgeDollarSign className="mr-2 h-4 w-4" />
-              Sales Dashboard
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push("/profile")}>
-              <Settings className="mr-2 h-4 w-4" />
-              Profile Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={async () => { await signOut(); window.location.href = "/sign-in"; }}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
-  )
+    <>
+      <Tooltip title={showLabels ? "" : user.name || user.email || "Account"} placement="right" arrow>
+        <ListItemButton
+          aria-label="Account menu"
+          aria-expanded={Boolean(anchor)}
+          onClick={(event) => setAnchor(event.currentTarget)}
+          sx={{
+            minHeight: showLabels ? 48 : 32,
+            px: showLabels ? 1 : 0,
+            py: 0,
+            gap: 1,
+            justifyContent: showLabels ? "flex-start" : "center",
+            borderRadius: "calc(var(--radius) - 2px)",
+            color: "hsl(var(--sidebar-foreground))",
+            "&:hover": { bgcolor: "hsl(var(--sidebar-accent))", color: "hsl(var(--sidebar-accent-foreground))" },
+            "&.Mui-focusVisible": { outline: "2px solid hsl(var(--sidebar-ring))", outlineOffset: 1 },
+          }}
+        >
+          {userAvatar(32)}
+          {showLabels && (
+            <>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Typography noWrap sx={{ fontSize: 13, fontWeight: 600 }}>{user.name || user.email || "User"}</Typography>
+                {user.name && <Typography noWrap sx={{ fontSize: 11, opacity: 0.75 }}>{user.email}</Typography>}
+              </Box>
+              <ChevronsUpDown size={16} />
+            </>
+          )}
+        </ListItemButton>
+      </Tooltip>
+      <Menu
+        anchorEl={anchor}
+        open={Boolean(anchor)}
+        onClose={() => setAnchor(null)}
+        sx={{ zIndex: 1500 }}
+        anchorOrigin={{ vertical: "top", horizontal: isMobile ? "left" : "right" }}
+        transformOrigin={{ vertical: "bottom", horizontal: "left" }}
+        slotProps={{ paper: { sx: { width: 256, borderRadius: "var(--radius)", border: "1px solid hsl(var(--sidebar-border))", boxShadow: 3 } } }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1 }}>
+          {userAvatar(32)}
+          <Box sx={{ minWidth: 0 }}>
+            <Typography noWrap sx={{ fontSize: 13, fontWeight: 600 }}>{user.name || user.email || "User"}</Typography>
+            {user.name && <Typography noWrap sx={{ fontSize: 11, color: "text.secondary" }}>{user.email}</Typography>}
+          </Box>
+        </Box>
+        <Divider />
+        <MenuItem onClick={() => navigate("/projects/dashboard")} sx={{ gap: 1.5, fontSize: 14 }}><LayoutDashboard size={16} />Todo Dashboard</MenuItem>
+        <MenuItem onClick={() => navigate("/crm/dashboard/" + user.id)} sx={{ gap: 1.5, fontSize: 14 }}><BadgeDollarSign size={16} />Sales Dashboard</MenuItem>
+        <Divider />
+        <MenuItem onClick={() => navigate("/profile")} sx={{ gap: 1.5, fontSize: 14 }}><Settings size={16} />Profile Settings</MenuItem>
+        <Divider />
+        <MenuItem onClick={logout} sx={{ gap: 1.5, fontSize: 14 }}><LogOut size={16} />Logout</MenuItem>
+      </Menu>
+    </>
+  );
 }

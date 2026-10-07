@@ -1,156 +1,163 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { type LucideIcon, ChevronRight } from "lucide-react"
-import { cn } from "@/lib/utils"
-import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-} from "@/components/ui/sidebar"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-
-/**
- * NavMain Component - Task Groups 2.1, 5.3
- *
- * Primary navigation component for the sidebar.
- * Features:
- * - Renders navigation items with icons and labels
- * - Supports collapsible groups for module dropdowns
- * - Active state detection using usePathname()
- * - Supports nested navigation items
- *
- * Task 5.3 Updates (Animation Standardization):
- * - Removed custom duration-200 class from ChevronRight icon
- * - Now uses Tailwind default transition duration (150ms)
- * - Maintains smooth rotation animation with shadcn defaults
- *
- * @param items - Array of navigation items (can be simple or grouped)
- * @param dict - Localization dictionary for labels
- */
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Box, Collapse, List, ListItemButton, ListItemIcon, Tooltip, Typography } from "@mui/material";
+import { ChevronRight, type LucideIcon } from "lucide-react";
+import { useSidebar } from "@/components/ui/sidebar";
 
 export interface NavItem {
-  title: string
-  url?: string
-  icon?: LucideIcon
-  isActive?: boolean
-  items?: NavSubItem[] // For collapsible groups
+  title: string;
+  url?: string;
+  icon?: LucideIcon;
+  isActive?: boolean;
+  items?: NavSubItem[];
 }
 
 export interface NavSubItem {
-  title: string
-  url: string
-  isActive?: boolean
-  exact?: boolean
+  title: string;
+  url: string;
+  isActive?: boolean;
+  exact?: boolean;
 }
 
 interface NavMainProps {
-  items: NavItem[]
-  dict?: any
+  items: NavItem[];
+  dict?: unknown;
 }
 
-export function NavMain({ items, dict }: NavMainProps) {
-  const pathname = usePathname()
-  const currentPath = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, "") || "/"
+const activeBackground = "hsl(var(--sidebar-accent))";
+const activeForeground = "hsl(var(--sidebar-accent-foreground))";
 
-  // Helper function to check if a route is active
-  const isRouteActive = (url: string, exact?: boolean): boolean => {
-    if (url === "/" || url === "") {
-      return currentPath === "/"
-    }
-    if (exact) {
-      return currentPath === url
-    }
-    return currentPath === url || currentPath.startsWith(url + "/")
-  }
+export function NavMain({ items }: NavMainProps) {
+  const pathname = usePathname();
+  const { state, isMobile, setOpen, setOpenMobile } = useSidebar();
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const showLabels = isMobile || state === "expanded";
+  const currentPath = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, "") || "/";
 
-  // Helper to check if any sub-item is active
-  const hasActiveChild = (subItems?: NavSubItem[]): boolean => {
-    if (!subItems) return false
-    return subItems.some((item) => isRouteActive(item.url))
-  }
+  const matchesRoute = (url: string, exact = false) => {
+    if (url === "/") return currentPath === "/";
+    return currentPath === url || (!exact && currentPath.startsWith(url + "/"));
+  };
+
+  const closeMobileMenu = () => {
+    if (isMobile) setOpenMobile(false);
+  };
+
+  const itemStyles = {
+    minHeight: 36,
+    borderRadius: "calc(var(--radius) - 2px)",
+    px: showLabels ? 1 : 0,
+    py: 0,
+    gap: showLabels ? 1 : 0,
+    justifyContent: showLabels ? "flex-start" : "center",
+    color: "hsl(var(--sidebar-foreground))",
+    "&:hover": { bgcolor: activeBackground, color: activeForeground },
+    "&.Mui-selected": { bgcolor: activeBackground, color: activeForeground },
+    "&.Mui-selected:hover": { bgcolor: activeBackground, color: activeForeground },
+    "&.Mui-focusVisible": { outline: "2px solid hsl(var(--sidebar-ring))", outlineOffset: 1 },
+  } as const;
 
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-      <SidebarMenu>
+    <Box component="nav" aria-label="Main navigation" sx={{ px: showLabels ? 2 : 1, py: 1, minWidth: 0 }}>
+      {showLabels && (
+        <Typography sx={{ height: 32, display: "flex", alignItems: "center", px: 1, fontSize: 12, fontWeight: 600, color: "hsl(var(--sidebar-foreground))", opacity: 0.7 }}>
+          Navigation
+        </Typography>
+      )}
+      <List disablePadding sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
         {items.map((item) => {
-          // Check if this is a collapsible group with sub-items
-          if (item.items && item.items.length > 0) {
-            const hasActive = hasActiveChild(item.items)
+          const Icon = item.icon;
+
+          if (item.items?.length) {
+            const activeChildren = item.items
+              .filter((child) => matchesRoute(child.url, child.exact))
+              .sort((left, right) => right.url.length - left.url.length);
+            const activeChild = activeChildren[0];
+            const isOpen = expandedGroups[item.title] ?? Boolean(activeChild);
 
             return (
-              <Collapsible
-                key={item.title}
-                asChild
-                defaultOpen={hasActive}
-                className="group/collapsible"
-              >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton
-                      tooltip={item.title}
-                      isActive={hasActive}
-                    >
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
-                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {item.items.map((subItem) => {
-                        const isActive = isRouteActive(subItem.url, subItem.exact)
-                        return (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={isActive}
-                            >
-                              <Link href={subItem.url}>
-                                <span>{subItem.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        )
-                      })}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-            )
+              <Box key={item.title}>
+                <Tooltip title={showLabels ? "" : item.title} placement="right" arrow>
+                  <ListItemButton
+                    selected={Boolean(activeChild)}
+                    aria-label={item.title}
+                    aria-expanded={showLabels && isOpen}
+                    onClick={() => {
+                      if (!showLabels) {
+                        setOpen(true);
+                        setExpandedGroups((current) => ({ ...current, [item.title]: true }));
+                      } else {
+                        setExpandedGroups((current) => ({ ...current, [item.title]: !isOpen }));
+                      }
+                    }}
+                    sx={itemStyles}
+                  >
+                    {Icon && <ListItemIcon sx={{ minWidth: 18, color: "inherit", "& svg": { width: 18, height: 18 } }}><Icon /></ListItemIcon>}
+                    {showLabels && (
+                      <>
+                        <Typography noWrap sx={{ flex: 1, fontSize: 14, fontWeight: activeChild ? 600 : 500 }}>{item.title}</Typography>
+                        <ChevronRight size={16} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform 150ms" }} />
+                      </>
+                    )}
+                  </ListItemButton>
+                </Tooltip>
+                <Collapse in={showLabels && isOpen} timeout="auto" unmountOnExit>
+                  <List disablePadding sx={{ ml: 2, pl: 1.25, py: 0.5, borderLeft: "1px solid hsl(var(--sidebar-border))", display: "flex", flexDirection: "column", gap: 0.5 }}>
+                    {item.items.map((child) => {
+                      const isActive = activeChild?.url === child.url;
+                      return (
+                        <ListItemButton
+                          key={child.url}
+                          component={Link}
+                          href={child.url}
+                          selected={isActive}
+                          aria-current={isActive ? "page" : undefined}
+                          onClick={closeMobileMenu}
+                          sx={{
+                            minHeight: 32,
+                            borderRadius: "calc(var(--radius) - 2px)",
+                            px: 1,
+                            py: 0,
+                            color: "hsl(var(--sidebar-foreground))",
+                            "&:hover": { bgcolor: activeBackground, color: activeForeground },
+                            "&.Mui-selected": { bgcolor: activeBackground, color: activeForeground },
+                            "&.Mui-selected:hover": { bgcolor: activeBackground, color: activeForeground },
+                            "&.Mui-focusVisible": { outline: "2px solid hsl(var(--sidebar-ring))", outlineOffset: 1 },
+                          }}
+                        >
+                          <Typography noWrap sx={{ fontSize: 14, fontWeight: isActive ? 600 : 400 }}>{child.title}</Typography>
+                        </ListItemButton>
+                      );
+                    })}
+                  </List>
+                </Collapse>
+              </Box>
+            );
           }
 
-          // Simple navigation item (no sub-items)
-          if (!item.url) return null
-          const isActive = isRouteActive(item.url)
+          if (!item.url) return null;
+          const isActive = matchesRoute(item.url);
           return (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                tooltip={item.title}
-                isActive={isActive}
+            <Tooltip key={item.title} title={showLabels ? "" : item.title} placement="right" arrow>
+              <ListItemButton
+                component={Link}
+                href={item.url}
+                selected={isActive}
+                aria-label={item.title}
+                aria-current={isActive ? "page" : undefined}
+                onClick={closeMobileMenu}
+                sx={itemStyles}
               >
-                <Link href={item.url}>
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )
+                {Icon && <ListItemIcon sx={{ minWidth: 18, color: "inherit", "& svg": { width: 18, height: 18 } }}><Icon /></ListItemIcon>}
+                {showLabels && <Typography noWrap sx={{ fontSize: 14, fontWeight: isActive ? 600 : 500 }}>{item.title}</Typography>}
+              </ListItemButton>
+            </Tooltip>
+          );
         })}
-      </SidebarMenu>
-    </SidebarGroup>
-  )
+      </List>
+    </Box>
+  );
 }
