@@ -1,149 +1,125 @@
 "use client";
 
-import * as React from "react";
-import {
-  Calculator,
-  Calendar,
-  CreditCard,
-  FileText,
-  LogOut,
-  Settings,
-  Smile,
-  User,
-} from "lucide-react";
-import { searchDocuments, type DocumentSearchResult } from "@/actions/documents/search-documents";
-
-import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-  CommandShortcut,
-} from "@/components/ui/command";
-import { redirect } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Box, Dialog, DialogContent, DialogTitle, Divider, List, ListItemButton, ListItemIcon, ListItemText, TextField, Typography } from "@mui/material";
+import { FileText, LogOut, Settings, User } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-import { signOut } from "@/lib/auth-client";
 import { useTranslations } from "next-intl";
+import { searchDocuments, type DocumentSearchResult } from "@/actions/documents/search-documents";
+import { signOut } from "@/lib/auth-client";
 
 export function CommandComponent() {
-  const [open, setOpen] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [docResults, setDocResults] = React.useState<DocumentSearchResult[]>([]);
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [docResults, setDocResults] = useState<DocumentSearchResult[]>([]);
   const router = useRouter();
   const t = useTranslations("CommandComponent");
 
-  React.useEffect(() => {
-    if (!searchQuery || searchQuery.length < 2) {
-      setDocResults([]);
-      return;
-    }
+  useEffect(() => {
+    if (searchQuery.length < 2) return;
+    let cancelled = false;
     const timeout = setTimeout(() => {
-      searchDocuments(searchQuery).then(setDocResults).catch(() => {});
+      searchDocuments(searchQuery)
+        .then((results) => { if (!cancelled) setDocResults(results); })
+        .catch(() => { if (!cancelled) setDocResults([]); });
     }, 300);
-    return () => clearTimeout(timeout);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
   }, [searchQuery]);
 
-  React.useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "j" && e.metaKey) {
-        setOpen((open) => !open);
+  useEffect(() => {
+    const down = (event: KeyboardEvent) => {
+      if (event.metaKey && event.key.toLowerCase() === "j") {
+        event.preventDefault();
+        setOpen((current) => !current);
       }
-      if (e.key === "Escape") {
-        setOpen(false);
-      }
-      if (e.key === "D" && e.metaKey && e.shiftKey) {
+      if (event.key === "Escape") setOpen(false);
+      if (event.metaKey && event.shiftKey && event.key.toLowerCase() === "d") {
+        event.preventDefault();
         router.push("/");
         setOpen(false);
       }
-      if (e.key === "P" && e.metaKey && e.shiftKey) {
+      if (event.metaKey && event.shiftKey && event.key.toLowerCase() === "p") {
+        event.preventDefault();
         router.push("/profile");
         setOpen(false);
       }
-      if (e.key === "k" && e.metaKey) {
+      if (event.metaKey && event.key.toLowerCase() === "k") {
+        event.preventDefault();
         signOut().then(() => { window.location.href = "/sign-in"; });
       }
     };
-
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, [router]);
 
+  const navigate = (path: string) => {
+    router.push(path);
+    setOpen(false);
+  };
+
   return (
-    <div className="hidden lg:block">
-      <p className="text-sm text-muted-foreground">
-        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-          <span className="text-xs">⌘</span>J
-        </kbd>
-      </p>
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput
-          placeholder={t("placeholder")}
-          value={searchQuery}
-          onValueChange={setSearchQuery}
-        />
-        <CommandList>
-          <CommandEmpty>{t("noResults")}</CommandEmpty>
-          {/*           <CommandGroup heading="Suggestions">
-            <CommandItem>
-              <Calendar className="mr-2 h-4 w-4" />
-              <span>Calendar</span>
-            </CommandItem>
-            <CommandItem>
-              <Smile className="mr-2 h-4 w-4" />
-              <span>Search Emoji</span>
-            </CommandItem>
-            <CommandItem>
-              <Calculator className="mr-2 h-4 w-4" />
-              <span>Calculator</span>
-            </CommandItem>
-          </CommandGroup> */}
-          {docResults.length > 0 && (
-            <CommandGroup heading="Documents">
-              {docResults.map((doc) => (
-                <CommandItem
-                  key={doc.id}
-                  onSelect={() => {
-                    router.push(`/documents?highlight=${doc.id}`);
-                    setOpen(false);
-                  }}
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  <div className="flex flex-col">
-                    <span>{doc.name}</span>
-                    {doc.summary && (
-                      <span className="text-xs text-muted-foreground line-clamp-1">
-                        {doc.summary}
-                      </span>
-                    )}
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-          <CommandSeparator />
-          <CommandGroup heading={t("settings")}>
-            <CommandItem onClick={() => redirect("/")}>
-              <User className="mr-2 h-4 w-4" />
-              <span>{t("dashboard")}</span>
-              <CommandShortcut>Shift + ⌘ + D</CommandShortcut>
-            </CommandItem>
-            <CommandItem onClick={() => redirect("/profile")}>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>{t("profileSettings")}</span>
-              <CommandShortcut>Shift + ⌘ + P</CommandShortcut>
-            </CommandItem>
-            <CommandItem onClick={async () => { await signOut(); window.location.href = "/sign-in"; }}>
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>{t("logout")}</span>
-              <CommandShortcut>⌘k</CommandShortcut>
-            </CommandItem>
-          </CommandGroup>
-        </CommandList>
-      </CommandDialog>
-    </div>
+    <>
+      <Box
+        component="kbd"
+        title={t("shortcutHint")}
+        sx={{ display: { xs: "none", lg: "inline-flex" }, px: 0.75, py: 0.25, borderRadius: 0.75, bgcolor: "action.hover", color: "text.secondary", fontFamily: "monospace", fontSize: 11, whiteSpace: "nowrap" }}
+      >
+        ⌘ J
+      </Box>
+      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm" aria-labelledby="command-menu-title">
+        <DialogTitle id="command-menu-title" sx={{ position: "absolute", width: 1, height: 1, p: 0, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" }}>
+          Command menu
+        </DialogTitle>
+        <DialogContent sx={{ p: 0 }}>
+          <TextField
+            autoFocus
+            fullWidth
+            placeholder={t("placeholder")}
+            value={searchQuery}
+            onChange={(event) => {
+              setSearchQuery(event.target.value);
+              setDocResults([]);
+            }}
+            variant="standard"
+            slotProps={{ input: { disableUnderline: true } }}
+            sx={{ px: 2, py: 1.5 }}
+          />
+          <Divider />
+          <List sx={{ maxHeight: "min(60vh, 440px)", overflowY: "auto", py: 0.5 }}>
+            {docResults.length > 0 && (
+              <>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", px: 2, pt: 1 }}>Documents</Typography>
+                {docResults.map((doc) => (
+                  <ListItemButton key={doc.id} onClick={() => navigate(`/documents?highlight=${doc.id}`)}>
+                    <ListItemIcon sx={{ minWidth: 34 }}><FileText size={17} /></ListItemIcon>
+                    <ListItemText primary={doc.name} secondary={doc.summary} slotProps={{ secondary: { noWrap: true } }} />
+                  </ListItemButton>
+                ))}
+                <Divider sx={{ my: 0.5 }} />
+              </>
+            )}
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", px: 2, pt: 1 }}>{t("settings")}</Typography>
+            <ListItemButton onClick={() => navigate("/")}>
+              <ListItemIcon sx={{ minWidth: 34 }}><User size={17} /></ListItemIcon>
+              <ListItemText primary={t("dashboard")} />
+              <Typography variant="caption" color="text.secondary">Shift + ⌘ + D</Typography>
+            </ListItemButton>
+            <ListItemButton onClick={() => navigate("/profile")}>
+              <ListItemIcon sx={{ minWidth: 34 }}><Settings size={17} /></ListItemIcon>
+              <ListItemText primary={t("profileSettings")} />
+              <Typography variant="caption" color="text.secondary">Shift + ⌘ + P</Typography>
+            </ListItemButton>
+            <ListItemButton onClick={async () => { await signOut(); window.location.href = "/sign-in"; }}>
+              <ListItemIcon sx={{ minWidth: 34 }}><LogOut size={17} /></ListItemIcon>
+              <ListItemText primary={t("logout")} />
+              <Typography variant="caption" color="text.secondary">⌘ K</Typography>
+            </ListItemButton>
+          </List>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

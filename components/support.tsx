@@ -1,47 +1,51 @@
-import React from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { HelpCircle } from "lucide-react";
+"use client";
+
+import { useState, type MouseEvent } from "react";
 import Link from "next/link";
-import { Button } from "./ui/button";
+import { Box, IconButton, Popover, Tooltip, Typography } from "@mui/material";
+import { HelpCircle } from "lucide-react";
 import { DiscordLogoIcon, GitHubLogoIcon } from "@radix-ui/react-icons";
 
-const SupportComponent = () => {
-  return (
-    <Popover>
-      <PopoverTrigger className="border rounded-md p-3">
-        <HelpCircle className="cursor-pointer w-4 h-4" />
-      </PopoverTrigger>
-      <PopoverContent
-        className="flex flex-col space-y-2 mt-3 min-w-[400px]"
-        align={"end"}
-      >
-        <div className="flex w-full justify-between items-center gap-2">
-          <span className="text-sm">Need help? Join us on</span>
-          <Button asChild variant={"secondary"}>
-            <Link
-              className="border rounded-md p-2"
-              href={process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "#"}
-              target="_blank"
-            >
-              <DiscordLogoIcon />
-            </Link>
-          </Button>
-        </div>
-        <div className="flex w-full justify-between items-center gap-2">
-          <span className="text-sm "> Find a bug? Create an issue on</span>
-          <Button asChild variant={"secondary"}>
-            <Link
-              className="border rounded-md p-2"
-              href={process.env.NEXT_PUBLIC_GITHUB_ISSUES_URL || "#"}
-              target="_blank"
-            >
-              <GitHubLogoIcon />
-            </Link>
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-};
+export default function SupportComponent() {
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 
-export default SupportComponent;
+  const open = (event: MouseEvent<HTMLElement>) => setAnchor(event.currentTarget);
+
+  return (
+    <>
+      <Tooltip title="Help">
+        <IconButton
+          aria-label="Help"
+          aria-haspopup="dialog"
+          aria-expanded={Boolean(anchor)}
+          onClick={open}
+          sx={{ width: 40, height: 40, border: 1, borderColor: "divider", borderRadius: 1, color: "text.primary" }}
+        >
+          <HelpCircle size={18} />
+        </IconButton>
+      </Tooltip>
+      <Popover
+        open={Boolean(anchor)}
+        anchorEl={anchor}
+        onClose={() => setAnchor(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Box sx={{ width: { xs: 280, sm: 360 }, p: 2, display: "grid", gap: 1.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+            <Typography variant="body2">Need help? Join us on</Typography>
+            <IconButton component={Link} href={process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "#"} target="_blank" rel="noopener noreferrer" aria-label="Discord" size="small" sx={{ border: 1, borderColor: "divider" }}>
+              <DiscordLogoIcon />
+            </IconButton>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+            <Typography variant="body2">Find a bug? Create an issue on</Typography>
+            <IconButton component={Link} href={process.env.NEXT_PUBLIC_GITHUB_ISSUES_URL || "#"} target="_blank" rel="noopener noreferrer" aria-label="GitHub issues" size="small" sx={{ border: 1, borderColor: "divider" }}>
+              <GitHubLogoIcon />
+            </IconButton>
+          </Box>
+        </Box>
+      </Popover>
+    </>
+  );
+}
