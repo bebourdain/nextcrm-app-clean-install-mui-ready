@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
-import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-import { ReportChart } from "@/components/reports/ReportChart";
-import { ReportTable } from "@/components/reports/ReportTable";
+import { ReportPageLayout } from "../_components/ReportPageLayout";
+import { ReportChart } from "../_components/ReportChart";
+import { ReportTable } from "../_components/ReportTable";
 import { parseSearchParamsToFilters } from "@/actions/reports/types";
 import {
   getNewAccounts,

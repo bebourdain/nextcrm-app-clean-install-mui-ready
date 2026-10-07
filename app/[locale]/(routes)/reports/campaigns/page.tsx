@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
-import { Card, CardContent } from "@/components/ui/card";
-import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-import { ReportChart } from "@/components/reports/ReportChart";
+import { Box, Paper, Typography } from "@mui/material";
+import { ReportPageLayout } from "../_components/ReportPageLayout";
+import { ReportChart } from "../_components/ReportChart";
 import { parseSearchParamsToFilters } from "@/actions/reports/types";
 import {
   getCampaignPerformance,
@@ -36,20 +36,10 @@ export default async function CampaignsReportPage({ searchParams }: Props) {
       category="campaigns"
       currentFilters={params.toString()}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card><CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">{t("campaigns.sent")}</p>
-          <p className="text-2xl font-bold mt-1">{performance.sent.toLocaleString()}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">{t("campaigns.openRate")}</p>
-          <p className="text-2xl font-bold mt-1">{performance.openRate}%</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">{t("campaigns.clickRate")}</p>
-          <p className="text-2xl font-bold mt-1">{performance.clickRate}%</p>
-        </CardContent></Card>
-      </div>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" }, gap: 2 }}>
+        {[[t("campaigns.sent"), performance.sent.toLocaleString()], [t("campaigns.openRate"), `${performance.openRate}%`], [t("campaigns.clickRate"), `${performance.clickRate}%`]].map(([label, value]) =>
+          <Paper key={label} variant="outlined" sx={{ p: 3 }}><Typography variant="body2" color="text.secondary">{label}</Typography><Typography variant="h5" sx={{ mt: 1, fontWeight: 600 }}>{value}</Typography></Paper>)}
+      </Box>
       <ReportChart data={campaignROI} titleKey="campaignROI" type="bar" />
       <ReportChart data={topTemplates} titleKey="topTemplates" type="bar" layout="horizontal" />
       <ReportChart data={targetGrowth} titleKey="targetGrowth" type="area" />

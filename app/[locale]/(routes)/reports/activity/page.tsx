@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
-import { Card, CardContent } from "@/components/ui/card";
-import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-import { ReportChart } from "@/components/reports/ReportChart";
+import { Paper, Typography } from "@mui/material";
+import { ReportPageLayout } from "../_components/ReportPageLayout";
+import { ReportChart } from "../_components/ReportChart";
 import { parseSearchParamsToFilters } from "@/actions/reports/types";
 import {
   getTasksCreatedCompleted,
@@ -42,10 +42,10 @@ export default async function ActivityReportPage({ searchParams }: Props) {
       category="activity"
       currentFilters={params.toString()}
     >
-      <Card><CardContent className="p-4">
-        <p className="text-sm text-muted-foreground">{t("activity.overdueTasks")}</p>
-        <p className="text-2xl font-bold mt-1 text-red-500">{overdue}</p>
-      </CardContent></Card>
+      <Paper variant="outlined" sx={{ p: 3 }}>
+        <Typography variant="body2" color="text.secondary">{t("activity.overdueTasks")}</Typography>
+        <Typography variant="h5" color="error.main" sx={{ mt: 1, fontWeight: 600 }}>{overdue}</Typography>
+      </Paper>
       <ReportChart
         data={taskChartData as never}
         titleKey="tasksCreatedCompleted"

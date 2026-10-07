@@ -2,9 +2,9 @@ import { getTranslations } from "next-intl/server";
 import { cookies } from "next/headers";
 import { getDefaultCurrency, formatCurrency as formatCurrencyUtil } from "@/lib/currency";
 import { Decimal } from "@prisma/client/runtime/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-import { ReportChart } from "@/components/reports/ReportChart";
+import { Box, Paper, Typography } from "@mui/material";
+import { ReportPageLayout } from "../_components/ReportPageLayout";
+import { ReportChart } from "../_components/ReportChart";
 import { parseSearchParamsToFilters } from "@/actions/reports/types";
 import {
   getRevenue,
@@ -50,30 +50,14 @@ export default async function SalesReportPage({ searchParams }: Props) {
       category="sales"
       currentFilters={params.toString()}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card><CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">{t("sales.revenue")}</p>
-          <p className="text-2xl font-bold mt-1">{formatCurrencyUtil(new Decimal(revenue), displayCurrency)}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">{t("sales.pipeline")}</p>
-          <p className="text-2xl font-bold mt-1">{formatCurrencyUtil(new Decimal(pipeline), displayCurrency)}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">{t("sales.avgDeal")}</p>
-          <p className="text-2xl font-bold mt-1">{formatCurrencyUtil(new Decimal(avgDeal), displayCurrency)}</p>
-        </CardContent></Card>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card><CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">{t("sales.winRate")}</p>
-          <p className="text-2xl font-bold mt-1">{winLoss.rate}%</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">{t("sales.cycleLength")}</p>
-          <p className="text-2xl font-bold mt-1">{cycleLength} {t("sales.days")}</p>
-        </CardContent></Card>
-      </div>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" }, gap: 2 }}>
+        {[[t("sales.revenue"), formatCurrencyUtil(new Decimal(revenue), displayCurrency)], [t("sales.pipeline"), formatCurrencyUtil(new Decimal(pipeline), displayCurrency)], [t("sales.avgDeal"), formatCurrencyUtil(new Decimal(avgDeal), displayCurrency)]].map(([label, value]) =>
+          <Paper key={label} variant="outlined" sx={{ p: 3 }}><Typography variant="body2" color="text.secondary">{label}</Typography><Typography variant="h5" sx={{ mt: 1, fontWeight: 600 }}>{value}</Typography></Paper>)}
+      </Box>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" }, gap: 2 }}>
+        {[[t("sales.winRate"), `${winLoss.rate}%`], [t("sales.cycleLength"), `${cycleLength} ${t("sales.days")}`]].map(([label, value]) =>
+          <Paper key={label} variant="outlined" sx={{ p: 3 }}><Typography variant="body2" color="text.secondary">{label}</Typography><Typography variant="h5" sx={{ mt: 1, fontWeight: 600 }}>{value}</Typography></Paper>)}
+      </Box>
       <ReportChart data={oppsByStage} titleKey="oppsByStage" type="bar" />
       <ReportChart data={oppsByMonth} titleKey="oppsByMonth" type="area" />
     </ReportPageLayout>

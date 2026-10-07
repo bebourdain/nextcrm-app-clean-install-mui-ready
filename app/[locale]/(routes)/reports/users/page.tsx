@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
-import { Card, CardContent } from "@/components/ui/card";
-import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-import { ReportChart } from "@/components/reports/ReportChart";
+import { Paper, Typography } from "@mui/material";
+import { ReportPageLayout } from "../_components/ReportPageLayout";
+import { ReportChart } from "../_components/ReportChart";
 import { parseSearchParamsToFilters } from "@/actions/reports/types";
 import {
   getActiveUsersByYear,
@@ -36,10 +36,7 @@ export default async function UsersReportPage({ searchParams }: Props) {
       category="users"
       currentFilters={params.toString()}
     >
-      <Card><CardContent className="p-4">
-        <p className="text-sm text-muted-foreground">{t("users.totalActive")}</p>
-        <p className="text-2xl font-bold mt-1">{totalActive.toLocaleString()}</p>
-      </CardContent></Card>
+      <Paper variant="outlined" sx={{ p: 3 }}><Typography variant="body2" color="text.secondary">{t("users.totalActive")}</Typography><Typography variant="h5" sx={{ mt: 1, fontWeight: 600 }}>{totalActive.toLocaleString()}</Typography></Paper>
       <ReportChart data={activeByYear} titleKey="activeByYear" type="bar" />
       <ReportChart data={userGrowth} titleKey="userGrowth" type="area" />
       <ReportChart data={usersByRole} titleKey="usersByRole" type="pie" />

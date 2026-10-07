@@ -1,8 +1,9 @@
-import Container from "../components/ui/Container";
+import { Box, Divider } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { getDashboardKPIs } from "@/actions/reports/dashboard";
 import { parseSearchParamsToFilters } from "@/actions/reports/types";
-import { KPICard } from "@/components/reports/KPICard";
-import { DateRangePicker } from "@/components/reports/DateRangePicker";
+import { KPICard } from "./_components/KPICard";
+import { DateRangePicker } from "./_components/DateRangePicker";
 import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import { cookies } from "next/headers";
@@ -28,17 +29,19 @@ export default async function ReportsPage({ searchParams }: Props) {
   const dateParams = params.toString();
 
   return (
-    <Container title={t("title")} description={t("description")}>
-      <div className="space-y-6 pt-4">
+    <Box sx={{ width: "100%", pb: 6 }}>
+      <MuiPageHeader title={t("title")} description={t("description")} />
+      <Divider sx={{ my: 2 }} />
+      <Box sx={{ display: "grid", gap: 3 }}>
         <Suspense>
           <DateRangePicker />
         </Suspense>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)", xl: "repeat(5, 1fr)" }, gap: 2 }}>
           {kpis.map((kpi) => (
             <KPICard key={kpi.label} kpi={kpi} dateParams={dateParams} displayCurrency={displayCurrency} />
           ))}
-        </div>
-      </div>
-    </Container>
+        </Box>
+      </Box>
+    </Box>
   );
 }

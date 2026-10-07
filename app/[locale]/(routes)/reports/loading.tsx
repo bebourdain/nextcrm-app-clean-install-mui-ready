@@ -1,16 +1,16 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Box, Skeleton, Stack } from "@mui/material";
 
 export default function Loading() {
   return (
-    <div className="flex flex-col flex-1 h-full w-full p-6">
-      <Skeleton className="h-8 w-48 mb-2" />
-      <Skeleton className="h-4 w-72 mb-6" />
-      <Skeleton className="h-10 w-full max-w-lg mb-6" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+    <Stack spacing={2} sx={{ width: "100%", p: 3 }}>
+      <Skeleton variant="text" width={192} height={40} />
+      <Skeleton variant="text" width={288} height={24} />
+      <Skeleton variant="rounded" width="100%" height={40} sx={{ maxWidth: 512 }} />
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)", xl: "repeat(5, 1fr)" }, gap: 2 }}>
         {Array.from({ length: 10 }).map((_, i) => (
-          <Skeleton key={i} className="h-24 rounded-md" />
+          <Skeleton key={i} variant="rounded" height={96} />
         ))}
-      </div>
-    </div>
+      </Box>
+    </Stack>
   );
 }

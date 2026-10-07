@@ -1,8 +1,8 @@
 import { getTranslations } from "next-intl/server";
-import { Card, CardContent } from "@/components/ui/card";
-import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-import { ReportChart } from "@/components/reports/ReportChart";
-import { ReportTable } from "@/components/reports/ReportTable";
+import { Paper, Typography } from "@mui/material";
+import { ReportPageLayout } from "../_components/ReportPageLayout";
+import { ReportChart } from "../_components/ReportChart";
+import { ReportTable } from "../_components/ReportTable";
 import { parseSearchParamsToFilters } from "@/actions/reports/types";
 import {
   getNewLeads,
@@ -40,13 +40,13 @@ export default async function LeadsReportPage({ searchParams }: Props) {
       category="leads"
       currentFilters={params.toString()}
     >
-      <Card><CardContent className="p-4">
-        <p className="text-sm text-muted-foreground">{t("leads.conversionRate")}</p>
-        <p className="text-2xl font-bold mt-1">{conversion.rate}%</p>
-        <p className="text-xs text-muted-foreground mt-1">
+      <Paper variant="outlined" sx={{ p: 3 }}>
+        <Typography variant="body2" color="text.secondary">{t("leads.conversionRate")}</Typography>
+        <Typography variant="h5" sx={{ mt: 1, fontWeight: 600 }}>{conversion.rate}%</Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
           {conversion.converted} / {conversion.leads} {t("leads.converted")}
-        </p>
-      </CardContent></Card>
+        </Typography>
+      </Paper>
       <ReportChart data={newLeads} titleKey="newLeads" type="area" />
       <ReportChart data={leadSources} titleKey="leadSources" type="bar" />
       <ReportChart data={newContacts} titleKey="newContacts" type="area" />
