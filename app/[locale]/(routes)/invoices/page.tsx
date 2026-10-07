@@ -1,9 +1,9 @@
-import Container from "@/app/[locale]/(routes)/components/ui/Container";
+import { Box, Button, Divider, Paper } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { getTranslations } from "next-intl/server";
 import { getInvoices } from "./data/get-invoices";
 import { InvoicesTable } from "./components/invoices-table";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
 export default async function InvoicesPage() {
@@ -35,20 +35,16 @@ export default async function InvoicesPage() {
   };
 
   return (
-    <Container title={t("title")} description={t("description")}>
-      <div className="flex justify-end mb-4">
-        <Link href="/invoices/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            {t("new")}
-          </Button>
-        </Link>
-      </div>
+    <Box sx={{ width: "100%", pb: 6 }}>
+      <MuiPageHeader title={t("title")} description={t("description")} action={<Button component={Link} href="/invoices/new" variant="contained" startIcon={<Plus size={16} />}>{t("new")}</Button>} />
+      <Divider sx={{ my: 2 }} />
+      <Paper variant="outlined" sx={{ p: 3, borderRadius: "var(--radius)" }}>
       <InvoicesTable
         invoices={JSON.parse(JSON.stringify(invoices))}
         statusLabels={statusLabels}
         tableLabels={tableLabels}
       />
-    </Container>
+      </Paper>
+    </Box>
   );
 }

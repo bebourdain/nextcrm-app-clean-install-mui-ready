@@ -1,14 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Box, Button, IconButton, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Tooltip } from "@mui/material";
 import { Trash2 } from "lucide-react";
 
 interface Product {
@@ -109,139 +101,35 @@ export function LineItemsEditor({
   const l = labels ?? {};
 
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-[1fr_2fr_80px_100px_80px_120px_80px_40px] gap-2 text-xs font-medium text-muted-foreground">
-        <span>{l.product ?? "Product"}</span>
-        <span>{l.description ?? "Description"}</span>
-        <span>{l.quantity ?? "Qty"}</span>
-        <span>{l.unitPrice ?? "Unit Price"}</span>
-        <span>{l.discount ?? "Disc %"}</span>
-        <span>{l.taxRate ?? "Tax Rate"}</span>
-        <span>{l.total ?? "Total"}</span>
-        <span />
-      </div>
-
-      {items.map((item, index) => {
-        const lineTotal = computeLineTotal(
-          item.quantity,
-          item.unitPrice,
-          item.discountPercent,
-          getTaxRateValue(item.taxRateId)
-        );
-
-        return (
-          <div
-            key={index}
-            className="grid grid-cols-[1fr_2fr_80px_100px_80px_120px_80px_40px] gap-2 items-center"
-          >
-            <Select
-              value={item.productId || "none"}
-              onValueChange={(v) =>
-                handleProductSelect(index, v === "none" ? "" : v)
-              }
-            >
-              <SelectTrigger className="h-9 text-xs">
-                <SelectValue placeholder="Select..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">-</SelectItem>
-                {products.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Input
-              className="h-9 text-sm"
-              value={item.description}
-              onChange={(e) =>
-                updateItem(index, { description: e.target.value })
-              }
-              placeholder="Description"
-            />
-
-            <Input
-              className="h-9 text-sm"
-              type="number"
-              min={0}
-              step="0.01"
-              value={item.quantity}
-              onChange={(e) =>
-                updateItem(index, {
-                  quantity: parseFloat(e.target.value) || 0,
-                })
-              }
-            />
-
-            <Input
-              className="h-9 text-sm"
-              type="number"
-              min={0}
-              step="0.01"
-              value={item.unitPrice}
-              onChange={(e) =>
-                updateItem(index, {
-                  unitPrice: parseFloat(e.target.value) || 0,
-                })
-              }
-            />
-
-            <Input
-              className="h-9 text-sm"
-              type="number"
-              min={0}
-              max={100}
-              step="0.01"
-              value={item.discountPercent}
-              onChange={(e) =>
-                updateItem(index, {
-                  discountPercent: parseFloat(e.target.value) || 0,
-                })
-              }
-            />
-
-            <Select
-              value={item.taxRateId || "none"}
-              onValueChange={(v) =>
-                updateItem(index, { taxRateId: v === "none" ? "" : v })
-              }
-            >
-              <SelectTrigger className="h-9 text-xs">
-                <SelectValue placeholder="Tax..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                {taxRates.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.name} ({t.rate}%)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <span className="text-sm font-mono text-right">
-              {lineTotal.toFixed(2)}
-            </span>
-
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => removeItem(index)}
-              disabled={items.length <= 1}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        );
-      })}
-
-      <Button type="button" variant="outline" size="sm" onClick={addItem}>
-        + {l.addLine ?? "Add Line"}
-      </Button>
-    </div>
+    <Box>
+      <TableContainer sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}>
+        <Table aria-label="Invoice line items" sx={{ minWidth: 1050, "& .MuiTableCell-head": { fontSize: 13, color: "text.secondary", whiteSpace: "nowrap" }, "& .MuiTableCell-body": { p: 1 } }}>
+          <TableHead><TableRow>
+            <TableCell sx={{ width: 170 }}>{l.product ?? "Product"}</TableCell>
+            <TableCell sx={{ minWidth: 220 }}>{l.description ?? "Description"}</TableCell>
+            <TableCell sx={{ width: 90 }}>{l.quantity ?? "Qty"}</TableCell>
+            <TableCell sx={{ width: 120 }}>{l.unitPrice ?? "Unit Price"}</TableCell>
+            <TableCell sx={{ width: 100 }}>{l.discount ?? "Disc %"}</TableCell>
+            <TableCell sx={{ width: 145 }}>{l.taxRate ?? "Tax Rate"}</TableCell>
+            <TableCell align="right" sx={{ width: 100 }}>{l.total ?? "Total"}</TableCell>
+            <TableCell sx={{ width: 50 }} aria-label="Remove" />
+          </TableRow></TableHead>
+          <TableBody>{items.map((item, index) => {
+            const lineTotal = computeLineTotal(item.quantity, item.unitPrice, item.discountPercent, getTaxRateValue(item.taxRateId));
+            return <TableRow key={index}>
+              <TableCell><TextField select size="small" fullWidth aria-label={`${l.product ?? "Product"} ${index + 1}`} value={item.productId} onChange={(event) => handleProductSelect(index, event.target.value)}><MenuItem value="">-</MenuItem>{products.map((product) => <MenuItem key={product.id} value={product.id}>{product.name}</MenuItem>)}</TextField></TableCell>
+              <TableCell><TextField size="small" fullWidth aria-label={`${l.description ?? "Description"} ${index + 1}`} value={item.description} onChange={(event) => updateItem(index, { description: event.target.value })} placeholder="Description" /></TableCell>
+              <TableCell><TextField size="small" fullWidth type="number" aria-label={`${l.quantity ?? "Qty"} ${index + 1}`} value={item.quantity} onChange={(event) => updateItem(index, { quantity: parseFloat(event.target.value) || 0 })} slotProps={{ htmlInput: { min: 0, step: "0.01" } }} /></TableCell>
+              <TableCell><TextField size="small" fullWidth type="number" aria-label={`${l.unitPrice ?? "Unit Price"} ${index + 1}`} value={item.unitPrice} onChange={(event) => updateItem(index, { unitPrice: parseFloat(event.target.value) || 0 })} slotProps={{ htmlInput: { min: 0, step: "0.01" } }} /></TableCell>
+              <TableCell><TextField size="small" fullWidth type="number" aria-label={`${l.discount ?? "Disc %"} ${index + 1}`} value={item.discountPercent} onChange={(event) => updateItem(index, { discountPercent: parseFloat(event.target.value) || 0 })} slotProps={{ htmlInput: { min: 0, max: 100, step: "0.01" } }} /></TableCell>
+              <TableCell><TextField select size="small" fullWidth aria-label={`${l.taxRate ?? "Tax Rate"} ${index + 1}`} value={item.taxRateId} onChange={(event) => updateItem(index, { taxRateId: event.target.value })}><MenuItem value="">None</MenuItem>{taxRates.map((rate) => <MenuItem key={rate.id} value={rate.id}>{rate.name} ({rate.rate}%)</MenuItem>)}</TextField></TableCell>
+              <TableCell align="right" sx={{ fontFamily: "monospace", whiteSpace: "nowrap" }}>{lineTotal.toFixed(2)}</TableCell>
+              <TableCell><Tooltip title="Remove line"><span><IconButton aria-label={`Remove line ${index + 1}`} size="small" color="error" onClick={() => removeItem(index)} disabled={items.length <= 1}><Trash2 size={16} /></IconButton></span></Tooltip></TableCell>
+            </TableRow>;
+          })}</TableBody>
+        </Table>
+      </TableContainer>
+      <Button type="button" variant="outlined" size="small" onClick={addItem} sx={{ mt: 2 }}>+ {l.addLine ?? "Add Line"}</Button>
+    </Box>
   );
 }

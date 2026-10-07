@@ -3,23 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, TextField } from "@mui/material";
 import { addPayment } from "@/actions/invoices/add-payment";
 
 const PAYMENT_METHODS = [
@@ -75,75 +59,19 @@ export function AddPaymentDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          Add Payment
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            Add Payment ({currency} {balanceDue} due)
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Amount</Label>
-            <Input
-              type="number"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Date</Label>
-            <Input
-              type="date"
-              value={paidAt}
-              onChange={(e) => setPaidAt(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Method</Label>
-            <Select value={method} onValueChange={setMethod}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAYMENT_METHODS.map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {m}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Reference</Label>
-            <Input
-              value={reference}
-              onChange={(e) => setReference(e.target.value)}
-              placeholder="Transaction reference"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Note</Label>
-            <Input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Optional note"
-            />
-          </div>
-          <Button
-            onClick={handleSubmit}
-            disabled={saving || !amount || parseFloat(amount) <= 0}
-          >
-            {saving ? "Saving..." : "Record Payment"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Button variant="outlined" size="small" onClick={() => setOpen(true)}>Add Payment</Button>
+      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Add Payment ({currency} {balanceDue} due)</DialogTitle>
+        <DialogContent><Stack spacing={2} sx={{ pt: 1 }}>
+          <TextField label="Amount" type="number" value={amount} onChange={(event) => setAmount(event.target.value)} disabled={saving} fullWidth slotProps={{ htmlInput: { step: "0.01" } }} />
+          <TextField label="Date" type="date" value={paidAt} onChange={(event) => setPaidAt(event.target.value)} disabled={saving} fullWidth slotProps={{ inputLabel: { shrink: true } }} />
+          <TextField label="Method" select value={method} onChange={(event) => setMethod(event.target.value)} disabled={saving} fullWidth>{PAYMENT_METHODS.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}</TextField>
+          <TextField label="Reference" value={reference} onChange={(event) => setReference(event.target.value)} placeholder="Transaction reference" disabled={saving} fullWidth />
+          <TextField label="Note" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Optional note" disabled={saving} fullWidth />
+        </Stack></DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}><Button onClick={() => setOpen(false)} disabled={saving}>Cancel</Button><Button variant="contained" onClick={handleSubmit} disabled={saving || !amount || parseFloat(amount) <= 0}>{saving ? "Saving..." : "Record Payment"}</Button></DialogActions>
+      </Dialog>
+    </>
   );
 }

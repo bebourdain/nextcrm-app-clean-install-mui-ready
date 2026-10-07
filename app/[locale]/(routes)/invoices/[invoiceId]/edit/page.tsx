@@ -1,7 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { prismadb } from "@/lib/prisma";
-import Container from "@/app/[locale]/(routes)/components/ui/Container";
+import { Box, Divider } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { InvoiceForm } from "../../components/invoice-form";
 import { getInvoiceById } from "../../data/get-invoices";
 
@@ -92,10 +93,9 @@ export default async function EditInvoicePage({ params }: Props) {
   };
 
   return (
-    <Container
-      title={`${t("actions.edit")} - ${invoice.number ?? "DRAFT"}`}
-      description={t("description")}
-    >
+    <Box sx={{ width: "100%", pb: 6 }}>
+      <MuiPageHeader title={`${t("actions.edit")} - ${invoice.number ?? "DRAFT"}`} description={t("description")} />
+      <Divider sx={{ my: 2 }} />
       <InvoiceForm
         products={JSON.parse(JSON.stringify(products))}
         taxRates={JSON.parse(JSON.stringify(taxRates))}
@@ -105,6 +105,6 @@ export default async function EditInvoicePage({ params }: Props) {
         labels={formLabels}
         initialData={JSON.parse(JSON.stringify(initialData))}
       />
-    </Container>
+    </Box>
   );
 }

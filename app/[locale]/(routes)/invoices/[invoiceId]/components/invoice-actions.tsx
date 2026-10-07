@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack } from "@mui/material";
 import { SendEmailDialog } from "./send-email-dialog";
 import { AddPaymentDialog } from "./add-payment-dialog";
 import {
@@ -37,6 +37,7 @@ export function InvoiceActions({
 }: InvoiceActionsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   const isDraft = status === "DRAFT";
   const canPay = [
@@ -83,35 +84,28 @@ export function InvoiceActions({
   };
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <>
+    <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
       {isDraft && (
         <>
-          <Link href={`/invoices/${invoiceId}/edit`}>
-            <Button variant="outline" size="sm">
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
-          </Link>
+          <Button component={Link} href={`/invoices/${invoiceId}/edit`} variant="outlined" size="small" startIcon={<Pencil size={16} />}>Edit</Button>
           <Button
-            variant="default"
-            size="sm"
+            variant="contained"
+            size="small"
+            startIcon={<CheckCircle size={16} />}
             onClick={() => handleAction("issue")}
             disabled={loading === "issue"}
           >
-            <CheckCircle className="mr-2 h-4 w-4" />
             {loading === "issue" ? "Issuing..." : "Issue"}
           </Button>
           <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              if (confirm("Cancel this draft invoice?")) {
-                handleAction("cancel");
-              }
-            }}
+            variant="outlined"
+            color="error"
+            size="small"
+            startIcon={<Ban size={16} />}
+            onClick={() => setCancelOpen(true)}
             disabled={loading === "cancel"}
           >
-            <Ban className="mr-2 h-4 w-4" />
             Cancel
           </Button>
         </>
@@ -133,38 +127,45 @@ export function InvoiceActions({
       )}
 
       <Button
-        variant="outline"
-        size="sm"
+        variant="outlined"
+        size="small"
+        startIcon={<Copy size={16} />}
         onClick={() => handleAction("duplicate")}
         disabled={loading === "duplicate"}
       >
-        <Copy className="mr-2 h-4 w-4" />
         Duplicate
       </Button>
 
-      <a
+      <Button
+        component="a"
         href={`/api/invoices/${invoiceId}/pdf`}
         target="_blank"
         rel="noopener noreferrer"
+        variant="outlined"
+        size="small"
+        startIcon={<FileDown size={16} />}
       >
-        <Button variant="outline" size="sm">
-          <FileDown className="mr-2 h-4 w-4" />
-          Download PDF
-        </Button>
-      </a>
+        Download PDF
+      </Button>
 
       {!isDraft && (
         <Button
-          variant="outline"
-          size="sm"
+          variant="outlined"
+          size="small"
+          startIcon={<RefreshCw size={16} />}
           onClick={handleRegenerate}
           disabled={loading === "regenerate"}
           title="Re-render PDF using current company settings"
         >
-          <RefreshCw className="mr-2 h-4 w-4" />
           {loading === "regenerate" ? "Regenerating..." : "Regenerate PDF"}
         </Button>
       )}
-    </div>
+    </Stack>
+    <Dialog open={cancelOpen} onClose={() => { if (loading !== "cancel") setCancelOpen(false); }}>
+      <DialogTitle>Cancel this draft invoice?</DialogTitle>
+      <DialogContent><DialogContentText>This invoice will be cancelled.</DialogContentText></DialogContent>
+      <DialogActions><Button onClick={() => setCancelOpen(false)} disabled={loading === "cancel"}>Keep invoice</Button><Button variant="contained" color="error" disabled={loading === "cancel"} onClick={async () => { await handleAction("cancel"); setCancelOpen(false); }}>{loading === "cancel" ? "Cancelling..." : "Cancel invoice"}</Button></DialogActions>
+    </Dialog>
+    </>
   );
 }

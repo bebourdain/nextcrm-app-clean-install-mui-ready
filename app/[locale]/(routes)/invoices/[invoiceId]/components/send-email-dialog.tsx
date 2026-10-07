@@ -3,17 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from "@mui/material";
 import { Send } from "lucide-react";
 import { sendInvoiceEmail } from "@/actions/invoices/send-invoice-email";
 
@@ -57,49 +47,17 @@ export function SendEmailDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Send className="mr-2 h-4 w-4" />
-          Send by Email
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Send Invoice by Email</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>To</Label>
-            <Input
-              type="email"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              placeholder="recipient@example.com"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Subject (optional)</Label>
-            <Input
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="Custom subject line"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Message (optional)</Label>
-            <Textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Optional message to include"
-              rows={3}
-            />
-          </div>
-          <Button onClick={handleSend} disabled={sending || !to}>
-            {sending ? "Sending..." : "Send"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Button variant="outlined" size="small" startIcon={<Send size={16} />} onClick={() => setOpen(true)}>Send by Email</Button>
+      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Send Invoice by Email</DialogTitle>
+        <DialogContent><Stack spacing={2} sx={{ pt: 1 }}>
+          <TextField type="email" label="To" value={to} onChange={(event) => setTo(event.target.value)} placeholder="recipient@example.com" disabled={sending} fullWidth />
+          <TextField label="Subject (optional)" value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Custom subject line" disabled={sending} fullWidth />
+          <TextField label="Message (optional)" value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Optional message to include" multiline minRows={3} disabled={sending} fullWidth />
+        </Stack></DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}><Button onClick={() => setOpen(false)} disabled={sending}>Cancel</Button><Button variant="contained" onClick={handleSend} disabled={sending || !to}>{sending ? "Sending..." : "Send"}</Button></DialogActions>
+      </Dialog>
+    </>
   );
 }

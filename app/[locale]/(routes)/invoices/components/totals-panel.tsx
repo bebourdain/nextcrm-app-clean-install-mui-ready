@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Box, Card, CardContent, Divider, Stack, Typography } from "@mui/material";
 
 interface LineItemValues {
   quantity: number;
@@ -70,35 +69,19 @@ export function TotalsPanel({ lineItems, currency, locale }: TotalsPanelProps) {
     }).format(n);
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">Totals</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2 text-sm">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Subtotal</span>
-          <span className="font-mono">{fmt(totals.subtotal)}</span>
-        </div>
+    <Card variant="outlined">
+      <Box sx={{ p: 3, pb: 1.5 }}><Typography variant="h6" component="h2">Totals</Typography><Divider sx={{ mt: 2 }} /></Box>
+      <CardContent sx={{ pt: 1.5 }}><Stack spacing={1}>
+        <Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography variant="body2" color="text.secondary">Subtotal</Typography><Typography variant="body2" sx={{ fontFamily: "monospace" }}>{fmt(totals.subtotal)}</Typography></Stack>
         {totals.discountTotal > 0 && (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Discount</span>
-            <span className="font-mono text-red-600">
-              -{fmt(totals.discountTotal)}
-            </span>
-          </div>
+          <Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography variant="body2" color="text.secondary">Discount</Typography><Typography variant="body2" color="error" sx={{ fontFamily: "monospace" }}>-{fmt(totals.discountTotal)}</Typography></Stack>
         )}
         {totals.vatBreakdown.map((b) => (
-          <div key={b.rate} className="flex justify-between">
-            <span className="text-muted-foreground">VAT {b.rate}%</span>
-            <span className="font-mono">{fmt(b.vat)}</span>
-          </div>
+          <Stack key={b.rate} direction="row" sx={{ justifyContent: "space-between" }}><Typography variant="body2" color="text.secondary">VAT {b.rate}%</Typography><Typography variant="body2" sx={{ fontFamily: "monospace" }}>{fmt(b.vat)}</Typography></Stack>
         ))}
-        <Separator />
-        <div className="flex justify-between font-semibold text-base">
-          <span>Total</span>
-          <span className="font-mono">{fmt(totals.grandTotal)}</span>
-        </div>
-      </CardContent>
+        <Divider />
+        <Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography sx={{ fontWeight: 600 }}>Total</Typography><Typography sx={{ fontWeight: 600, fontFamily: "monospace" }}>{fmt(totals.grandTotal)}</Typography></Stack>
+      </Stack></CardContent>
     </Card>
   );
 }

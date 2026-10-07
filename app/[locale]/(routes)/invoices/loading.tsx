@@ -1,10 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Box, Skeleton, Stack } from "@mui/material";
 
 export default function Loading() {
-  return (
-    <div className="p-6 space-y-4">
-      <Skeleton className="h-8 w-48" />
-      <Skeleton className="h-64 w-full" />
-    </div>
-  );
+  return <Box sx={{ p: 3 }}><Stack spacing={2}><Skeleton variant="text" width={192} height={40} /><Skeleton variant="rounded" height={256} /></Stack></Box>;
 }

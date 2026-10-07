@@ -1,4 +1,5 @@
-import Container from "@/app/[locale]/(routes)/components/ui/Container";
+import { Box, Divider } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { getTranslations } from "next-intl/server";
 import { prismadb } from "@/lib/prisma";
 import { InvoiceForm } from "../components/invoice-form";
@@ -53,7 +54,9 @@ export default async function NewInvoicePage() {
   };
 
   return (
-    <Container title={t("new")} description={t("description")}>
+    <Box sx={{ width: "100%", pb: 6 }}>
+      <MuiPageHeader title={t("new")} description={t("description")} />
+      <Divider sx={{ my: 2 }} />
       <InvoiceForm
         products={JSON.parse(JSON.stringify(products))}
         taxRates={JSON.parse(JSON.stringify(taxRates))}
@@ -62,6 +65,6 @@ export default async function NewInvoicePage() {
         settings={settings ? JSON.parse(JSON.stringify(settings)) : null}
         labels={formLabels}
       />
-    </Container>
+    </Box>
   );
 }

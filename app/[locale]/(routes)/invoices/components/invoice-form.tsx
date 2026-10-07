@@ -4,20 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Box, Button, Divider, MenuItem, Paper, Stack, TextField, Typography } from "@mui/material";
 import { LineItemsEditor, LineItemRow } from "./line-items-editor";
 import { TotalsPanel } from "./totals-panel";
-import { AccountSearchCombobox } from "@/components/ui/account-search-combobox";
+import { InvoiceAccountPicker } from "./account-picker";
 import { INVOICE_TYPES } from "@/types/invoice";
 import { createInvoice } from "@/actions/invoices/create-invoice";
 import { updateInvoice } from "@/actions/invoices/update-invoice";
@@ -229,177 +219,46 @@ export function InvoiceForm({
   const l = labels ?? {};
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-      <div className="space-y-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label>{l.type ?? "Type"}</Label>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {INVOICE_TYPES.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t.replace("_", " ")}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>{l.account ?? "Account"}</Label>
-            <AccountSearchCombobox
-              value={accountId}
-              onChange={setAccountId}
-              placeholder="Select account..."
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>{l.series ?? "Series"}</Label>
-            <Select
-              value={seriesId || "none"}
-              onValueChange={(v) => setSeriesId(v === "none" ? "" : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select series..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">-</SelectItem>
-                {series.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label>{l.currency ?? "Currency"}</Label>
-            <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {currencies.map((c) => (
-                  <SelectItem key={c.code} value={c.code}>
-                    {c.code} - {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>{l.dueDate ?? "Due Date"}</Label>
-            <Input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>{l.variableSymbol ?? "Variable Symbol"}</Label>
-            <Input
-              value={variableSymbol}
-              onChange={(e) => setVariableSymbol(e.target.value)}
-              placeholder="Variable symbol"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label>{l.bankName ?? "Bank Name"}</Label>
-            <Input
-              value={bankName}
-              onChange={(e) => setBankName(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>{l.iban ?? "IBAN"}</Label>
-            <Input
-              value={iban}
-              onChange={(e) => setIban(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>{l.swift ?? "SWIFT"}</Label>
-            <Input
-              value={swift}
-              onChange={(e) => setSwift(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label className="mb-3 block">
-            {l.lineItems ?? "Line Items"}
-          </Label>
-          <LineItemsEditor
-            items={lineItems}
-            onChange={setLineItems}
-            products={products}
-            taxRates={taxRates}
-            labels={{
-              product: l.product,
-              description: l.description,
-              quantity: l.quantity,
-              unitPrice: l.unitPrice,
-              discount: l.discount,
-              taxRate: l.taxRate,
-              total: l.total,
-              addLine: l.addLine,
-            }}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>{l.publicNotes ?? "Public Notes"}</Label>
-            <Textarea
-              value={publicNotes}
-              onChange={(e) => setPublicNotes(e.target.value)}
-              rows={3}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>{l.internalNotes ?? "Internal Notes"}</Label>
-            <Textarea
-              value={internalNotes}
-              onChange={(e) => setInternalNotes(e.target.value)}
-              rows={3}
-            />
-          </div>
-        </div>
-
-        <div className="flex gap-3">
-          <Button onClick={handleSubmit} disabled={saving}>
-            {saving
-              ? "Saving..."
-              : isEdit
-                ? "Update Draft"
-                : (l.save ?? "Save Draft")}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={saving}
-          >
-            Cancel
-          </Button>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <TotalsPanel lineItems={totalsInput} currency={currency} locale={locale} />
-      </div>
-    </div>
+    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) 300px" }, gap: 3 }}>
+      <Stack spacing={3}>
+        <Paper variant="outlined" sx={{ p: 3, borderRadius: "var(--radius)" }}>
+          <Typography variant="h6" component="h2" sx={{ mb: 2 }}>Invoice details</Typography>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" }, gap: 2 }}>
+            <TextField select label={l.type ?? "Type"} value={type} onChange={(event) => setType(event.target.value)} disabled={saving} fullWidth>
+              {INVOICE_TYPES.map((item) => <MenuItem key={item} value={item}>{item.replace("_", " ")}</MenuItem>)}
+            </TextField>
+            <InvoiceAccountPicker value={accountId} onChange={setAccountId} label={l.account ?? "Account"} disabled={saving} />
+            <TextField select label={l.series ?? "Series"} value={seriesId} onChange={(event) => setSeriesId(event.target.value)} disabled={saving} fullWidth>
+              <MenuItem value="">-</MenuItem>{series.map((item) => <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>)}
+            </TextField>
+            <TextField select label={l.currency ?? "Currency"} value={currency} onChange={(event) => setCurrency(event.target.value)} disabled={saving} fullWidth>
+              {currencies.map((item) => <MenuItem key={item.code} value={item.code}>{item.code} - {item.name}</MenuItem>)}
+            </TextField>
+            <TextField type="date" label={l.dueDate ?? "Due Date"} value={dueDate} onChange={(event) => setDueDate(event.target.value)} disabled={saving} fullWidth slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField label={l.variableSymbol ?? "Variable Symbol"} value={variableSymbol} onChange={(event) => setVariableSymbol(event.target.value)} disabled={saving} fullWidth />
+            <TextField label={l.bankName ?? "Bank Name"} value={bankName} onChange={(event) => setBankName(event.target.value)} disabled={saving} fullWidth />
+            <TextField label={l.iban ?? "IBAN"} value={iban} onChange={(event) => setIban(event.target.value)} disabled={saving} fullWidth />
+            <TextField label={l.swift ?? "SWIFT"} value={swift} onChange={(event) => setSwift(event.target.value)} disabled={saving} fullWidth />
+          </Box>
+        </Paper>
+        <Paper variant="outlined" sx={{ p: 3, borderRadius: "var(--radius)" }}>
+          <Typography variant="h6" component="h2" sx={{ mb: 2 }}>{l.lineItems ?? "Line Items"}</Typography>
+          <LineItemsEditor items={lineItems} onChange={setLineItems} products={products} taxRates={taxRates} labels={{ product: l.product, description: l.description, quantity: l.quantity, unitPrice: l.unitPrice, discount: l.discount, taxRate: l.taxRate, total: l.total, addLine: l.addLine }} />
+        </Paper>
+        <Paper variant="outlined" sx={{ p: 3, borderRadius: "var(--radius)" }}>
+          <Typography variant="h6" component="h2" sx={{ mb: 2 }}>Notes</Typography>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
+            <TextField label={l.publicNotes ?? "Public Notes"} value={publicNotes} onChange={(event) => setPublicNotes(event.target.value)} multiline minRows={3} disabled={saving} fullWidth />
+            <TextField label={l.internalNotes ?? "Internal Notes"} value={internalNotes} onChange={(event) => setInternalNotes(event.target.value)} multiline minRows={3} disabled={saving} fullWidth />
+          </Box>
+        </Paper>
+        <Divider />
+        <Stack direction="row" spacing={1.5}>
+          <Button variant="contained" onClick={handleSubmit} disabled={saving} data-testid="invoice-submit-btn">{saving ? "Saving..." : isEdit ? "Update Draft" : (l.save ?? "Save Draft")}</Button>
+          <Button variant="outlined" onClick={() => router.back()} disabled={saving}>Cancel</Button>
+        </Stack>
+      </Stack>
+      <Box><TotalsPanel lineItems={totalsInput} currency={currency} locale={locale} /></Box>
+    </Box>
   );
 }

@@ -1,17 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
+import { Box, Button, Card, CardContent, Divider, Stack, Typography } from "@mui/material";
 import { InvoicesTable } from "@/app/[locale]/(routes)/invoices/components/invoices-table";
 
 interface InvoicesViewProps {
@@ -36,35 +27,20 @@ const InvoicesView = ({
   statusLabels,
   tableLabels,
 }: InvoicesViewProps) => {
-  const router = useRouter();
-
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between">
-          <div>
-            <CardTitle
-              onClick={() => router.push("/invoices")}
-              className="cursor-pointer"
-            >
-              Invoices
-            </CardTitle>
-            <CardDescription></CardDescription>
-          </div>
+    <Card variant="outlined">
+      <Box sx={{ p: 3, pb: 1.5 }}>
+        <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", gap: 2 }}>
+          <Typography variant="h5" component="h2"><Link href="/invoices" style={{ color: "inherit", textDecoration: "none" }}>Invoices</Link></Typography>
           {accountId && (
-            <Link href={`/invoices/new?accountId=${accountId}`}>
-              <Button size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                New invoice
-              </Button>
-            </Link>
+            <Button component={Link} href={`/invoices/new?accountId=${accountId}`} variant="contained" size="small" startIcon={<Plus size={16} />}>New invoice</Button>
           )}
-        </div>
-        <Separator />
-      </CardHeader>
-      <CardContent>
+        </Stack>
+        <Divider sx={{ mt: 2.5 }} />
+      </Box>
+      <CardContent sx={{ pt: 1.5 }}>
         {!data || data.length === 0 ? (
-          "No assigned invoices found"
+          <Typography variant="body2" color="text.secondary">No assigned invoices found</Typography>
         ) : (
           <InvoicesTable
             invoices={data}
