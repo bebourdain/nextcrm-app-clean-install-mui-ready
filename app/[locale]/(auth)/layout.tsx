@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { GithubIcon, Star } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { Box, IconButton, Paper, Stack, Typography } from "@mui/material";
 
 import "@/app/[locale]/globals.css";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -27,32 +27,15 @@ const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
   //Get github stars from github api
   const githubStars = await getGithubRepoStars();
 
-  return (
-    <div className="flex flex-col justify-center items-center min-h-screen w-full">
-      <div className="flex justify-end items-center space-x-5 w-full p-5">
-        <Link
-          href={process.env.NEXT_PUBLIC_GITHUB_REPO_URL || "#"}
-          className=" border rounded-md p-2"
-        >
-          <GithubIcon className="size-5" />
-        </Link>
-        <div className="flex items-center border rounded-md p-2 ">
-          <span className="sr-only">Github stars</span>
-          {githubStars}
-          <Star className="size-4" />
-        </div>
-        <div className="flex items-center border rounded-md p-2">
-          <Link href="https://discord.gg/Dd4Aj6S4Dz">
-            <DiscordLogoIcon className="size-5" />
-          </Link>
-        </div>
-        <ThemeToggle />
-      </div>
-      <div className="flex items-center grow h-full overflow-hidden">
-        {children}
-      </div>
-    </div>
-  );
+  return <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", minHeight: "100vh", width: "100%", bgcolor: "background.default" }}>
+    <Stack component="header" direction="row" spacing={1} sx={{ width: "100%", p: 2, alignItems: "center", justifyContent: "flex-end" }}>
+      <IconButton component="a" href={process.env.NEXT_PUBLIC_GITHUB_REPO_URL || "#"} aria-label="GitHub" sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}><GithubIcon size={20} /></IconButton>
+      <Paper variant="outlined" sx={{ display: "flex", alignItems: "center", gap: 0.75, px: 1.5, height: 40 }}><Typography variant="caption" component="span" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden" }}>GitHub stars</Typography><Typography variant="body2">{githubStars}</Typography><Star size={16} /></Paper>
+      <IconButton component="a" href="https://discord.gg/Dd4Aj6S4Dz" aria-label="Discord" sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}><DiscordLogoIcon width={20} height={20} /></IconButton>
+      <ThemeToggle />
+    </Stack>
+    <Box sx={{ display: "flex", flex: 1, width: "100%", justifyContent: "center", alignItems: "center", px: 2 }}>{children}</Box>
+  </Box>;
 };
 
 export default AuthLayout;

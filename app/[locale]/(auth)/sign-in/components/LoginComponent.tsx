@@ -2,25 +2,10 @@
 
 import React, { useState } from "react";
 import { authClient } from "@/lib/auth-client";
-
 import { Icons } from "@/components/ui/icons";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Box, Button, Card, CardContent, CardHeader, Divider, Stack, TextField, Typography } from "@mui/material";
 import { toast } from "sonner";
 import { MailIcon } from "lucide-react";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
 
 type Step = "email" | "otp";
 
@@ -93,92 +78,27 @@ export function LoginComponent() {
   };
 
   return (
-    <Card className="shadow-lg my-5">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Login</CardTitle>
-        <CardDescription>Choose your sign-in method</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        <Button
-          variant="outline"
-          onClick={loginWithGoogle}
-          disabled={isLoading}
-          className="w-full"
-        >
-          <Icons.google className="mr-2 h-4 w-4" />
-          Continue with Google
-        </Button>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              Or continue with email
-            </span>
-          </div>
-        </div>
-
-        {step === "email" && (
-          <div className="grid gap-3">
-            <div className="grid gap-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@domain.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-                onKeyDown={(e) => e.key === "Enter" && sendOtp()}
-              />
-            </div>
-            <Button onClick={sendOtp} disabled={isLoading || !email}>
-              <MailIcon className="mr-2 h-4 w-4" />
-              Send verification code
-            </Button>
-          </div>
-        )}
-
-        {step === "otp" && (
-          <div className="grid gap-3">
-            <p className="text-sm text-muted-foreground">
-              Enter the 6-digit code sent to <strong>{email}</strong>
-            </p>
-            <div className="flex justify-center">
-              <InputOTP
-                maxLength={6}
-                value={otp}
-                onChange={setOtp}
-                disabled={isLoading}
-              >
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                  <InputOTPSlot index={4} />
-                  <InputOTPSlot index={5} />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
-            <Button onClick={verifyOtp} disabled={isLoading || otp.length !== 6}>
-              Verify and sign in
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setStep("email");
-                setOtp("");
-              }}
-              disabled={isLoading}
-            >
-              Use a different email
-            </Button>
-          </div>
-        )}
+    <Card variant="outlined" sx={{ my: 2, width: "100%", maxWidth: 560 }}>
+      <CardHeader title={<Typography variant="h5" sx={{ fontWeight: 700 }}>Login</Typography>} subheader="Choose your sign-in method" />
+      <CardContent>
+        <Stack spacing={2.5}>
+          <Button fullWidth variant="outlined" onClick={loginWithGoogle} disabled={isLoading} startIcon={<Icons.google style={{ width: 16, height: 16 }} />}>Continue with Google</Button>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><Divider sx={{ flex: 1 }} /><Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase" }}>Or continue with email</Typography><Divider sx={{ flex: 1 }} /></Stack>
+          {step === "email" && <Box component="form" onSubmit={(event) => { event.preventDefault(); void sendOtp(); }}>
+            <Stack spacing={1.5}>
+              <TextField fullWidth id="email" type="email" label="Email" placeholder="name@domain.com" value={email} onChange={(event) => setEmail(event.target.value)} disabled={isLoading} autoComplete="email" required />
+              <Button fullWidth type="submit" variant="contained" disabled={isLoading || !email} startIcon={<MailIcon size={16} />}>Send verification code</Button>
+            </Stack>
+          </Box>}
+          {step === "otp" && <Box component="form" onSubmit={(event) => { event.preventDefault(); void verifyOtp(); }}>
+            <Stack spacing={1.5}>
+              <Typography variant="body2" color="text.secondary">Enter the 6-digit code sent to <Box component="strong" sx={{ color: "text.primary" }}>{email}</Box></Typography>
+              <TextField fullWidth label="6-digit verification code" type="text" value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))} disabled={isLoading} autoComplete="one-time-code" slotProps={{ htmlInput: { inputMode: "numeric", pattern: "[0-9]*", maxLength: 6, "aria-label": "6-digit verification code" } }} sx={{ "& input": { textAlign: "center", letterSpacing: "0.5em", fontSize: 20 } }} />
+              <Button fullWidth type="submit" variant="contained" disabled={isLoading || otp.length !== 6}>Verify and sign in</Button>
+              <Button fullWidth size="small" onClick={() => { setStep("email"); setOtp(""); }} disabled={isLoading}>Use a different email</Button>
+            </Stack>
+          </Box>}
+        </Stack>
       </CardContent>
     </Card>
   );

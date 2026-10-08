@@ -1,11 +1,11 @@
 "use client";
+
 import { useState, useTransition } from "react";
+import { Box, Button, Stack, Typography } from "@mui/material";
 import { AuditEntry } from "./Entry";
 import { getAuditLogByEntity } from "@/actions/crm/audit-log/get-audit-log-by-entity";
-import { Button } from "@/components/ui/button";
 
 type AuditLogEntry = Awaited<ReturnType<typeof getAuditLogByEntity>>["data"][number];
-
 interface TimelineProps {
   entityType: string;
   entityId: string;
@@ -19,41 +19,16 @@ export function AuditTimeline({ entityType, entityId, initialData, role, onResto
   const [cursor, setCursor] = useState<string | null>(initialData.nextCursor);
   const [isPending, startTransition] = useTransition();
 
-  const loadMore = () => {
-    startTransition(async () => {
-      const result = await getAuditLogByEntity(entityType, entityId, cursor ?? undefined);
-      setEntries((prev) => [...prev, ...result.data]);
-      setCursor(result.nextCursor);
-    });
-  };
+  const loadMore = () => startTransition(async () => {
+    const result = await getAuditLogByEntity(entityType, entityId, cursor ?? undefined);
+    setEntries((prev) => [...prev, ...result.data]);
+    setCursor(result.nextCursor);
+  });
 
-  if (entries.length === 0) {
-    return <p className="text-sm text-muted-foreground py-4">No history yet.</p>;
-  }
+  if (entries.length === 0) return <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>No history yet.</Typography>;
 
-  return (
-    <div>
-      <div className="divide-y">
-        {entries.map((entry) => (
-          <AuditEntry
-            key={entry.id}
-            entry={entry as any}
-            showRestore={role === "admin"}
-            onRestore={onRestore ? () => onRestore(entry.id) : undefined}
-          />
-        ))}
-      </div>
-      {cursor && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mt-2 w-full"
-          onClick={loadMore}
-          disabled={isPending}
-        >
-          {isPending ? "Loading..." : "Load more"}
-        </Button>
-      )}
-    </div>
-  );
+  return <Stack spacing={1}>
+    <Box>{entries.map((entry) => <AuditEntry key={entry.id} entry={entry as any} showRestore={role === "admin"} onRestore={onRestore ? () => onRestore(entry.id) : undefined} />)}</Box>
+    {cursor && <Button fullWidth size="small" onClick={loadMore} disabled={isPending}>{isPending ? "Loading..." : "Load more"}</Button>}
+  </Stack>;
 }

@@ -1,21 +1,6 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Box, Divider, Paper, Skeleton, Stack } from "@mui/material";
 import TableSkeleton from "./table-skeleton";
 
-const CrmAccountsSkeleton = () => (
-  <div className="flex-1 p-8 pt-6">
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <Skeleton className="h-6 w-32" />
-        <Skeleton className="h-8 w-8" />
-      </CardHeader>
-      <Separator />
-      <CardContent className="pt-4">
-        <TableSkeleton />
-      </CardContent>
-    </Card>
-  </div>
-);
-
-export default CrmAccountsSkeleton;
+export default function CrmAccountsSkeleton() {
+  return <Box sx={{ p: 3, flex: 1 }}><Paper variant="outlined" sx={{ p: 2 }}><Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 2 }}><Skeleton width={128} height={30} /><Skeleton variant="rounded" width={32} height={32} /></Stack><Divider /><Box sx={{ pt: 2 }}><TableSkeleton /></Box></Paper></Box>;
+}

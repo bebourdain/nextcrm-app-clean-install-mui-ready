@@ -7,8 +7,7 @@ import { ReactNode } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { getTranslations, getMessages } from "next-intl/server";
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { MuiToastProvider } from "@/components/mui/MuiToastProvider";
 import { ThemeProvider } from "@/app/providers/ThemeProvider";
 import { MuiProvider } from "@/app/providers/MuiProvider";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
@@ -66,12 +65,10 @@ export default async function RootLayout(props: Props) {
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <NextIntlClientProvider locale={locale} messages={messages}>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-              <MuiProvider>{children}</MuiProvider>
+              <MuiProvider>{children}<MuiToastProvider /></MuiProvider>
             </ThemeProvider>
           </NextIntlClientProvider>
         </AppRouterCacheProvider>
-        <Toaster />
-        <SonnerToaster />
       </body>
     </html>
   );

@@ -1,18 +1,11 @@
 import { LoginComponent } from "./components/LoginComponent";
+import { Box, Typography } from "@mui/material";
 
 const SignInPage = async () => {
-  return (
-    <div className="h-full">
-      <div className="py-10">
-        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-          Welcome to {process.env.NEXT_PUBLIC_APP_NAME}
-        </h1>
-      </div>
-      <div>
-        <LoginComponent />
-      </div>
-    </div>
-  );
+  return <Box sx={{ width: "100%", maxWidth: 600, py: 5 }}>
+    <Typography component="h1" variant="h3" sx={{ fontWeight: 800, mb: 4 }}>Welcome to {process.env.NEXT_PUBLIC_APP_NAME}</Typography>
+    <LoginComponent />
+  </Box>;
 };
 
 export default SignInPage;

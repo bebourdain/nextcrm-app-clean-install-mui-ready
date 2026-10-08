@@ -275,7 +275,7 @@ const Kanban = (props: any) => {
           toast.success("New section title saved in database");
         }
       } catch (err) {
-        alert(err);
+        toast.error(err instanceof Error ? err.message : "Failed to save section title");
       }
     }, timeout);
   };

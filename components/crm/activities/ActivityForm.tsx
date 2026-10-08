@@ -1,23 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Box, Button, Divider, Drawer, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { createActivity } from "@/actions/crm/activities/create-activity";
 import { updateActivity } from "@/actions/crm/activities/update-activity";
 import type { ActivityWithLinks } from "@/actions/crm/activities/get-activities-by-entity";
@@ -58,12 +42,10 @@ export function ActivityForm({ open, onOpenChange, entityType, entityId, activit
   );
   const [saving, setSaving] = useState(false);
 
-  // Auto-set status when type changes (only in create mode)
-  useEffect(() => {
-    if (!isEdit) {
-      setStatus(DEFAULT_STATUS[type]);
-    }
-  }, [type, isEdit]);
+  const handleTypeChange = (nextType: ActivityType) => {
+    setType(nextType);
+    if (!isEdit) setStatus(DEFAULT_STATUS[nextType]);
+  };
 
   const showDuration = type === "call" || type === "meeting";
   const showOutcome = type === "call" || type === "meeting";
@@ -117,122 +99,29 @@ export function ActivityForm({ open, onOpenChange, entityType, entityId, activit
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[480px] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>{isEdit ? "Edit Activity" : "Log Activity"}</SheetTitle>
-        </SheetHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div className="space-y-1">
-            <Label htmlFor="activity-type">Type</Label>
-            <Select value={type} onValueChange={(v) => setType(v as ActivityType)}>
-              <SelectTrigger id="activity-type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="call">Call</SelectItem>
-                <SelectItem value="meeting">Meeting</SelectItem>
-                <SelectItem value="note">Note</SelectItem>
-                <SelectItem value="email">Email</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="activity-title">Title *</Label>
-            <Input
-              id="activity-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Brief description"
-              required
-            />
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="activity-date">Date & Time *</Label>
-            <Input
-              id="activity-date"
-              type="datetime-local"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="activity-status">Status</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as ActivityStatus)}>
-              <SelectTrigger id="activity-status">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {showDuration && (
-            <div className="space-y-1">
-              <Label htmlFor="activity-duration">Duration (minutes)</Label>
-              <Input
-                id="activity-duration"
-                type="number"
-                min="1"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                placeholder="e.g. 30"
-              />
-            </div>
-          )}
-
-          {showOutcome && (
-            <div className="space-y-1">
-              <Label htmlFor="activity-outcome">Outcome</Label>
-              <Input
-                id="activity-outcome"
-                value={outcome}
-                onChange={(e) => setOutcome(e.target.value)}
-                placeholder="Result of the call / meeting"
-              />
-            </div>
-          )}
-
-          {showEmailSubject && (
-            <div className="space-y-1">
-              <Label htmlFor="activity-email-subject">Email Subject</Label>
-              <Input
-                id="activity-email-subject"
-                value={emailSubject}
-                onChange={(e) => setEmailSubject(e.target.value)}
-                placeholder="Subject line"
-              />
-            </div>
-          )}
-
-          <div className="space-y-1">
-            <Label htmlFor="activity-description">Notes</Label>
-            <Textarea
-              id="activity-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Additional notes..."
-              rows={4}
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Saving..." : isEdit ? "Save changes" : "Log activity"}
-            </Button>
-          </div>
-        </form>
-      </SheetContent>
-    </Sheet>
+    <Drawer anchor="right" open={open} onClose={() => onOpenChange(false)} slotProps={{ paper: { sx: { width: { xs: "100%", sm: 480 }, maxWidth: "100%" } } }}>
+      <Box sx={{ p: 3 }}><Typography variant="h6">{isEdit ? "Edit Activity" : "Log Activity"}</Typography></Box>
+      <Divider />
+      <Box component="form" onSubmit={handleSubmit} sx={{ p: 3, overflowY: "auto", flex: 1 }}>
+        <Stack spacing={2.5}>
+          <TextField select fullWidth label="Type" value={type} onChange={(event) => handleTypeChange(event.target.value as ActivityType)}>
+            <MenuItem value="call">Call</MenuItem><MenuItem value="meeting">Meeting</MenuItem><MenuItem value="note">Note</MenuItem><MenuItem value="email">Email</MenuItem>
+          </TextField>
+          <TextField fullWidth label="Title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Brief description" required />
+          <TextField fullWidth label="Date & Time" type="datetime-local" value={date} onChange={(event) => setDate(event.target.value)} required slotProps={{ inputLabel: { shrink: true } }} />
+          <TextField select fullWidth label="Status" value={status} onChange={(event) => setStatus(event.target.value as ActivityStatus)}>
+            <MenuItem value="scheduled">Scheduled</MenuItem><MenuItem value="completed">Completed</MenuItem><MenuItem value="cancelled">Cancelled</MenuItem>
+          </TextField>
+          {showDuration && <TextField fullWidth label="Duration (minutes)" type="number" value={duration} onChange={(event) => setDuration(event.target.value)} placeholder="e.g. 30" slotProps={{ htmlInput: { min: 1 } }} />}
+          {showOutcome && <TextField fullWidth label="Outcome" value={outcome} onChange={(event) => setOutcome(event.target.value)} placeholder="Result of the call / meeting" />}
+          {showEmailSubject && <TextField fullWidth label="Email Subject" value={emailSubject} onChange={(event) => setEmailSubject(event.target.value)} placeholder="Subject line" />}
+          <TextField fullWidth multiline minRows={4} label="Notes" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Additional notes..." />
+          <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
+            <Button type="button" variant="outlined" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={saving}>{saving ? "Saving..." : isEdit ? "Save changes" : "Log activity"}</Button>
+          </Stack>
+        </Stack>
+      </Box>
+    </Drawer>
   );
 }

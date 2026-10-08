@@ -1,69 +1,22 @@
-import { Button } from "@/components/ui/button";
+import { Box, Button, Divider, Link as MuiLink, Paper, Stack, Typography } from "@mui/material";
 import { getSession } from "@/lib/auth-server";
 import { prismadb } from "@/lib/prisma";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import TryAgain from "./components/TryAgain";
-import { Users } from "@prisma/client";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardTitle,
-} from "@/components/ui/card";
 
-const PendingPage = async () => {
-  const adminUsers: Users[] = await prismadb.users.findMany({
-    where: {
-      role: "admin",
-      userStatus: "ACTIVE",
-    },
-  });
+export default async function InactivePage() {
+  const [adminUsers, session] = await Promise.all([
+    prismadb.users.findMany({ where: { role: "admin", userStatus: "ACTIVE" } }),
+    getSession(),
+  ]);
+  if (session?.user.userStatus !== "INACTIVE") redirect("/");
 
-  const session = await getSession();
-
-  if (session?.user.userStatus !== "INACTIVE") {
-    return redirect("/");
-  }
-
-  return (
-    <Card className="p-10 space-y- m-10">
-      <CardTitle className="flex justify-center py-10">
-        Your account has been deactivated by Admin
-      </CardTitle>
-      <CardDescription className="py-3">
-        Hi, your {process.env.NEXT_PUBLIC_APP_NAME} account has been disabled.
-        Ask someone in your organization to activate your account again.
-      </CardDescription>
-      <CardContent>
-        <h2 className="flex justify-center text-xl">Admin List</h2>
-        <div className="flex flex-wrap justify-center">
-          {adminUsers &&
-            adminUsers?.map((user: Users) => (
-              <div
-                key={user.id}
-                className="flex flex-col p-5 m-2 gap-3 border rounded-md"
-              >
-                <div>
-                  <p className="font-bold">{user.name}</p>
-                  <p>
-                    <Link href={`mailto:  ${user.email}`}>{user.email}</Link>
-                  </p>
-                </div>
-              </div>
-            ))}
-        </div>
-
-        <div className="flex flex-col md:flex-row space-x-2 justify-center items-center pt-5">
-          <Button asChild>
-            <Link href="/sign-in">Log-in with another account</Link>
-          </Button>
-          <p>or</p>
-          <TryAgain />
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-export default PendingPage;
+  return <Paper variant="outlined" sx={{ width: "100%", maxWidth: 760, p: { xs: 3, sm: 5 } }}>
+    <Stack spacing={3}>
+      <Box><Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 1 }}>Your account has been deactivated</Typography><Typography color="text.secondary">Ask an administrator in your organization to reactivate your account.</Typography></Box>
+      <Divider />
+      <Box><Typography variant="h6" sx={{ mb: 1.5 }}>Administrators</Typography><Stack spacing={1.5}>{adminUsers.map((user) => <Paper key={user.id} variant="outlined" sx={{ p: 2 }}><Typography sx={{ fontWeight: 600 }}>{user.name || "Administrator"}</Typography>{user.email && <MuiLink href={`mailto:${user.email}`}>{user.email}</MuiLink>}</Paper>)}</Stack></Box>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}><Button component="a" href="/sign-in" variant="outlined">Log in with another account</Button><TryAgain /></Stack>
+    </Stack>
+  </Paper>;
+}

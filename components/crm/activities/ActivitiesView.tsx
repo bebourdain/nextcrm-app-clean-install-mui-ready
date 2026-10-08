@@ -1,16 +1,12 @@
 "use client";
+
 import { useState, useTransition } from "react";
 import { Plus } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Box, Button, Divider, Paper, Stack, Typography } from "@mui/material";
 import { ActivityEntry } from "./ActivityEntry";
 import { ActivityForm } from "./ActivityForm";
 import { getActivitiesByEntity } from "@/actions/crm/activities/get-activities-by-entity";
-import type {
-  ActivityWithLinks,
-  ActivityCursor,
-} from "@/actions/crm/activities/get-activities-by-entity";
+import type { ActivityWithLinks, ActivityCursor } from "@/actions/crm/activities/get-activities-by-entity";
 
 interface Props {
   entityType: string;
@@ -33,69 +29,18 @@ export function ActivitiesView({ entityType, entityId, initialData }: Props) {
     });
   };
 
-  const handleCreated = (activity: ActivityWithLinks) => {
-    setActivities((prev) => [activity, ...prev]);
-  };
-
-  const handleUpdated = (updated: ActivityWithLinks) => {
-    setActivities((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
-  };
-
-  const handleDeleted = (id: string) => {
-    setActivities((prev) => prev.filter((a) => a.id !== id));
-  };
-
-  return (
-    <TooltipProvider>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between py-3">
-          <CardTitle className="text-base">Activities</CardTitle>
-          <Button size="sm" variant="outline" onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" />
-            Log activity
-          </Button>
-        </CardHeader>
-        <CardContent className="pt-0">
-          {activities.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              No activities yet. Log a call, meeting, or note.
-            </p>
-          ) : (
-            <>
-              {activities.map((activity) => (
-                <ActivityEntry
-                  key={activity.id}
-                  activity={activity}
-                  entityType={entityType}
-                  entityId={entityId}
-                  onDeleted={handleDeleted}
-                  onUpdated={handleUpdated}
-                />
-              ))}
-              {cursor && (
-                <div className="flex justify-center pt-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={loadMore}
-                    disabled={isPending}
-                  >
-                    {isPending ? "Loading..." : "Load more"}
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-
-        <ActivityForm
-          open={createOpen}
-          onOpenChange={setCreateOpen}
-          entityType={entityType}
-          entityId={entityId}
-          onSaved={handleCreated}
-        />
-      </Card>
-    </TooltipProvider>
-  );
+  return <Paper variant="outlined" sx={{ overflow: "hidden" }}>
+    <Stack direction="row" sx={{ p: 2, alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Activities</Typography>
+      <Button size="small" variant="outlined" startIcon={<Plus size={16} />} onClick={() => setCreateOpen(true)}>Log activity</Button>
+    </Stack>
+    <Divider />
+    <Box sx={{ px: 2, pb: 1 }}>
+      {activities.length === 0 ? <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3 }}>No activities yet. Log a call, meeting, or note.</Typography> : <>
+        {activities.map((activity) => <ActivityEntry key={activity.id} activity={activity} entityType={entityType} entityId={entityId} onDeleted={(id) => setActivities((prev) => prev.filter((item) => item.id !== id))} onUpdated={(updated) => setActivities((prev) => prev.map((item) => item.id === updated.id ? updated : item))} />)}
+        {cursor && <Box sx={{ textAlign: "center", pt: 1.5 }}><Button size="small" onClick={loadMore} disabled={isPending}>{isPending ? "Loading..." : "Load more"}</Button></Box>}
+      </>}
+    </Box>
+    <ActivityForm open={createOpen} onOpenChange={setCreateOpen} entityType={entityType} entityId={entityId} onSaved={(activity) => setActivities((prev) => [activity, ...prev])} />
+  </Paper>;
 }

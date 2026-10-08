@@ -7,9 +7,7 @@ import { X } from "lucide-react";
 import { Box, Button, Card, CardContent, Divider, Drawer, IconButton, Stack, Typography } from "@mui/material";
 
 import type { getAllCrmData } from "@/actions/crm/get-crm-data";
-import { columns as accountColumns } from "../../../accounts/table-components/columns";
-import { AccountDataTable } from "../../../accounts/table-components/data-table";
-import { NewAccountForm } from "../../../accounts/components/NewAccountForm";
+import AccountsView from "../../../components/AccountsView";
 import { createColumns as contactColumns } from "../../../contacts/table-components/columns";
 import { ContactsDataTable } from "../../../contacts/table-components/data-table";
 import { NewContactForm } from "../../../contacts/components/NewContactForm";
@@ -51,21 +49,7 @@ function FormDrawer({ open, onClose, title, description, children }: { open: boo
 }
 
 export function MuiOpportunityAccounts({ crmData, data }: { crmData: CrmData; data: any[] }) {
-  const [open, setOpen] = useState(false);
-  const t = useTranslations("CrmPage");
-  return (
-    <>
-      <Card>
-        <RelatedHeader title={t("accounts.viewTitle")} href="/crm/accounts" addLabel={t("accounts.addNew")} addTestId="add-account-btn" onAdd={() => setOpen(true)} />
-        <CardContent sx={{ pt: 1.5 }}>
-          {data?.length ? <AccountDataTable data={data} columns={accountColumns} industries={crmData.industries} /> : <Typography variant="body2" color="text.secondary">{t("accounts.empty")}</Typography>}
-        </CardContent>
-      </Card>
-      <FormDrawer open={open} onClose={() => setOpen(false)} title={t("accounts.sheetTitle")} description={t("accounts.sheetDescription")}>
-        <NewAccountForm industries={crmData.industries} onFinish={() => setOpen(false)} />
-      </FormDrawer>
-    </>
-  );
+  return <AccountsView data={data} crmData={crmData} />;
 }
 
 export function MuiOpportunityContacts({ crmData, data }: { crmData: CrmData; data: any[] }) {
