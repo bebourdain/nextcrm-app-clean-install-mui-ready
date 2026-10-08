@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-r
 import type { Table } from "@tanstack/react-table";
 
 export function DataTablePagination<TData>({ table }: { table: Table<TData> }) {
-  const pageCount = table.getPageCount();
+  const pageCount = Math.max(1, table.getPageCount());
   return <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, px: 1, flexWrap: "wrap" }}>
     <Typography variant="body2" color="text.secondary">{table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s) selected.</Typography>
     <Stack direction="row" spacing={2} sx={{ alignItems: "center", flexWrap: "wrap" }}>
