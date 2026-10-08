@@ -1,97 +1,25 @@
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  DoubleArrowLeftIcon,
-  DoubleArrowRightIcon,
-} from "@radix-ui/react-icons";
-import { Table } from "@tanstack/react-table";
+import { Box, IconButton, MenuItem, Select, Stack, Typography } from "@mui/material";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import type { Table } from "@tanstack/react-table";
 
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-interface DataTablePaginationProps<TData> {
-  table: Table<TData>;
-}
-
-export function DataTablePagination<TData>({
-  table,
-}: DataTablePaginationProps<TData>) {
-  return (
-    <div className="flex items-center justify-between px-2">
-      <div className="flex-1 text-sm text-muted-foreground">
-        {table.getFilteredSelectedRowModel().rows.length} of{" "}
-        {table.getFilteredRowModel().rows.length} row(s) selected.
-      </div>
-      <div className="flex items-center space-x-6 lg:space-x-8">
-        <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">Rows per page</p>
-          <Select
-            value={`${table.getState().pagination.pageSize}`}
-            onValueChange={(value) => {
-              table.setPageSize(Number(value));
-            }}
-          >
-            <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue placeholder={table.getState().pagination.pageSize} />
-            </SelectTrigger>
-            <SelectContent side="top">
-              {[10, 20, 30, 40, 50].map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
-          {table.getPageCount()}
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            className="hidden h-8 w-8 p-0 lg:flex"
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <span className="sr-only">Go to first page</span>
-            <DoubleArrowLeftIcon className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            className="h-8 w-8 p-0"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <span className="sr-only">Go to previous page</span>
-            <ChevronLeftIcon className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            className="h-8 w-8 p-0"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            <span className="sr-only">Go to next page</span>
-            <ChevronRightIcon className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            className="hidden h-8 w-8 p-0 lg:flex"
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
-          >
-            <span className="sr-only">Go to last page</span>
-            <DoubleArrowRightIcon className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
+export function DataTablePagination<TData>({ table }: { table: Table<TData> }) {
+  const pageCount = table.getPageCount();
+  return <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, px: 1, flexWrap: "wrap" }}>
+    <Typography variant="body2" color="text.secondary">{table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s) selected.</Typography>
+    <Stack direction="row" spacing={2} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+        <Typography variant="body2">Rows per page</Typography>
+        <Select size="small" value={table.getState().pagination.pageSize} onChange={(event) => table.setPageSize(Number(event.target.value))} sx={{ width: 70 }}>
+          {[10, 20, 30, 40, 50].map((pageSize) => <MenuItem key={pageSize} value={pageSize}>{pageSize}</MenuItem>)}
+        </Select>
+      </Stack>
+      <Typography variant="body2">Page {table.getState().pagination.pageIndex + 1} of {pageCount}</Typography>
+      <Stack direction="row" spacing={0.5}>
+        <IconButton aria-label="Go to first page" size="small" disabled={!table.getCanPreviousPage()} onClick={() => table.setPageIndex(0)} sx={{ display: { xs: "none", lg: "inline-flex" } }}><ChevronsLeft size={18} /></IconButton>
+        <IconButton aria-label="Go to previous page" size="small" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}><ChevronLeft size={18} /></IconButton>
+        <IconButton aria-label="Go to next page" size="small" disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}><ChevronRight size={18} /></IconButton>
+        <IconButton aria-label="Go to last page" size="small" disabled={!table.getCanNextPage()} onClick={() => table.setPageIndex(pageCount - 1)} sx={{ display: { xs: "none", lg: "inline-flex" } }}><ChevronsRight size={18} /></IconButton>
+      </Stack>
+    </Stack>
+  </Box>;
 }

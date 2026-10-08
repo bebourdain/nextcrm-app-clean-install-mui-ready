@@ -1,20 +1,13 @@
 "use client";
 
-import { DotsHorizontalIcon } from "@radix-ui/react-icons";
+import { MoreHorizontal } from "lucide-react";
 import { Row } from "@tanstack/react-table";
-
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { IconButton, Menu, MenuItem } from "@mui/material";
 
 import { useParams } from "next/navigation";
 import { taskSchema } from "../data/schema";
 import { useRouter } from "next/navigation";
-import DocumentViewModal from "@/components/modals/document-view-modal";
+import { TaskDocumentPreview } from "./task-document-preview";
 import { useState } from "react";
 import { toast } from "sonner";
 import { disconnectDocumentFromCrmTask } from "@/actions/crm/tasks/assign-document";
@@ -28,13 +21,11 @@ export function DataTableRowActionsTasks<TData>({
 }: DataTableRowActionsProps<TData>) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const document = taskSchema.parse(row.original);
 
   const router = useRouter();
   const params = useParams();
-
-  //console.log(params, "params");
-
 
   const onDisconnect = async () => {
     setLoading(true);
@@ -59,31 +50,17 @@ export function DataTableRowActionsTasks<TData>({
 
   return (
     <>
-      <DocumentViewModal
-        isOpen={open}
+      <TaskDocumentPreview
+        open={open}
         onClose={() => setOpen(false)}
         loading={loading}
         document={document}
       />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
-          >
-            <DotsHorizontalIcon className="h-4 w-4" />
-            <span className="sr-only">Open menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[260px]">
-          <DropdownMenuItem onClick={onDisconnect}>
-            Disconnect from task
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setOpen(true)}>
-            View
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <IconButton aria-label="Open menu" size="small" onClick={(event) => setAnchor(event.currentTarget)}><MoreHorizontal size={18} /></IconButton>
+      <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
+        <MenuItem onClick={() => { setAnchor(null); void onDisconnect(); }} disabled={loading}>Disconnect from task</MenuItem>
+        <MenuItem onClick={() => { setAnchor(null); setOpen(true); }}>View</MenuItem>
+      </Menu>
     </>
   );
 }

@@ -1,10 +1,8 @@
 "use client";
 
-import { Cross2Icon } from "@radix-ui/react-icons";
+import { X } from "lucide-react";
 import { Table } from "@tanstack/react-table";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Box, Button, TextField } from "@mui/material";
 import { DataTableViewOptions } from "./data-table-view-options";
 
 interface DataTableToolbarProps<TData> {
@@ -17,9 +15,9 @@ export function DataTableToolbar<TData>({
   const isFiltered = table.getState().columnFilters.length > 0;
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex flex-1 items-center space-x-2">
-        <Input
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, flexWrap: "wrap" }}>
+      <Box sx={{ display: "flex", flex: 1, alignItems: "center", gap: 1 }}>
+        <TextField size="small"
           placeholder="Document name ..."
           value={
             (table.getColumn("document_name")?.getFilterValue() as string) ?? ""
@@ -27,20 +25,15 @@ export function DataTableToolbar<TData>({
           onChange={(event) =>
             table.getColumn("document_name")?.setFilterValue(event.target.value)
           }
-          className="h-8 w-[150px] lg:w-[350px]"
+          sx={{ width: { xs: 170, lg: 350 } }}
         />
         {isFiltered && (
-          <Button
-            variant="ghost"
-            onClick={() => table.resetColumnFilters()}
-            className="h-8 px-2 lg:px-3"
-          >
+          <Button variant="text" size="small" onClick={() => table.resetColumnFilters()} endIcon={<X size={16} />}>
             Reset
-            <Cross2Icon className="ml-2 h-4 w-4" />
           </Button>
         )}
-      </div>
+      </Box>
       <DataTableViewOptions table={table} />
-    </div>
+    </Box>
   );
 }

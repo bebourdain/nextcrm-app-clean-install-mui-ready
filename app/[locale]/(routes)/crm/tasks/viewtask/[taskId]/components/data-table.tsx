@@ -16,14 +16,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 
 import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar } from "./data-table-toolbar";
@@ -68,35 +61,32 @@ export function TaskDataTable<TData, TValue>({
   });
 
   return (
-    <div className="space-y-4">
+    <Box sx={{ display: "grid", gap: 2 }}>
       <DataTableToolbar table={table} />
-      <div className="rounded-md border overflow-x-auto">
+      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: "var(--radius)" }}>
         <Table>
-          <TableHeader>
+          <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableCell key={header.id}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
                             header.getContext()
                           )}
-                    </TableHead>
+                    </TableCell>
                   );
                 })}
               </TableRow>
             ))}
-          </TableHeader>
+          </TableHead>
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
+                <TableRow key={row.id} selected={row.getIsSelected()} hover>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -109,18 +99,15 @@ export function TaskDataTable<TData, TValue>({
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={table.getVisibleLeafColumns().length} align="center" sx={{ py: 5 }}>
                   No results.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-      </div>
+      </TableContainer>
       <DataTablePagination table={table} />
-    </div>
+    </Box>
   );
 }

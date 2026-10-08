@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, CircularProgress } from "@mui/material";
 import { RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,8 +33,7 @@ export function RetryEnrichmentButton({ contactId, fields }: RetryEnrichmentButt
   };
 
   return (
-    <Button variant="ghost" size="sm" onClick={handleRetry} disabled={loading}>
-      <RotateCcw className={`h-3 w-3 mr-1 ${loading ? "animate-spin" : ""}`} />
+    <Button variant="text" size="small" onClick={handleRetry} disabled={loading} startIcon={loading ? <CircularProgress size={14} /> : <RotateCcw size={14} />}>
       Retry
     </Button>
   );

@@ -1,71 +1,20 @@
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  CaretSortIcon,
-  EyeNoneIcon,
-} from "@radix-ui/react-icons";
-import { Column } from "@tanstack/react-table";
+"use client";
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useState } from "react";
+import { Button, Divider, Menu, MenuItem, Typography } from "@mui/material";
+import { ArrowDown, ArrowUp, ChevronsUpDown, EyeOff } from "lucide-react";
+import type { Column } from "@tanstack/react-table";
 
-interface DataTableColumnHeaderProps<TData, TValue>
-  extends React.HTMLAttributes<HTMLDivElement> {
-  column: Column<TData, TValue>;
-  title: string;
-}
-
-export function DataTableColumnHeader<TData, TValue>({
-  column,
-  title,
-  className,
-}: DataTableColumnHeaderProps<TData, TValue>) {
-  if (!column.getCanSort()) {
-    return <div className={cn(className)}>{title}</div>;
-  }
-
-  return (
-    <div className={cn("flex items-center space-x-2", className)}>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-ml-3 h-8 data-[state=open]:bg-accent"
-          >
-            <span>{title}</span>
-            {column.getIsSorted() === "desc" ? (
-              <ArrowDownIcon className="ml-2 h-4 w-4" />
-            ) : column.getIsSorted() === "asc" ? (
-              <ArrowUpIcon className="ml-2 h-4 w-4" />
-            ) : (
-              <CaretSortIcon className="ml-2 h-4 w-4" />
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => column.toggleSorting(false)}>
-            <ArrowUpIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
-            Asc
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => column.toggleSorting(true)}>
-            <ArrowDownIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
-            Desc
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
-            <EyeNoneIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
-            Hide
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  );
+export function DataTableColumnHeader<TData, TValue>({ column, title }: { column: Column<TData, TValue>; title: string }) {
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  if (!column.getCanSort()) return <Typography variant="body2" sx={{ fontWeight: 600 }}>{title}</Typography>;
+  return <>
+    <Button size="small" variant="text" onClick={(event) => setAnchor(event.currentTarget)} endIcon={column.getIsSorted() === "desc" ? <ArrowDown size={15} /> : column.getIsSorted() === "asc" ? <ArrowUp size={15} /> : <ChevronsUpDown size={15} />} sx={{ color: "text.secondary", p: 0.5, textTransform: "none" }}>{title}</Button>
+    <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
+      <MenuItem onClick={() => { column.toggleSorting(false); setAnchor(null); }}><ArrowUp size={15} style={{ marginRight: 10 }} />Asc</MenuItem>
+      <MenuItem onClick={() => { column.toggleSorting(true); setAnchor(null); }}><ArrowDown size={15} style={{ marginRight: 10 }} />Desc</MenuItem>
+      <Divider />
+      <MenuItem onClick={() => { column.toggleVisibility(false); setAnchor(null); }}><EyeOff size={15} style={{ marginRight: 10 }} />Hide</MenuItem>
+    </Menu>
+  </>;
 }

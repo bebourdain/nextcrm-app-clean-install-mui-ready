@@ -1,126 +1,49 @@
 import moment from "moment";
-
+import { Box, Chip, Divider, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { MuiPageHeader } from "@/components/mui/MuiPageHeader";
 import { getDocuments } from "@/actions/documents/get-documents";
 import { extractDocuments } from "@/lib/junction-helpers";
-
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-
 import { TeamConversations } from "./components/team-conversation";
 import { TaskDataTable } from "./components/data-table";
 import { columns } from "./components/columns";
 import { columnsTask } from "./components/columns-task";
 import { getCrMTask } from "@/actions/crm/account/get-task";
 
-type TaskPageProps = {
-  params: Promise<{
-    taskId: string;
-  }>;
-};
+type TaskPageProps = { params: Promise<{ taskId: string }> };
 
-const CRMTaskPage = async (props: TaskPageProps) => {
-  const params = await props.params;
-  const { taskId } = params;
-  // getCrMTask already fetches CRM-scoped comments via the Prisma relation
-  // on crm_Accounts_Tasks — do not call the Projects-module getTaskComments
-  // from here, that's a cross-module boundary violation.
+export default async function CRMTaskPage({ params }: TaskPageProps) {
+  const { taskId } = await params;
   const task: any = await getCrMTask(taskId);
   const taskDocuments = extractDocuments(task?.documents ?? []);
   const documents: any = await getDocuments();
   const comments = task?.comments ?? [];
-
-  return (
-    <div className="flex flex-col md:flex-row w-full px-2 space-x-2 ">
-      <div className="flex flex-col w-full md:w-2/3">
-        <h4 className="scroll-m-20 text-xl font-semibold tracking-tight py-5">
-          Task details
-        </h4>
-        <div className="w-full border rounded-lg mb-5">
-          {/*          <pre>
-            <code>{JSON.stringify(task, null, 2)}</code>
-          </pre> */}
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr>
-                <th className="py-2 px-4 border-b font-semibold">
-                  <span className="flex justify-start">Property</span>
-                </th>
-                <th className="py-2 px-4 border-b font-semibold">
-                  <span className="flex justify-start">Value</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="py-2 px-4 border-b">ID</td>
-                <td className="py-2 px-4 border-b">{task.id}</td>
-              </tr>
-              <tr>
-                <td className="py-2 px-4 border-b">Date created</td>
-                <td className="py-2 px-4 border-b">
-                  {moment(task.createdAt).format("YYYY-MM-DD")}
-                </td>
-              </tr>
-              <tr>
-                <td className="py-2 px-4 border-b">Date due</td>
-                <td className="py-2 px-4 border-b">
-                  {moment(task.dueDateAt).format("YYYY-MM-DD")}
-                </td>
-              </tr>
-              <tr>
-                <td className="py-2 px-4 border-b">Date modified</td>
-                <td className="py-2 px-4 border-b">
-                  {moment(task.lastEditedAt).format("YYYY-MM-DD")}
-                </td>
-              </tr>
-              <tr>
-                <td className="py-2 px-4 border-b">Priority</td>
-                <td className="py-2 px-4 border-b">
-                  <Badge
-                    variant={
-                      task.priority === "high" ? `destructive` : `outline`
-                    }
-                  >
-                    {task.priority}
-                  </Badge>
-                </td>
-              </tr>
-              <tr>
-                <td className="py-2 px-4 border-b">Title</td>
-                <td className="py-2 px-4 border-b">{task.title}</td>
-              </tr>
-              <tr>
-                <td className="py-2 px-4 border-b">Content</td>
-                <td className="py-2 px-4 border-b">{task.content}</td>
-              </tr>
-              <tr>
-                <td className="py-2 px-4 border-b">Assigned to</td>
-                <td className="py-2 px-4 border-b">
-                  {task.assigned_user?.name || "Not assigned"}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        {/*         <pre>
-          <code>{JSON.stringify(taskDocuments, null, 2)}</code>
-        </pre> */}
-        <h4 className="scroll-m-20 text-xl font-semibold tracking-tight py-5">
-          Task documents ({taskDocuments.length})
-        </h4>
+  const details = [
+    ["ID", task.id],
+    ["Date created", moment(task.createdAt).format("YYYY-MM-DD")],
+    ["Date due", moment(task.dueDateAt).format("YYYY-MM-DD")],
+    ["Date modified", moment(task.lastEditedAt).format("YYYY-MM-DD")],
+    ["Priority", <Chip key="priority" size="small" label={task.priority} color={task.priority === "high" ? "error" : "default"} variant={task.priority === "high" ? "filled" : "outlined"} />],
+    ["Title", task.title],
+    ["Content", task.content],
+    ["Assigned to", task.assigned_user?.name || "Not assigned"],
+  ];
+  return <Box sx={{ width: "100%", pb: 6 }}>
+    <MuiPageHeader title="Task details" description={task.title} />
+    <Divider sx={{ my: 2 }} />
+    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(0, 2fr) minmax(300px, 1fr)" }, gap: 3 }}>
+      <Box sx={{ minWidth: 0 }}>
+        <Paper variant="outlined" sx={{ overflow: "hidden", borderRadius: "var(--radius)" }}>
+          <TableContainer><Table size="small"><TableHead><TableRow><TableCell>Property</TableCell><TableCell>Value</TableCell></TableRow></TableHead>
+            <TableBody>{details.map(([label, value]) => <TableRow key={String(label)}><TableCell sx={{ width: 170, color: "text.secondary" }}>{label}</TableCell><TableCell sx={{ overflowWrap: "anywhere" }}>{value}</TableCell></TableRow>)}</TableBody>
+          </Table></TableContainer>
+        </Paper>
+        <Typography variant="h6" component="h2" sx={{ mt: 3, mb: 1.5 }}>Task documents ({taskDocuments.length})</Typography>
         <TaskDataTable data={taskDocuments} columns={columnsTask} />
-        <Separator />
-        <h4 className="scroll-m-20 text-xl font-semibold tracking-tight py-5">
-          Available documents ({documents.length})
-        </h4>
+        <Divider sx={{ my: 3 }} />
+        <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>Available documents ({documents.length})</Typography>
         <TaskDataTable data={documents} columns={columns} />
-      </div>
-
-      <div className="w-full md:w-1/3">
-        <TeamConversations data={comments} taskId={task.id} />
-      </div>
-    </div>
-  );
-};
-
-export default CRMTaskPage;
+      </Box>
+      <Box sx={{ minWidth: 0 }}><TeamConversations data={comments} taskId={task.id} /></Box>
+    </Box>
+  </Box>;
+}

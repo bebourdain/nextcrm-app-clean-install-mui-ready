@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
-import { Badge } from "@/components/ui/badge";
+import { Box, Chip, Stack, Typography } from "@mui/material";
 
 import { labels } from "../data/data";
 import { Task } from "../data/schema";
@@ -16,11 +16,7 @@ export const columnsTask: ColumnDef<Task>[] = [
       <DataTableColumnHeader column={column} title="Assigned to" />
     ),
 
-    cell: ({ row }) => (
-      <div className="w-[150px]">
-        {row.original.assigned_to_user?.name ?? "Unassigned"}
-      </div>
-    ),
+    cell: ({ row }) => <Box sx={{ minWidth: 150 }}>{row.original.assigned_to_user?.name ?? "Unassigned"}</Box>,
     enableSorting: false,
     enableHiding: false,
   },
@@ -35,12 +31,10 @@ export const columnsTask: ColumnDef<Task>[] = [
       );
 
       return (
-        <div className="flex space-x-2">
-          {label && <Badge variant="outline">{label.label}</Badge>}
-          <span className="max-w-[500px] truncate font-medium">
-            {row.original.document_name}
-          </span>
-        </div>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          {label && <Chip size="small" variant="outlined" label={label.label} />}
+          <Typography variant="body2" noWrap sx={{ maxWidth: 500, fontWeight: 500 }}>{row.original.document_name}</Typography>
+        </Stack>
       );
     },
   },

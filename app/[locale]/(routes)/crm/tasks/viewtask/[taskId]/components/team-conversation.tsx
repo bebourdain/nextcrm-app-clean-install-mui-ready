@@ -1,21 +1,6 @@
 "use client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+
+import { Avatar, Box, Button, Card, CardContent, Divider, Stack, TextField, Typography } from "@mui/material";
 import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import moment from "moment";
@@ -25,126 +10,54 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { addComment } from "@/actions/crm/tasks/add-comment";
 
-// Shape matches the `comments` relation select in actions/crm/account/get-task.ts.
-// Kept permissive on the nullable user fields because the relation returns
-// `name` and `avatar` as `string | null` straight out of Prisma.
 interface TeamConversationsProps {
   data: Array<{
     id: string;
     comment: string;
     createdAt: Date | string;
-    assigned_user: {
-      id?: string;
-      name: string | null;
-      avatar: string | null;
-    } | null;
+    assigned_user: { id?: string; name: string | null; avatar: string | null } | null;
   }>;
   taskId: string;
 }
 
-const FormSchema = z.object({
-  comment: z.string().min(3).max(160),
-});
+const FormSchema = z.object({ comment: z.string().min(3).max(160) });
 
-export function TeamConversations({
-  data: comments,
-  taskId,
-}: TeamConversationsProps) {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+export function TeamConversations({ data: comments, taskId }: TeamConversationsProps) {
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-
-
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-  });
-
+  const form = useForm<z.infer<typeof FormSchema>>({ resolver: zodResolver(FormSchema), defaultValues: { comment: "" } });
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     try {
       setIsLoading(true);
       const result = await addComment({ taskId, comment: data.comment });
-      if (result?.error) {
-        toast.error(result.error);
-      } else {
-        toast.success("Success");
-      }
-    } catch (error) {
+      if (result?.error) toast.error(result.error);
+      else toast.success("Success");
+    } catch {
       toast.error("Something went wrong while sending comment to the DB");
     } finally {
-      form.reset({
-        comment: "",
-      });
+      form.reset({ comment: "" });
       router.refresh();
       setIsLoading(false);
     }
   }
-
-  return (
-    <>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="flex space-x-5 w-full py-2 items-end pb-5"
-        >
-          <FormField
-            control={form.control}
-            name="comment"
-            render={({ field }) => (
-              <FormItem className="w-full">
-                <FormControl>
-                  <Input
-                    disabled={isLoading}
-                    placeholder="Your comment ..."
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <Button className="w-[80px]" disabled={isLoading} type="submit">
-            Add
-          </Button>
-        </form>
-      </Form>
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Team conversation</CardTitle>
-          <CardDescription>
-            Invite your team members to collaborate.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-6">
-          {comments?.map((comment: any) => (
-            <>
-              {/*               <pre>
-                <code>{JSON.stringify(comment, null, 2)}</code>
-              </pre> */}
-              <div key={comment.id} className="flex items-center space-x-4">
-                <Avatar>
-                  <AvatarImage
-                    src={comment.assigned_user?.avatar || "/images/nouser.png"}
-                  />
-                  <AvatarFallback>{comment.assigned_user?.name}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <div>
-                    <p className="text-sm font-medium leading-none">
-                      {comment.assigned_user?.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground py-2">
-                      {comment.comment}
-                    </p>
-                  </div>
-                  <div className="text-xs opacity-50">
-                    {moment(comment.createdAt).format("YYYY-MM-DD-HH:mm")}
-                  </div>
-                </div>
-              </div>
-            </>
-          ))}
-        </CardContent>
-      </Card>
-    </>
-  );
+  return <Box sx={{ display: "grid", gap: 2 }}>
+    <Box component="form" onSubmit={form.handleSubmit(onSubmit)} sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+      <TextField size="small" placeholder="Your comment ..." aria-label="Your comment" fullWidth disabled={isLoading} {...form.register("comment")} error={Boolean(form.formState.errors.comment)} helperText={form.formState.errors.comment?.message} />
+      <Button variant="contained" type="submit" disabled={isLoading} sx={{ minWidth: 80, height: 40 }}>Add</Button>
+    </Box>
+    <Card variant="outlined">
+      <CardContent><Typography variant="h6">Team conversation</Typography><Typography variant="body2" color="text.secondary">Invite your team members to collaborate.</Typography></CardContent>
+      <Divider />
+      <CardContent sx={{ display: "grid", gap: 2.5 }}>
+        {comments.map((comment) => <Stack key={comment.id} direction="row" spacing={1.5} sx={{ alignItems: "flex-start" }}>
+          <Avatar src={comment.assigned_user?.avatar || "/images/nouser.png"} alt={comment.assigned_user?.name ?? ""}>{comment.assigned_user?.name?.charAt(0)}</Avatar>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>{comment.assigned_user?.name}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ overflowWrap: "anywhere" }}>{comment.comment}</Typography>
+            <Typography variant="caption" color="text.secondary">{moment(comment.createdAt).format("YYYY-MM-DD-HH:mm")}</Typography>
+          </Box>
+        </Stack>)}
+      </CardContent>
+    </Card>
+  </Box>;
 }
