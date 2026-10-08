@@ -1,13 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import { toast } from "sonner";
 import { EnrichFieldSelector } from "./EnrichFieldSelector";
 import type { EnrichmentField } from "@/lib/enrichment/types";
@@ -49,15 +43,13 @@ export function BulkEnrichModal({ contactIds, open, onOpenChange }: BulkEnrichMo
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader>
-          <DialogTitle>Enrich {contactIds.length} contacts</DialogTitle>
-          <DialogDescription>
+    <Dialog open={open} onClose={() => onOpenChange(false)} fullWidth maxWidth="sm">
+      <DialogTitle>Enrich {contactIds.length} contacts</DialogTitle>
+      <DialogContent dividers>
+          <DialogContentText sx={{ mb: 2 }}>
             Select fields to enrich. Firecrawl will run in the background.
             Only empty fields will be filled — existing data is never overwritten.
-          </DialogDescription>
-        </DialogHeader>
+          </DialogContentText>
         <EnrichFieldSelector onStart={handleStart} loading={loading} />
       </DialogContent>
     </Dialog>

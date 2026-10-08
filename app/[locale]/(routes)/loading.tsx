@@ -1,53 +1,20 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Box, Divider, Paper, Skeleton, Stack } from "@mui/material";
 
-const StatCardSkeleton = () => (
-  <Card>
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <Skeleton className="h-4 w-24" />
-      <Skeleton className="h-4 w-4" />
-    </CardHeader>
-    <CardContent>
-      <Skeleton className="h-8 w-16" />
-    </CardContent>
-  </Card>
-);
-
-const StorageCardSkeleton = () => (
-  <Card>
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <Skeleton className="h-4 w-24" />
-      <Skeleton className="h-4 w-4" />
-    </CardHeader>
-    <CardContent>
-      <Skeleton className="h-8 w-24" />
-      <Skeleton className="h-2 w-full mt-4" />
-    </CardContent>
-  </Card>
-);
-
-const DashboardLoading = () => {
-  return (
-    <div className="flex-1 space-y-4 p-8 pt-6 h-full overflow-hidden">
-      <div>
-        <Skeleton className="h-9 w-48" />
-        <Skeleton className="h-4 w-72 mt-2" />
-      </div>
-      <Separator />
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        <StatCardSkeleton />
-        <StatCardSkeleton />
-        <StatCardSkeleton />
-        <StatCardSkeleton />
-        <StatCardSkeleton />
-        <StatCardSkeleton />
-        <StatCardSkeleton />
-        <StatCardSkeleton />
-        <StorageCardSkeleton />
-      </div>
-    </div>
-  );
-};
-
-export default DashboardLoading;
+function StatCardSkeleton({ storage = false }: { storage?: boolean }) {
+  return <Paper variant="outlined" sx={{ p: 2 }}>
+    <Stack direction="row" sx={{ justifyContent: "space-between" }}><Skeleton width={96} /><Skeleton width={20} /></Stack>
+    <Skeleton width={storage ? 96 : 64} height={40} />
+    {storage && <Skeleton width="100%" height={12} sx={{ mt: 1 }} />}
+  </Paper>;
+}
+export default function DashboardLoading() {
+  return <Box sx={{ p: { xs: 2, md: 3 }, height: "100%", overflow: "hidden" }}>
+    <Skeleton width={192} height={44} />
+    <Skeleton width={288} height={22} />
+    <Divider sx={{ my: 2 }} />
+    <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))" } }}>
+      {Array.from({ length: 8 }).map((_, index) => <StatCardSkeleton key={index} />)}
+      <StatCardSkeleton storage />
+    </Box>
+  </Box>;
+}

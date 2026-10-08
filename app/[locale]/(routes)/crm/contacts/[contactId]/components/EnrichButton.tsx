@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
+import { Button } from "@mui/material";
+import { AutoAwesome } from "@mui/icons-material";
 import { EnrichContactDrawer } from "./EnrichContactDrawer";
 
 interface EnrichButtonProps {
@@ -27,13 +27,13 @@ export function EnrichButton({ contactId, contactEmail, contactCurrentData }: En
   return (
     <>
       <Button
-        variant="outline"
-        size="sm"
+        variant="outlined"
+        size="small"
+        startIcon={<AutoAwesome sx={{ color: "warning.main" }} />}
         onClick={() => setOpen(true)}
         disabled={!contactEmail}
         title={!contactEmail ? "Add an email to enable enrichment" : "Enrich with AI"}
       >
-        <Sparkles className="h-4 w-4 mr-1 text-orange-500" />
         Enrich with AI
       </Button>
       <EnrichContactDrawer

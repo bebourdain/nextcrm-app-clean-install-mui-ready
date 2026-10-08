@@ -2,6 +2,7 @@
 
 import { useSearchParams, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Alert, Skeleton, Stack, Typography } from "@mui/material";
 import { EntityResultSection } from "@/components/fulltext-search/entity-result-section";
 import {
   unifiedSearch,
@@ -35,60 +36,65 @@ export default function SearchResult() {
   const params = useParams();
   const query = searchParams?.get("q") ?? "";
   const locale = (params?.locale as string) ?? "en";
+  const trimmedQuery = query.trim();
+  const requestKey = `${locale}:${trimmedQuery}`;
 
-  const [results, setResults] = useState<UnifiedSearchResults | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [searchState, setSearchState] = useState<{ key: string; results: UnifiedSearchResults | null } | null>(null);
 
   useEffect(() => {
-    if (!query || query.trim().length < 2) {
-      setResults(null);
-      return;
-    }
-    setIsLoading(true);
-    unifiedSearch(query.trim(), locale)
+    if (trimmedQuery.length < 2) return;
+    let active = true;
+    unifiedSearch(trimmedQuery, locale)
       .then((res) => {
+        if (!active) return;
         if ("error" in res) {
           console.error("[UNIFIED_SEARCH]", res.error);
+          setSearchState({ key: requestKey, results: null });
           return;
         }
-        setResults(res);
+        setSearchState({ key: requestKey, results: res });
       })
-      .catch((err) => console.error(err))
-      .finally(() => setIsLoading(false));
-  }, [query, locale]);
+      .catch((err) => {
+        if (!active) return;
+        console.error(err);
+        setSearchState({ key: requestKey, results: null });
+      });
+    return () => { active = false; };
+  }, [trimmedQuery, locale, requestKey]);
 
   if (!query)
-    return <p className="text-muted-foreground">Enter a search term above.</p>;
+    return <Typography color="text.secondary">Enter a search term above.</Typography>;
 
-  if (query.trim().length < 2)
+  if (trimmedQuery.length < 2)
     return (
-      <p className="text-muted-foreground text-sm">
+      <Typography color="text.secondary" variant="body2">
         Type at least 2 characters to search.
-      </p>
+      </Typography>
     );
 
-  if (isLoading)
+  if (searchState?.key !== requestKey)
     return (
-      <div className="flex flex-col gap-4">
+      <Stack spacing={2}>
         {ENTITY_ORDER.map((key) => (
-          <div key={key} className="h-16 rounded-md bg-muted animate-pulse" />
+          <Skeleton key={key} variant="rounded" height={64} />
         ))}
-      </div>
+      </Stack>
     );
 
+  const results = searchState.results;
   if (!results) return null;
 
   const hasAnyResults = ENTITY_ORDER.some((key) => results[key].length > 0);
 
   if (!hasAnyResults)
     return (
-      <p className="text-muted-foreground">
+      <Alert severity="info">
         No results found for &quot;{query}&quot;.
-      </p>
+      </Alert>
     );
 
   return (
-    <div className="flex flex-col gap-6">
+    <Stack spacing={3}>
       {ENTITY_ORDER.map((key) => (
         <EntityResultSection
           key={key}
@@ -96,6 +102,6 @@ export default function SearchResult() {
           results={results[key]}
         />
       ))}
-    </div>
+    </Stack>
   );
 }

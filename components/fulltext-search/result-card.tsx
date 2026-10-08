@@ -1,45 +1,25 @@
 "use client";
+
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { Box, Chip, Paper, Stack, Typography } from "@mui/material";
 import type { SearchResult } from "@/actions/fulltext/unified-search";
 
 const matchTypeLabel: Record<SearchResult["matchType"], string> = {
-  keyword: "Keyword",
-  semantic: "Semantic",
-  both: "Best Match",
+  keyword: "Keyword", semantic: "Semantic", both: "Best Match",
 };
-
-const matchTypeVariant: Record<
-  SearchResult["matchType"],
-  "default" | "secondary" | "outline"
-> = {
-  keyword: "outline",
-  semantic: "secondary",
-  both: "default",
+const matchTypeColor: Record<SearchResult["matchType"], "default" | "info" | "primary"> = {
+  keyword: "default", semantic: "info", both: "primary",
 };
 
 export function ResultCard({ result }: { result: SearchResult }) {
-  return (
-    <Link
-      href={result.url}
-      className="flex items-start justify-between gap-3 rounded-md border p-3 text-sm hover:bg-muted/50 transition-colors"
-    >
-      <div className="flex flex-col gap-1 min-w-0">
-        <span className="font-medium truncate">{result.title}</span>
-        {result.subtitle && (
-          <span className="text-muted-foreground text-xs truncate">
-            {result.subtitle}
-          </span>
-        )}
-      </div>
-      <div className="flex flex-col items-end gap-1 shrink-0">
-        <Badge variant={matchTypeVariant[result.matchType]}>
-          {matchTypeLabel[result.matchType]}
-        </Badge>
-        <span className="text-xs text-muted-foreground">
-          {Math.round(result.score * 100)}%
-        </span>
-      </div>
-    </Link>
-  );
+  return <Paper component={Link} href={result.url} variant="outlined" sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2, p: 1.5, color: "inherit", textDecoration: "none", "&:hover": { bgcolor: "action.hover" } }}>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>{result.title}</Typography>
+      {result.subtitle && <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block" }}>{result.subtitle}</Typography>}
+    </Box>
+    <Stack spacing={0.5} sx={{ alignItems: "flex-end", flexShrink: 0 }}>
+      <Chip size="small" color={matchTypeColor[result.matchType]} label={matchTypeLabel[result.matchType]} />
+      <Typography variant="caption" color="text.secondary">{Math.round(result.score * 100)}%</Typography>
+    </Stack>
+  </Paper>;
 }
