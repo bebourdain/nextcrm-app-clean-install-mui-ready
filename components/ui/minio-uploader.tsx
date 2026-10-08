@@ -2,8 +2,8 @@
 
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { cn } from "@/lib/utils";
-import { UploadCloud, Loader2 } from "lucide-react";
+import { Box, CircularProgress, Typography } from "@mui/material";
+import { UploadCloud } from "lucide-react";
 
 interface MinioUploaderProps {
   folder: "avatars" | "images" | "documents";
@@ -79,29 +79,43 @@ export function MinioUploader({
   });
 
   return (
-    <div
+    <Box
+      component="div"
       {...getRootProps()}
-      className={cn(
-        "flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center cursor-pointer transition-colors",
-        isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50",
-        uploading && "opacity-60 cursor-not-allowed"
-      )}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 1,
+        p: 4,
+        textAlign: "center",
+        border: 2,
+        borderStyle: "dashed",
+        borderColor: isDragActive ? "primary.main" : "divider",
+        borderRadius: 2,
+        bgcolor: isDragActive ? "action.hover" : "transparent",
+        cursor: uploading ? "not-allowed" : "pointer",
+        opacity: uploading ? 0.6 : 1,
+        transition: "border-color 150ms, background-color 150ms",
+        "&:hover": uploading ? undefined : { borderColor: "primary.main" },
+      }}
     >
       <input {...getInputProps()} />
       {uploading ? (
         <>
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">{progress}</p>
+          <CircularProgress size={32} color="inherit" />
+          <Typography variant="body2" color="text.secondary">{progress}</Typography>
         </>
       ) : (
         <>
-          <UploadCloud className="h-8 w-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
+          <UploadCloud size={32} aria-hidden="true" />
+          <Typography variant="body2" color="text.secondary">
             {isDragActive ? "Drop file here" : "Drag & drop or click to upload"}
-          </p>
-          <p className="text-xs text-muted-foreground/60">Max {maxSizeMB}MB</p>
+          </Typography>
+          <Typography variant="caption" color="text.disabled">Max {maxSizeMB}MB</Typography>
         </>
       )}
-    </div>
+    </Box>
   );
 }
