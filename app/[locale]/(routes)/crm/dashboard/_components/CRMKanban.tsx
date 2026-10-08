@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, PlusCircle, ThumbsDown } from "lucide-react";
+import { GripVertical, MoreHorizontal, PlusCircle, ThumbsDown } from "lucide-react";
 import { Avatar, Box, Card, CardContent, Dialog, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } from "@mui/material";
 import {
   DndContext,
@@ -66,6 +66,7 @@ function OpportunityCard({ opportunity, router, onThumbsDown, stage, salesStages
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -77,11 +78,14 @@ function OpportunityCard({ opportunity, router, onThumbsDown, stage, salesStages
     opacity: isDragging ? 0.5 : 1,
   };
 
-  return <Card ref={setNodeRef} style={style} {...attributes} {...listeners} variant="outlined" sx={{ my: 1, cursor: "grab", "&:active": { cursor: "grabbing" } }}>
+  return <Card ref={setNodeRef} style={style} variant="outlined" sx={{ my: 1 }}>
     <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>
       <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 1 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, overflowWrap: "anywhere" }}>{opportunity.name}</Typography>
-        <IconButton size="small" aria-label="Opportunity actions" onClick={(event) => setMenuAnchor(event.currentTarget)}><MoreHorizontal size={18} /></IconButton>
+        <Stack direction="row" spacing={0.5}>
+          <IconButton ref={setActivatorNodeRef} {...attributes} {...listeners} size="small" aria-label="Drag opportunity" sx={{ cursor: "grab", "&:active": { cursor: "grabbing" } }}><GripVertical size={18} /></IconButton>
+          <IconButton size="small" aria-label="Opportunity actions" onClick={(event) => setMenuAnchor(event.currentTarget)}><MoreHorizontal size={18} /></IconButton>
+        </Stack>
         <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
           <MenuItem onClick={() => { setMenuAnchor(null); router.push(`/crm/opportunities/${opportunity.id}`); }}>View</MenuItem>
         </Menu>
