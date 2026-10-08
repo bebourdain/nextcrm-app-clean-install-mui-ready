@@ -1,4 +1,3 @@
-import Link from "next/link";
 import moment from "moment";
 import { Box, Chip, Divider, Grid, Link as MuiLink, Paper, Stack, Typography } from "@mui/material";
 import { prismadb } from "@/lib/prisma";
@@ -26,7 +25,7 @@ export async function BasicView({ data }: { data: any }) {
   if (!data) return <Typography>Contact not found</Typography>;
   const userName = (id: string | null | undefined) => users.find((user) => user.id === id)?.name || "N/A";
   const date = (value: Date | string | null | undefined) => value ? moment(value).format("MMM DD YYYY") : "N/A";
-  const email = (value: string | null | undefined) => value ? <MuiLink component={Link} href={`mailto:${value}`}>{value}</MuiLink> : "N/A";
+  const email = (value: string | null | undefined) => value ? <MuiLink href={`mailto:${value}`}>{value}</MuiLink> : "N/A";
   return <Stack spacing={2.5}>
     <Paper variant="outlined" sx={{ p: 3, borderRadius: "var(--radius)" }}>
       <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }} spacing={2}>
@@ -73,7 +72,7 @@ export async function BasicView({ data }: { data: any }) {
         <Field label="Personal e-mail" value={email(data.personal_email)} />
         <Field label="Office phone" value={data.office_phone} />
         <Field label="Mobile phone" value={data.mobile_phone} />
-        <Field label="Website" value={data.website ? <MuiLink component={Link} href={data.website}>{data.website}</MuiLink> : undefined} />
+        <Field label="Website" value={data.website ? <MuiLink href={data.website}>{data.website}</MuiLink> : undefined} />
         <Field label="Billing country" value={data.billing_country} />
       </Section></Grid>
       <Grid size={{ xs: 12, md: 6 }}><Section title="Social networks">
