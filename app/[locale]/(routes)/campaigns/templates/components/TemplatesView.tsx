@@ -99,7 +99,7 @@ export default function TemplatesView({ data }: { data: Template[] }) {
           <TableCell align="right"><TemplateRowActions template={template} /></TableCell>
         </TableRow>) : <TableRow><TableCell colSpan={5} align="center" sx={{ py: 5 }}><Typography color="text.secondary">{data.length ? "No results." : "No templates found"}</Typography></TableCell></TableRow>}</TableBody>
       </Table>
-      <TablePagination component="div" count={rows.length} page={Math.min(page, Math.max(0, Math.ceil(rows.length / rowsPerPage) - 1))} rowsPerPage={rowsPerPage} onPageChange={(_, next) => setPage(next)} onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }} rowsPerPageOptions={[10, 20, 30, 40, 50]} />
+      <TablePagination component="div" count={rows.length} page={Math.min(page, Math.max(0, Math.ceil(rows.length / rowsPerPage) - 1))} rowsPerPage={rowsPerPage} onPageChange={(_, next) => setPage(next)} onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }} rowsPerPageOptions={[10, 20, 30, 40, 50]} showFirstButton showLastButton />
     </TableContainer>
   </Paper>;
 }

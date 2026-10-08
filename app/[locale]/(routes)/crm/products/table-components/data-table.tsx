@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DeleteOutlined, MoreHoriz } from "@mui/icons-material";
-import { Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Menu, MenuItem, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TableSortLabel, TextField, Typography } from "@mui/material";
+import { Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, FormControl, IconButton, InputLabel, ListItemText, Menu, MenuItem, OutlinedInput, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TableSortLabel, TextField, Typography } from "@mui/material";
 import { toast } from "sonner";
 import { deleteProduct } from "@/actions/crm/products/delete-product";
 import type { Product } from "../table-data/schema";
@@ -31,8 +31,10 @@ function formatPrice(value: number, currency: string) {
 export function ProductsDataTable({ data }: { data: Product[] }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [type, setType] = useState("");
-  const [status, setStatus] = useState("");
+  const [types, setTypes] = useState<string[]>([]);
+  const [statuses, setStatuses] = useState<string[]>([]);
+  const [visible, setVisible] = useState<SortKey[]>(columns.map((column) => column.key));
+  const [viewAnchor, setViewAnchor] = useState<HTMLElement | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(0);
@@ -44,12 +46,12 @@ export function ProductsDataTable({ data }: { data: Product[] }) {
 
   const filtered = useMemo(() => data.filter((product) =>
     product.name.toLowerCase().includes(query.toLowerCase()) &&
-    (!type || product.type === type) && (!status || product.status === status)
+    (!types.length || types.includes(product.type)) && (!statuses.length || statuses.includes(product.status))
   ).sort((a, b) => {
     const av = valueOf(a, sortKey), bv = valueOf(b, sortKey);
     const comparison = typeof av === "number" && typeof bv === "number" ? av - bv : String(av).localeCompare(String(bv));
     return sortDirection === "asc" ? comparison : -comparison;
-  }), [data, query, type, status, sortKey, sortDirection]);
+  }), [data, query, types, statuses, sortKey, sortDirection]);
 
   const sort = (key: SortKey) => {
     if (sortKey === key) setSortDirection((current) => current === "asc" ? "desc" : "asc");
@@ -75,18 +77,20 @@ export function ProductsDataTable({ data }: { data: Product[] }) {
   return <Stack spacing={2}>
     <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ alignItems: { md: "center" } }}>
       <TextField size="small" label="Search products" value={query} onChange={(event) => { setQuery(event.target.value); setPage(0); }} sx={{ minWidth: 230 }} />
-      <TextField select size="small" label="Type" value={type} onChange={(event) => { setType(event.target.value); setPage(0); }} sx={{ minWidth: 150 }}>
-        <MenuItem value="">All types</MenuItem><MenuItem value="PRODUCT">Product</MenuItem><MenuItem value="SERVICE">Service</MenuItem>
-      </TextField>
-      <TextField select size="small" label="Status" value={status} onChange={(event) => { setStatus(event.target.value); setPage(0); }} sx={{ minWidth: 150 }}>
-        <MenuItem value="">All statuses</MenuItem><MenuItem value="DRAFT">Draft</MenuItem><MenuItem value="ACTIVE">Active</MenuItem><MenuItem value="ARCHIVED">Archived</MenuItem>
-      </TextField>
-      {(query || type || status) && <Button onClick={() => { setQuery(""); setType(""); setStatus(""); setPage(0); }}>Reset</Button>}
+      <FormControl size="small" sx={{ minWidth: 150 }}><InputLabel>Type</InputLabel><Select multiple value={types} onChange={(event) => { setTypes(typeof event.target.value === "string" ? event.target.value.split(",") : event.target.value); setPage(0); }} input={<OutlinedInput label="Type" />} renderValue={(selected) => selected.map((value) => value === "PRODUCT" ? "Product" : "Service").join(", ")}>
+        {[["PRODUCT", "Product"], ["SERVICE", "Service"]].map(([value, label]) => <MenuItem key={value} value={value}><Checkbox size="small" checked={types.includes(value)} /><ListItemText primary={label} /></MenuItem>)}
+      </Select></FormControl>
+      <FormControl size="small" sx={{ minWidth: 150 }}><InputLabel>Status</InputLabel><Select multiple value={statuses} onChange={(event) => { setStatuses(typeof event.target.value === "string" ? event.target.value.split(",") : event.target.value); setPage(0); }} input={<OutlinedInput label="Status" />} renderValue={(selected) => selected.map((value) => value.charAt(0) + value.slice(1).toLowerCase()).join(", ")}>
+        {["DRAFT", "ACTIVE", "ARCHIVED"].map((value) => <MenuItem key={value} value={value}><Checkbox size="small" checked={statuses.includes(value)} /><ListItemText primary={value.charAt(0) + value.slice(1).toLowerCase()} /></MenuItem>)}
+      </Select></FormControl>
+      {(query || types.length || statuses.length) ? <Button onClick={() => { setQuery(""); setTypes([]); setStatuses([]); setPage(0); }}>Reset</Button> : null}
+      <Button variant="outlined" onClick={(event) => setViewAnchor(event.currentTarget)} sx={{ ml: { md: "auto" } }}>View</Button>
+      <Menu anchorEl={viewAnchor} open={!!viewAnchor} onClose={() => setViewAnchor(null)}><MenuItem disabled>Toggle columns</MenuItem><Divider />{columns.filter((column) => column.key !== "name").map((column) => <MenuItem key={column.key} onClick={() => setVisible((current) => current.includes(column.key) ? current.filter((key) => key !== column.key) : [...current, column.key])}><Checkbox size="small" checked={visible.includes(column.key)} /><ListItemText primary={column.label} /></MenuItem>)}</Menu>
     </Stack>
     <TableContainer component={Paper} variant="outlined">
       <Table size="small">
         <TableHead><TableRow>
-          {columns.map((column) => <TableCell key={column.key} align={column.align} sortDirection={sortKey === column.key ? sortDirection : false}>
+          {columns.filter((column) => visible.includes(column.key)).map((column) => <TableCell key={column.key} align={column.align} sortDirection={sortKey === column.key ? sortDirection : false}>
             <TableSortLabel active={sortKey === column.key} direction={sortKey === column.key ? sortDirection : "asc"} onClick={() => sort(column.key)}>{column.label}</TableSortLabel>
           </TableCell>)}
           <TableCell align="right">Actions</TableCell>
@@ -94,18 +98,18 @@ export function ProductsDataTable({ data }: { data: Product[] }) {
         <TableBody>
           {filtered.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((product) => <TableRow key={product.id} hover>
             <TableCell><Typography component={Link} href={`/crm/products/${product.id}`} sx={{ color: "primary.main", fontWeight: 600, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}>{product.name}</Typography></TableCell>
-            <TableCell>{product.sku || "—"}</TableCell>
-            <TableCell><Chip size="small" variant="outlined" color={product.type === "PRODUCT" ? "primary" : "secondary"} label={product.type === "PRODUCT" ? "Product" : "Service"} /></TableCell>
-            <TableCell><Chip size="small" color={product.status === "ACTIVE" ? "success" : product.status === "ARCHIVED" ? "warning" : "default"} label={product.status.charAt(0) + product.status.slice(1).toLowerCase()} /></TableCell>
-            <TableCell align="right">{formatPrice(product.unit_price, product.currency)}</TableCell>
-            <TableCell>{product.category?.name || "—"}</TableCell>
-            <TableCell align="right">{product._count.accountProducts}</TableCell>
+            {visible.includes("sku") && <TableCell>{product.sku || "—"}</TableCell>}
+            {visible.includes("type") && <TableCell><Chip size="small" variant="outlined" color={product.type === "PRODUCT" ? "primary" : "secondary"} label={product.type === "PRODUCT" ? "Product" : "Service"} /></TableCell>}
+            {visible.includes("status") && <TableCell><Chip size="small" color={product.status === "ACTIVE" ? "success" : product.status === "ARCHIVED" ? "warning" : "default"} label={product.status.charAt(0) + product.status.slice(1).toLowerCase()} /></TableCell>}
+            {visible.includes("unit_price") && <TableCell align="right">{formatPrice(product.unit_price, product.currency)}</TableCell>}
+            {visible.includes("category") && <TableCell>{product.category?.name || "—"}</TableCell>}
+            {visible.includes("accounts") && <TableCell align="right">{product._count.accountProducts}</TableCell>}
             <TableCell align="right"><IconButton aria-label={`Actions for ${product.name}`} onClick={(event) => { setSelected(product); setMenuAnchor(event.currentTarget); }}><MoreHoriz /></IconButton></TableCell>
           </TableRow>)}
-          {filtered.length === 0 && <TableRow><TableCell colSpan={8} align="center" sx={{ py: 5 }}><Typography color="text.secondary">No results.</Typography></TableCell></TableRow>}
+          {filtered.length === 0 && <TableRow><TableCell colSpan={visible.length + 1} align="center" sx={{ py: 5 }}><Typography color="text.secondary">No results.</Typography></TableCell></TableRow>}
         </TableBody>
       </Table>
-      <TablePagination component="div" count={filtered.length} page={Math.min(page, Math.max(0, Math.ceil(filtered.length / rowsPerPage) - 1))} rowsPerPage={rowsPerPage} onPageChange={(_, next) => setPage(next)} onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }} rowsPerPageOptions={[10, 25, 50]} />
+      <TablePagination component="div" count={filtered.length} page={Math.min(page, Math.max(0, Math.ceil(filtered.length / rowsPerPage) - 1))} rowsPerPage={rowsPerPage} onPageChange={(_, next) => setPage(next)} onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }} rowsPerPageOptions={[10, 20, 30, 40, 50]} showFirstButton showLastButton />
     </TableContainer>
     <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
       <MenuItem onClick={() => { setMenuAnchor(null); if (selected) router.push(`/crm/products/${selected.id}`); }}>View / Edit</MenuItem>

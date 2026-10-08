@@ -134,7 +134,7 @@ export function AdminUserDataTable({ data }: { data: Users[] }) {
     </Table></TableContainer>
     <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", pl: 2, flexWrap: "wrap" }}>
       <Typography variant="body2" color="text.secondary">{selection.filter((id) => rows.some((user) => user.id === id)).length} of {rows.length} row(s) selected.</Typography>
-      <TablePagination component="div" count={rows.length} page={effectivePage} onPageChange={(_, value) => setPage(value)} rowsPerPage={pageSize} onRowsPerPageChange={(event) => { setPageSize(Number(event.target.value)); setPage(0); }} rowsPerPageOptions={[10, 20, 30, 40, 50]} />
+      <TablePagination component="div" count={rows.length} page={effectivePage} onPageChange={(_, value) => setPage(value)} rowsPerPage={pageSize} onRowsPerPageChange={(event) => { setPageSize(Number(event.target.value)); setPage(0); }} rowsPerPageOptions={[10, 20, 30, 40, 50]} showFirstButton showLastButton />
     </Stack>
   </Paper>;
 }
