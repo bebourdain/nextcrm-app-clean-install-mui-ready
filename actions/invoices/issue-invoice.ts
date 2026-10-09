@@ -10,7 +10,6 @@ import { consumeNextNumber } from "@/lib/invoices/numbering";
 import { fetchFxRate } from "@/lib/invoices/fx";
 import { issueInvoiceSchema } from "@/types/invoice";
 import { renderInvoicePdf } from "@/lib/invoices/pdf/render";
-import { uploadInvoicePdf } from "@/lib/invoices/storage";
 import type { InvoicePdfData, PdfParty } from "@/lib/invoices/pdf/templates/default-invoice";
 import { serializeDecimals } from "@/lib/serialize-decimals";
 
@@ -128,8 +127,15 @@ export async function issueInvoice(raw: unknown) {
     { isolationLevel: "Serializable" }
   );
 
+  // Temporarily skip PDF generation when storage still points at the test placeholder.
+  // Issuance above remains saved; a real storage endpoint restores PDF generation.
+  if (!process.env.MINIO_ENDPOINT || process.env.MINIO_ENDPOINT.includes("storage-not-configured.invalid")) {
+    return serializeDecimals(result);
+  }
+
   // After transaction: generate PDF (non-blocking for the legal issuance)
   try {
+    const { uploadInvoicePdf } = await import("@/lib/invoices/storage");
     const customer: PdfParty = {
       name: result.account.name,
       street: result.account.billing_street ?? undefined,
