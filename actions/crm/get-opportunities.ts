@@ -16,6 +16,7 @@ export const getOpportunities = async () => {
 
   const data = await prismadb.crm_Opportunities.findMany({
     where: { ...opportunityReadScopeWhere(user) },
+    orderBy: [{ board_order: "asc" }, { created_on: "asc" }, { id: "asc" }],
     include: {
       // Include assigned user (uses "assigned_to_user_relation")
       assigned_to_user: {

@@ -23,6 +23,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable,
+  arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -36,6 +37,7 @@ import { toast } from "sonner";
 import { NewOpportunityForm } from "../../opportunities/components/NewOpportunityForm";
 import { setInactiveOpportunity } from "@/actions/crm/opportunity/dashboard/set-inactive";
 import { updateOpportunity } from "@/actions/crm/opportunities/update-opportunity";
+import { saveOpportunityBoardOrder } from "@/actions/crm/opportunities/save-board-order";
 
 interface CRMKanbanProps {
   salesStages: crm_Opportunities_Sales_Stages[];
@@ -205,7 +207,16 @@ const CRMKanban = ({
     }
 
     if (toColIdx === -1) return;
-    if (fromColIdx === toColIdx) return;
+    if (fromColIdx === toColIdx) {
+      // Same-stage drags are finalized on drop. After crossing stages, keep the
+      // dragged card aligned with the card currently under the pointer.
+      if (origStageIdRef.current === current[fromColIdx].id || fromOppIdx === toOppIdx) return;
+      const reordered = current.map((c) => ({ ...c, opportunities: [...c.opportunities] }));
+      reordered[fromColIdx].opportunities = arrayMove(reordered[fromColIdx].opportunities, fromOppIdx, toOppIdx);
+      columnsRef.current = reordered;
+      setColumns(reordered);
+      return;
+    }
 
     const newColumns = current.map((c) => ({
       ...c,
@@ -215,54 +226,76 @@ const CRMKanban = ({
       fromOppIdx,
       1
     );
-    (movedOpp as any).sales_stage = newColumns[toColIdx].id;
-    newColumns[toColIdx].opportunities.splice(toOppIdx, 0, movedOpp);
+    newColumns[toColIdx].opportunities.splice(toOppIdx, 0, { ...movedOpp, sales_stage: newColumns[toColIdx].id });
     columnsRef.current = newColumns;
     setColumns(newColumns);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
-    isDraggingRef.current = false;
-    const { active } = event;
+    const { active, over } = event;
     setActiveOpportunity(null);
+    if (!over) {
+      isDraggingRef.current = false;
+      columnsRef.current = initColumns(data, salesStages);
+      setColumns(columnsRef.current);
+      return;
+    }
 
     const activeId = active.id as string;
-    const current = columnsRef.current;
+    const overId = over.id as string;
+    let current = columnsRef.current;
 
     // Find where the opportunity ended up after handleDragOver moves
     let curColIdx = -1;
+    let curOppIdx = -1;
     for (let i = 0; i < current.length; i++) {
-      if (current[i].opportunities.find((o) => o.id === activeId)) {
+      const index = current[i].opportunities.findIndex((o) => o.id === activeId);
+      if (index !== -1) {
         curColIdx = i;
+        curOppIdx = index;
         break;
       }
     }
-    if (curColIdx === -1) return;
+    if (curColIdx === -1) { isDraggingRef.current = false; return; }
 
     const curStageId = current[curColIdx].id;
     const wasCrossStageMove =
       origStageIdRef.current !== null &&
       origStageIdRef.current !== curStageId;
+    origStageIdRef.current = null;
 
-    if (!wasCrossStageMove) return;
+    if (!wasCrossStageMove) {
+      const overIsColumn = overId === curStageId;
+      const targetIndex = overIsColumn
+        ? current[curColIdx].opportunities.length - 1
+        : current[curColIdx].opportunities.findIndex((o) => o.id === overId);
+      if (targetIndex === -1 || targetIndex === curOppIdx) { isDraggingRef.current = false; return; }
+      current = current.map((col) => ({ ...col, opportunities: [...col.opportunities] }));
+      current[curColIdx].opportunities = arrayMove(current[curColIdx].opportunities, curOppIdx, targetIndex);
+      columnsRef.current = current;
+      setColumns(current);
+    }
+
+    const ordered = current[curColIdx].opportunities;
+    const finalIndex = ordered.findIndex((o) => o.id === activeId);
+    const beforeId = finalIndex > 0 ? ordered[finalIndex - 1].id : null;
+    const afterId = finalIndex < ordered.length - 1 ? ordered[finalIndex + 1].id : null;
 
     try {
-      const result = await updateOpportunity({
-        id: activeId,
-        sales_stage: curStageId,
-      });
-      if (result?.error) {
-        toast.error(result.error);
-        columnsRef.current = initColumns(data, salesStages);
-        setColumns(initColumns(data, salesStages));
-      } else {
-        toast.success("Opportunity stage changed");
+      if (wasCrossStageMove) {
+        const result = await updateOpportunity({ id: activeId, sales_stage: curStageId });
+        if (result?.error) throw new Error(result.error);
       }
+      const result = await saveOpportunityBoardOrder({ opportunityId: activeId, stageId: curStageId, beforeId, afterId });
+      if (result.error) throw new Error(result.error);
+      toast.success(wasCrossStageMove ? "Opportunity stage and order saved" : "Opportunity order saved");
     } catch (error) {
-      console.log(error);
-      toast.error("Something went wrong");
+      toast.error(error instanceof Error ? error.message : "Could not save opportunity order");
       columnsRef.current = initColumns(data, salesStages);
       setColumns(initColumns(data, salesStages));
+      router.refresh();
+    } finally {
+      isDraggingRef.current = false;
     }
   };
 

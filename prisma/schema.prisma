@@ -228,6 +228,7 @@ model crm_Opportunities {
   name             String?
   next_step        String?
   sales_stage      String?                 @db.Uuid
+  board_order      Int                     @default(0)
   type             String?                 @db.Uuid
   status           crm_Opportunity_Status? @default(ACTIVE)
 
@@ -252,6 +253,7 @@ model crm_Opportunities {
   @@index([contact])
   @@index([createdBy])
   @@index([sales_stage])
+  @@index([sales_stage, board_order])
   @@index([type])
   @@index([status])
   @@index([createdAt])

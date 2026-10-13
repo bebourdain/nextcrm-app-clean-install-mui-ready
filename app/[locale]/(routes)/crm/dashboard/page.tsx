@@ -13,7 +13,7 @@ const CrmDashboardPage = async () => {
 
   return (
     <Box sx={{ width: "100%", pb: 6 }}>
-      <MuiPageHeader title="CRM Dashboard" description="In development. After this compoment is finished, there will be a optimistic update of the data." />
+      <MuiPageHeader title="CRM Dashboard" description="Drag opportunities between stages or reorder them within a stage. Changes are saved automatically." />
       <Divider sx={{ my: 2 }} />
       <Box sx={{ width: "100%", overflow: "hidden" }}>
         <CRMKanban
