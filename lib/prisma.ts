@@ -1,7 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaNeon } from "@prisma/adapter-neon";
 
 declare global {
   var cachedPrisma: PrismaClient | undefined;
@@ -9,13 +8,9 @@ declare global {
 
 // Prisma Client configuration with connection pooling and lifecycle management
 const prismaClientSingleton = () => {
-  const connectionString = process.env.DATABASE_URL;
-  const hostname = connectionString && URL.canParse(connectionString)
-    ? new URL(connectionString).hostname
-    : undefined;
-  const adapter = hostname?.endsWith(".neon.tech")
-    ? new PrismaNeon({ connectionString })
-    : new PrismaPg(new Pool({ connectionString }));
+  const connectionString = `${process.env.DATABASE_URL}`;
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
 
   const client = new PrismaClient({
     adapter,

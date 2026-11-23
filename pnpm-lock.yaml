@@ -158,9 +158,6 @@ importers:
       '@openai/agents':
         specifier: ^0.8.0
         version: 0.8.0(supports-color@5.5.0)(ws@8.21.1)(zod@4.3.6)
-      '@prisma/adapter-neon':
-        specifier: 7.6.0
-        version: 7.6.0
       '@prisma/adapter-pg':
         specifier: 7.6.0
         version: 7.6.0
@@ -2405,10 +2402,6 @@ packages:
     resolution: {integrity: sha512-hF/Om50SmpKK2PQldcwYxi6b3p7S2wlwW8fX+54jx88xHaEu7hB4dojuuuP8nwQz24qq/p/jxVm0P9DztKPoJA==}
     engines: {node: '>=20.19.0'}
 
-  '@neondatabase/serverless@1.2.0':
-    resolution: {integrity: sha512-tnaqgixUengZQNd9ZrS3ytQfamJzLKY8QxgqWQTNHHtB+KrFQWk77JTbbpg4RD+J3qE4eO2lVytvGDX5Kj6FdQ==}
-    engines: {node: '>=19.0.0'}
-
   '@next/env@16.3.6':
     resolution: {integrity: sha512-x9Vblze1EbtltQYnNH38xCPWU3TVfBd1eXqA3+w9+BTpedkkdNpAaltXlGQ/nsc1+E0mVTNrtcbX3GoO09zeLQ==}
 
@@ -3184,9 +3177,6 @@ packages:
 
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
-
-  '@prisma/adapter-neon@7.6.0':
-    resolution: {integrity: sha512-53L0Q0eoz0vF1ZUKpcAe6hBJDDzFUfQPZUgV9zm1DICvrX9/7imMJTdFM97YU5AK5Tom6W+2gdxctWeta+2+xQ==}
 
   '@prisma/adapter-pg@7.6.0':
     resolution: {integrity: sha512-BjHNmJqqa42NqJSDPnXUfwUofWo8LJY7Ui2gqxN4DmAOb+H/gGKv+hln2Xq/1kSJXPW5AXMXuNiPDMpywvyIOw==}
@@ -12087,8 +12077,6 @@ snapshots:
 
   '@neon/sdk@7.0.0': {}
 
-  '@neondatabase/serverless@1.2.0': {}
-
   '@next/env@16.3.6': {}
 
   '@next/eslint-plugin-next@16.1.6':
@@ -13055,12 +13043,6 @@ snapshots:
       playwright: 1.58.2
 
   '@popperjs/core@2.11.8': {}
-
-  '@prisma/adapter-neon@7.6.0':
-    dependencies:
-      '@neondatabase/serverless': 1.2.0
-      '@prisma/driver-adapter-utils': 7.6.0
-      postgres-array: 3.0.4
 
   '@prisma/adapter-pg@7.6.0':
     dependencies:
